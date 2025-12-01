@@ -1,5 +1,5 @@
-name: cl_server_user_manager
-description: CLI utility for managing users in CL Server using the Dart client library.
+name: cl_server_examples
+description: CLI utilities for managing users and store entities in CL Server using the Dart client library.
 version: 1.0.0
 
 environment:
@@ -9,6 +9,7 @@ dependencies:
   cl_server_dart_client:
     path: ../
   args: ^2.4.0
+  path: ^1.8.0
 
 dev_dependencies:
   lints: ^3.0.0

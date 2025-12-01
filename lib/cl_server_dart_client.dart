@@ -53,5 +53,10 @@ export 'src/session/session_exceptions.dart';
 export 'src/session/token_storage.dart';
 export 'src/session/utils/jwt_utils.dart';
 
+// Store Manager module
+export 'src/store_manager/store_manager.dart';
+export 'src/store_manager/models/result_model.dart';
+export 'src/store_manager/exceptions.dart';
+
 // Constants
 export 'src/utils/constants.dart';
