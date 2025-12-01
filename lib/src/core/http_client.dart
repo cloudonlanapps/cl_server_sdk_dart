@@ -46,8 +46,9 @@ class HttpClientWrapper {
         request.headers.addAll(_buildHeaders());
         if (body != null) {
           body.forEach((key, value) {
-            if (value is String) {
-              request.fields[key] = value;
+            // Convert all values to String for form data
+            if (value != null) {
+              request.fields[key] = value.toString();
             }
           });
         }

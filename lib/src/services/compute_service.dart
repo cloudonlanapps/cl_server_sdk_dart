@@ -35,6 +35,7 @@ class ComputeService {
     final response = await _httpClient.post(
       endpoint,
       body: metadata ?? {},
+      isFormData: true,
     );
     return Job.fromJson(response);
   }

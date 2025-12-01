@@ -20,16 +20,16 @@ class AuthServiceEndpoints {
 /// Store Service Endpoints
 class StoreServiceEndpoints {
   static const String health = '/';
-  static const String listEntities = '/entities';
-  static const String createEntity = '/entities';
-  static const String getEntity = '/entities/{entity_id}';
-  static const String updateEntity = '/entities/{entity_id}';
-  static const String patchEntity = '/entities/{entity_id}';
-  static const String deleteEntity = '/entities/{entity_id}';
-  static const String deleteCollection = '/entities/collection';
-  static const String getVersions = '/entities/{entity_id}/versions';
-  static const String getConfig = '/config';
-  static const String updateReadAuthConfig = '/config/read-auth';
+  static const String listEntities = '/entity/';
+  static const String createEntity = '/entity/';
+  static const String getEntity = '/entity/{entity_id}';
+  static const String updateEntity = '/entity/{entity_id}';
+  static const String patchEntity = '/entity/{entity_id}';
+  static const String deleteEntity = '/entity/{entity_id}';
+  static const String deleteCollection = '/entity/collection';
+  static const String getVersions = '/entity/{entity_id}/versions';
+  static const String getConfig = '/admin/config';
+  static const String updateReadAuthConfig = '/admin/config/read-auth';
 }
 
 /// Compute Service Endpoints
