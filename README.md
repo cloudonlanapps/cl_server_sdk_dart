@@ -11,11 +11,13 @@ A comprehensive Dart client library for interacting with CL Server microservices
 - ✨ Three fully-featured service clients (Auth, Store, Compute)
 - 🔒 Custom exception hierarchy for comprehensive error handling
 - 📦 Immutable data models with full serialization support
-- 🧪 115+ unit tests with excellent coverage
-- 🎯 Manual token management (stateless clients)
+- 🧪 120+ unit tests with excellent coverage
+- 🎯 SessionManager for automatic token lifecycle management
 - 📝 No code generation required (manual implementation)
 - 🚀 Type-safe async/await API
 - 🔌 HTTP client wrapper with intelligent error mapping
+- 💾 Built-in token persistence and encryption
+- ⚡ Automatic token refresh with configurable strategies
 
 ## Installation
 
@@ -169,14 +171,64 @@ final updatedUser = user.copyWith(username: 'newadmin');
 
 ## Token Management
 
-This library does not implement token caching or automatic refresh. Callers are responsible for:
+### SessionManager (Recommended)
 
-1. Generating tokens via `AuthService.generateToken()`
-2. Storing tokens securely
-3. Refreshing tokens when needed
-4. Passing tokens to service constructors
+For most applications, use the `SessionManager` which provides automatic token lifecycle management:
 
-Example with a simple token manager:
+```dart
+import 'package:cl_server_dart_client/cl_server_dart_client.dart';
+
+// Initialize session manager (creates storage, auth service, and notifier)
+final sessionManager = SessionManager.initialize();
+
+// Login with credentials
+try {
+  await sessionManager.login('admin', 'admin');
+  print('Logged in as: ${sessionManager.currentUsername}');
+} on AuthException catch (e) {
+  print('Login failed: $e');
+}
+
+// Access current session state
+if (sessionManager.isLoggedIn) {
+  print('User: ${sessionManager.currentUsername}');
+  print('State: ${sessionManager.currentState}');
+}
+
+// Get valid token (auto-refreshes if needed)
+final token = await sessionManager.getValidToken();
+
+// Create pre-authenticated services
+final storeService = await sessionManager.createStoreService();
+final computeService = await sessionManager.createComputeService();
+
+// Use services with automatic token injection
+final entities = await storeService.listEntities();
+
+// Listen to session state changes
+sessionManager.onSessionStateChanged((state) {
+  print('Session changed: logged_in=${state.isLoggedIn}');
+});
+
+// Logout when done
+await sessionManager.logout();
+
+// Cleanup
+await sessionManager.dispose();
+```
+
+### SessionManager Features
+
+- **Token Persistence**: Automatically stores token in-memory (or extend for persistent storage)
+- **Token Refresh**: Automatic refresh with 1-minute threshold before expiry
+- **Reactive Updates**: Uses Solidart signals for reactive state management
+- **Password Encryption**: Optional password storage with AES encryption
+- **Configurable Strategies**: `refreshEndpoint` or `reLogin` refresh strategies
+- **Single User**: Manages a single logged-in user at a time
+
+### Manual Token Management
+
+If you prefer manual control, you can use stateless clients:
 
 ```dart
 class TokenManager {
@@ -193,16 +245,62 @@ class TokenManager {
     return _token!;
   }
 }
+
+final tokenManager = TokenManager();
+final storeService = StoreService(token: await tokenManager.getValidToken());
+```
+
+### SessionManager Configuration
+
+Configure token refresh strategy:
+
+```dart
+// Use token refresh endpoint (recommended)
+sessionManager.setRefreshStrategy(TokenRefreshStrategy.refreshEndpoint);
+
+// Or use re-login strategy (stores encrypted password)
+sessionManager.setRefreshStrategy(TokenRefreshStrategy.reLogin);
+```
+
+### JWT Token Parsing
+
+For manual token handling, the library includes JWT utilities:
+
+```dart
+import 'package:cl_server_dart_client/cl_server_dart_client.dart';
+
+final token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+
+// Parse JWT token (no signature verification)
+final payload = JwtUtils.parseToken(token);
+
+if (payload != null) {
+  print('User: ${payload.userId}');
+  print('Permissions: ${payload.permissions}');
+  print('Is Admin: ${payload.isAdmin}');
+
+  // Check if token expires within 1 minute
+  if (payload.expiresWithin(const Duration(minutes: 1))) {
+    print('Token will expire soon');
+  }
+
+  // Get time remaining
+  final remaining = payload.timeRemaining;
+  print('Time remaining: ${remaining?.inMinutes} minutes');
+}
 ```
 
 ## Testing
 
-The package includes comprehensive unit tests (115+ tests) covering:
+The package includes comprehensive unit tests (120+ tests) covering:
 
 - All service clients and their endpoints
 - Model serialization/deserialization
 - Exception handling
 - HTTP client error mapping
+- Session management (token storage, JWT parsing, refresh)
+- SessionManager lifecycle and state management
+- Token persistence and encryption
 
 Run tests with:
 
@@ -212,9 +310,11 @@ dart test
 
 ## Known Limitations
 
-- **No automatic token refresh**: Token refresh must be implemented by the calling application
+- **In-memory token storage**: TokenStorage uses in-memory cache by default. Extend it to use `shared_preferences` or `flutter_secure_storage` for persistent storage in Flutter apps
 - **No built-in caching**: Response caching should be implemented at the application level
-- **Integration tests deferred**: Full integration tests with running services are planned for Phase 2
+- **JWT signature verification disabled**: Tokens are parsed but signatures are not verified (trusted tokens from server)
+- **Single user session**: SessionManager manages only one logged-in user at a time
+- **Integration tests deferred**: Full integration tests with running services are planned
 
 ## Code Quality
 
@@ -232,14 +332,29 @@ The library follows a layered architecture:
 
 Each service is independent and can be used separately.
 
+### Architecture Updates (Phase 2)
+
+Phase 2 adds the Session Layer for automatic token lifecycle management:
+
+- **SessionManager**: High-level facade for session management
+- **SessionNotifier**: Reactive state management using Solidart signals
+- **TokenStorage**: In-memory token persistence with optional encryption
+- **JwtUtils**: JWT token parsing without verification
+- **SessionExceptions**: Domain-specific exceptions for session operations
+
 ### Contributing
 
-This is Phase 1 of the CL Server Dart Client project. Future phases will include:
+Future phases will include:
 - Integration tests with running services
-- Higher-level integration modules
-- Request/response caching
+- Persistent storage adapters (shared_preferences, flutter_secure_storage)
+- Request/response caching strategies
 - Advanced error recovery strategies
+- Multi-user session management
 
 ### Version
 
-Current version: **0.1.0** (Phase 1 - Core Client Implementation)
+Current version: **0.1.0** (Phase 2 - Session Management Layer)
+
+**Phase History:**
+- **Phase 1**: Core client implementation (Auth, Store, Compute services)
+- **Phase 2** (Current): Session management layer with token lifecycle

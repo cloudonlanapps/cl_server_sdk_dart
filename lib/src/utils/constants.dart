@@ -7,6 +7,7 @@ const String computeServiceBaseUrl = 'http://localhost:8002';
 class AuthServiceEndpoints {
   static const String health = '/';
   static const String generateToken = '/auth/token';
+  static const String refreshToken = '/auth/token/refresh';
   static const String getPublicKey = '/auth/public-key';
   static const String getCurrentUser = '/users/me';
   static const String listUsers = '/users/';

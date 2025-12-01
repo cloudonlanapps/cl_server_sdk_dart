@@ -45,5 +45,13 @@ export 'src/services/auth_service.dart';
 export 'src/services/store_service.dart';
 export 'src/services/compute_service.dart';
 
+// Session management
+export 'src/session/session_manager.dart';
+export 'src/session/session_notifier.dart';
+export 'src/session/session_state.dart';
+export 'src/session/session_exceptions.dart';
+export 'src/session/token_storage.dart';
+export 'src/session/utils/jwt_utils.dart';
+
 // Constants
 export 'src/utils/constants.dart';

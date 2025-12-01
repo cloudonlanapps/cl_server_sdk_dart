@@ -50,6 +50,15 @@ class AuthService {
     return PublicKeyResponse.fromJson(response);
   }
 
+  /// Refresh access token (requires valid token)
+  /// POST /auth/token/refresh
+  Future<TokenResponse> refreshToken() async {
+    final response = await _httpClient.post(
+      AuthServiceEndpoints.refreshToken,
+    );
+    return TokenResponse.fromJson(response);
+  }
+
   /// Get current user info (requires token)
   /// GET /users/me
   Future<User> getCurrentUser() async {
