@@ -5,11 +5,11 @@ import 'package:test/test.dart';
 class MockHttpClient extends http.BaseClient {
   MockHttpClient(this.responses);
   final Map<String, http.Response> responses;
-  late http.Request lastRequest;
+  late http.BaseRequest lastRequest;
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    lastRequest = request as http.Request;
+    lastRequest = request;
     final key = '${request.method} ${request.url}';
     final response = responses[key];
 
