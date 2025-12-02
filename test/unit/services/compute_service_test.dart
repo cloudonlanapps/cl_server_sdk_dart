@@ -34,14 +34,14 @@ void main() {
   group('ComputeService Tests', () {
     test('createJob returns Job', () async {
       final mockClient = MockHttpClient({
-        'POST http://localhost:8002/api/v1/job/image_resize': http.Response(
+        'POST $computeServiceBaseUrl/api/v1/job/image_resize': http.Response(
           '''
           {
             "job_id": "job-123",
             "task_type": "image_resize",
             "status": "queued",
             "progress": 0,
-            "input_files": ["image.jpg"],
+            "input_files": [{}],
             "output_files": [],
             "task_output": {},
             "created_at": 1704067200,
@@ -59,6 +59,12 @@ void main() {
       final job = await computeService.createJob(
         taskType: 'image_resize',
         metadata: {'width': 800, 'height': 600},
+        externalFiles: [
+          {
+            'path': '/tmp/test_image.jpg',
+            'metadata': {'name': 'input_image'},
+          },
+        ],
       );
 
       expect(job.jobId, 'job-123');
@@ -69,7 +75,7 @@ void main() {
 
     test('getJobStatus returns Job', () async {
       final mockClient = MockHttpClient({
-        'GET http://localhost:8002/api/v1/job/job-123': http.Response(
+        'GET $computeServiceBaseUrl/api/v1/job/job-123': http.Response(
           '''
 {
             "job_id": "job-123",
@@ -97,7 +103,7 @@ void main() {
 
     test('getJobStatus throws ResourceNotFoundException on 404', () async {
       final mockClient = MockHttpClient({
-        'GET http://localhost:8002/api/v1/job/nonexistent': http.Response(
+        'GET $computeServiceBaseUrl/api/v1/job/nonexistent': http.Response(
           '{"detail": "Job not found"}',
           404,
         ),
@@ -113,7 +119,7 @@ void main() {
 
     test('deleteJob completes successfully', () async {
       final mockClient = MockHttpClient({
-        'DELETE http://localhost:8002/api/v1/job/job-123': http.Response(
+        'DELETE $computeServiceBaseUrl/api/v1/job/job-123': http.Response(
           '',
           204,
         ),
@@ -129,7 +135,7 @@ void main() {
 
     test('listWorkers returns WorkersListResponse', () async {
       final mockClient = MockHttpClient({
-        'GET http://localhost:8002/api/v1/workers': http.Response(
+        'GET $computeServiceBaseUrl/api/v1/workers': http.Response(
           '''
 {
             "workers": [
@@ -153,7 +159,7 @@ void main() {
 
     test('getWorkerStatus returns WorkerStatus', () async {
       final mockClient = MockHttpClient({
-        'GET http://localhost:8002/api/v1/workers/status/worker-1':
+        'GET $computeServiceBaseUrl/api/v1/workers/status/worker-1':
             http.Response(
               '{"worker_id": "worker-1", "running": true, "ttl_remaining": 24}',
               200,
@@ -170,7 +176,7 @@ void main() {
 
     test('getWorkerStatus returns running false on 404', () async {
       final mockClient = MockHttpClient({
-        'GET http://localhost:8002/api/v1/workers/status/nonexistent':
+        'GET $computeServiceBaseUrl/api/v1/workers/status/nonexistent':
             http.Response(
               '{"worker_id": "nonexistent", "running": false}',
               200,
@@ -185,8 +191,8 @@ void main() {
 
     test('getStorageSize returns StorageSize', () async {
       final mockClient = MockHttpClient({
-        'GET http://localhost:8002/api/v1/admin/storage/size': http.Response(
-          '{"size_in_bytes": 1073741824, "size_formatted": "1.0 GB"}',
+        'GET $computeServiceBaseUrl/api/v1/admin/storage/size': http.Response(
+          '{"total_bytes": 1073741824, "total_mb": 1024.0, "job_count": 5}',
           200,
         ),
       });
@@ -197,13 +203,14 @@ void main() {
       );
       final storage = await computeService.getStorageSize();
 
-      expect(storage.sizeInBytes, 1073741824);
-      expect(storage.sizeFormatted, '1.0 GB');
+      expect(storage.totalBytes, 1073741824);
+      expect(storage.totalMb, 1024.0);
+      expect(storage.jobCount, 5);
     });
 
     test('cleanupOldJobs returns CleanupResponse', () async {
       final mockClient = MockHttpClient({
-        'DELETE http://localhost:8002/api/v1/admin/cleanup?days=7':
+        'DELETE $computeServiceBaseUrl/api/v1/admin/cleanup?days=7':
             http.Response(
               '''
 {
@@ -226,7 +233,7 @@ void main() {
 
     test('cleanupOldJobs throws PermissionException on 403', () async {
       final mockClient = MockHttpClient({
-        'DELETE http://localhost:8002/api/v1/admin/cleanup?days=7':
+        'DELETE $computeServiceBaseUrl/api/v1/admin/cleanup?days=7':
             http.Response(
               '{"detail": "Not enough permissions"}',
               403,

@@ -93,7 +93,7 @@ void main() {
       test('createComputeService accepts optional baseUrl', () async {
         expect(
           () => manager.createComputeService(
-            baseUrl: 'http://localhost:8002',
+            baseUrl: computeServiceBaseUrl,
           ),
           throwsA(isA<NotLoggedInException>()),
         );

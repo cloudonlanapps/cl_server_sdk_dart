@@ -135,31 +135,35 @@ void main() {
 
     group('StorageSize Model', () {
       final sampleStorageJson = {
-        'size_in_bytes': 1073741824,
-        'size_formatted': '1.0 GB',
+        'total_bytes': 1073741824,
+        'total_mb': 1024.0,
+        'job_count': 5,
       };
 
       test('StorageSize.fromJson creates instance correctly', () {
         final storage = StorageSize.fromJson(sampleStorageJson);
 
-        expect(storage.sizeInBytes, 1073741824);
-        expect(storage.sizeFormatted, '1.0 GB');
+        expect(storage.totalBytes, 1073741824);
+        expect(storage.totalMb, 1024.0);
+        expect(storage.jobCount, 5);
       });
 
       test('StorageSize.toJson serializes correctly', () {
         final storage = StorageSize.fromJson(sampleStorageJson);
         final json = storage.toJson();
 
-        expect(json['size_in_bytes'], 1073741824);
-        expect(json['size_formatted'], '1.0 GB');
+        expect(json['total_bytes'], 1073741824);
+        expect(json['total_mb'], 1024.0);
+        expect(json['job_count'], 5);
       });
 
       test('StorageSize.copyWith creates new instance', () {
         final storage = StorageSize.fromJson(sampleStorageJson);
-        final updated = storage.copyWith(sizeInBytes: 2147483648);
+        final updated = storage.copyWith(totalBytes: 2147483648);
 
-        expect(updated.sizeInBytes, 2147483648);
-        expect(updated.sizeFormatted, storage.sizeFormatted);
+        expect(updated.totalBytes, 2147483648);
+        expect(updated.totalMb, storage.totalMb);
+        expect(updated.jobCount, storage.jobCount);
       });
     });
 

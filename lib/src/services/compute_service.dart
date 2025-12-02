@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
 import '../core/http_client.dart';
@@ -23,21 +25,36 @@ class ComputeService {
 
   /// Create a new compute job
   /// POST /api/v1/job/{task_type}
+  ///
+  /// Parameters:
+  /// - [taskType]: The type of task to execute
+  /// - [metadata]: Optional metadata to attach to the job
+  /// - [externalFiles]: Optional list of external file references with 'path' and optional 'metadata' keys
   Future<Job> createJob({
     required String taskType,
     Map<String, dynamic>? metadata,
+    List<Map<String, dynamic>>? externalFiles,
   }) async {
     final endpoint = ComputeServiceEndpoints.createJob.replaceAll(
       '{task_type}',
       taskType,
     );
 
+    final body = <String, dynamic>{
+      ...?metadata,
+    };
+
+    // Add external files if provided
+    if (externalFiles != null && externalFiles.isNotEmpty) {
+      body['external_files'] = jsonEncode(externalFiles);
+    }
+
     final response = await _httpClient.post(
       endpoint,
-      body: metadata ?? {},
+      body: body.isNotEmpty ? body : {},
       isFormData: true,
     );
-    return Job.fromJson(response);
+    return Job.fromMap(response);
   }
 
   /// Get job status
@@ -49,7 +66,7 @@ class ComputeService {
     );
 
     final response = await _httpClient.get(endpoint);
-    return Job.fromJson(response);
+    return Job.fromMap(response);
   }
 
   /// Delete job

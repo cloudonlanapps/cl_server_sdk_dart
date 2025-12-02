@@ -30,9 +30,7 @@ class Job {
       taskType: json['task_type'] as String,
       status: json['status'] as String,
       progress: json['progress'] as int? ?? 0,
-      inputFiles: List<String>.from(
-        (json['input_files'] as List<dynamic>? ?? []).cast<String>(),
-      ),
+      inputFiles: json['input_files'] as List<dynamic>,
       outputFiles: List<String>.from(
         (json['output_files'] as List<dynamic>? ?? []).cast<String>(),
       ),
@@ -54,7 +52,8 @@ class Job {
   final String taskType;
   final String status;
   final int progress;
-  final List<String> inputFiles;
+  // FIXME: InputFile require its own class
+  final List<dynamic> inputFiles;
   final List<String> outputFiles;
   final Map<String, dynamic> taskOutput;
   final DateTime createdAt;
@@ -214,27 +213,31 @@ class WorkersListResponse {
 @immutable
 class StorageSize {
   const StorageSize({
-    required this.sizeInBytes,
-    required this.sizeFormatted,
+    required this.totalBytes,
+    required this.totalMb,
+    required this.jobCount,
   });
 
   factory StorageSize.fromJson(Map<String, dynamic> json) {
     return StorageSize(
-      sizeInBytes: json['size_in_bytes'] as int? ?? 0,
-      sizeFormatted: json['size_formatted'] as String? ?? '0 B',
+      totalBytes: json['total_bytes'] as int? ?? 0,
+      totalMb: json['total_mb'] as double? ?? 0.0,
+      jobCount: json['job_count'] as int? ?? 0,
     );
   }
 
   factory StorageSize.fromMap(Map<String, dynamic> map) {
     return StorageSize.fromJson(map);
   }
-  final int sizeInBytes;
-  final String sizeFormatted;
+  final int totalBytes;
+  final double totalMb;
+  final int jobCount;
 
   Map<String, dynamic> toJson() {
     return {
-      'size_in_bytes': sizeInBytes,
-      'size_formatted': sizeFormatted,
+      'total_bytes': totalBytes,
+      'total_mb': totalMb,
+      'job_count': jobCount,
     };
   }
 
@@ -243,12 +246,14 @@ class StorageSize {
   }
 
   StorageSize copyWith({
-    int? sizeInBytes,
-    String? sizeFormatted,
+    int? totalBytes,
+    double? totalMb,
+    int? jobCount,
   }) {
     return StorageSize(
-      sizeInBytes: sizeInBytes ?? this.sizeInBytes,
-      sizeFormatted: sizeFormatted ?? this.sizeFormatted,
+      totalBytes: totalBytes ?? this.totalBytes,
+      totalMb: totalMb ?? this.totalMb,
+      jobCount: jobCount ?? this.jobCount,
     );
   }
 }

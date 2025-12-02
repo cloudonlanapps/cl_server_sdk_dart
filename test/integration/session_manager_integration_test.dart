@@ -52,6 +52,16 @@ void main() {
           final token = await adminManager.getValidToken();
           expect(token, isNotEmpty);
           expect(token.contains('.'), true); // JWT format check
+
+          // Decode and print token claims for debugging
+          final payload = JwtUtils.parseToken(token);
+          if (payload != null) {
+            print('Admin Token Claims:');
+            print('  userId: ${payload.userId}');
+            print('  isAdmin: ${payload.isAdmin}');
+            print('  permissions: ${payload.permissions}');
+            print('  expiresAt: ${payload.expiresAt}');
+          }
         } on Exception catch (e) {
           fail('Getting admin token failed: $e');
         }
@@ -66,6 +76,7 @@ void main() {
           final user = await authService.createUser(
             username: testUsername,
             password: testPassword,
+            permissions: ['ai_inference_support'],
           );
 
           expect(user, isNotNull);
@@ -90,10 +101,9 @@ void main() {
           expect(testUserManager!.isLoggedIn, true);
           expect(testUserManager!.currentUsername, testUsername);
         } on Exception catch (e) {
-          // Skip test if test user not available
-          print('Test user not available: $e');
+          fail('Test user login failed: $e');
         }
-      }, skip: true);
+      });
 
       test('Token refresh strategy can be set', () async {
         try {
@@ -109,7 +119,7 @@ void main() {
         } on Exception catch (e) {
           fail('Setting refresh strategy failed: $e');
         }
-      }, skip: true);
+      });
     });
 
     group('Store Service Integration', () {
@@ -228,13 +238,11 @@ void main() {
 
       test('ComputeService can create job', () async {
         try {
-          if (!adminManager.isLoggedIn) {
-            await adminManager.login(
-              adminUsername,
-              adminPassword,
-              authBaseUrl: authBaseUrl,
-            );
-          }
+          await adminManager.login(
+            adminUsername,
+            adminPassword,
+            authBaseUrl: authBaseUrl,
+          );
 
           final computeService = await adminManager.createComputeService(
             baseUrl: computeBaseUrl,
@@ -242,6 +250,12 @@ void main() {
           final job = await computeService.createJob(
             taskType: 'test_task',
             metadata: {'test': 'integration_test'},
+            externalFiles: [
+              {
+                'path': '/tmp/test_file.txt',
+                'metadata': {'name': 'test_input'},
+              },
+            ],
           );
 
           expect(job, isNotNull);
@@ -459,13 +473,23 @@ void main() {
         try {
           final manager = SessionManager.initialize();
 
-          // Step 1: Login
+          // Step 1: Login with test user (who has ai_inference_support permission)
           await manager.login(
             adminUsername,
             adminPassword,
             authBaseUrl: authBaseUrl,
           );
-          print('✓ Logged in as $adminUsername');
+          print('✓ Logged in as $testUsername');
+
+          // Debug: Print token claims
+          final token = await manager.getValidToken();
+          final payload = JwtUtils.parseToken(token);
+          if (payload != null) {
+            print('Token Claims:');
+            print('  userId: ${payload.userId}');
+            print('  isAdmin: ${payload.isAdmin}');
+            print('  permissions: ${payload.permissions}');
+          }
 
           // Step 2: Create entity via Store Service
           final storeService = await manager.createStoreService(
@@ -488,6 +512,12 @@ void main() {
               'entityId': entity.id,
               'entityLabel': entity.label,
             },
+            externalFiles: [
+              {
+                'path': '/tmp/workflow_test_file.txt',
+                'metadata': {'name': 'workflow_input'},
+              },
+            ],
           );
           print('✓ Created job: ${job.jobId}');
 
