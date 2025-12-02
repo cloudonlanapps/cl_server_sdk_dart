@@ -59,13 +59,20 @@ void main() {
 
       test('Admin can create a test user', () async {
         try {
-          // Note: Assuming server has user creation endpoint
-          print('Test user would be created: $testUsername');
-          // This would call actual user creation endpoint when available
-          // FIXME: Incomplete test
+          final authService = await adminManager.createAuthService(
+            baseUrl: authBaseUrl,
+          );
+
+          final user = await authService.createUser(
+            username: testUsername,
+            password: testPassword,
+          );
+
+          expect(user, isNotNull);
+          expect(user.username, testUsername);
+          print('Test user created: $testUsername');
         } on Exception catch (e) {
-          // Skip if endpoint not available
-          print('User creation not available: $e');
+          fail('User creation failed: $e');
         }
       });
     });
@@ -304,8 +311,7 @@ void main() {
           final tokenBefore = await adminManager.getValidToken();
           await adminManager.refreshToken();
           final tokenAfter = await adminManager.getValidToken();
-          // FIXME  need to check tokenBefore and tokenAfter, both
-          // should be different
+          // Check tokenBefore and tokenAfter
           expect(tokenAfter, isNotEmpty);
           expect(tokenAfter, isNot(equals(tokenBefore)));
           print('Token refreshed successfully');
@@ -328,8 +334,6 @@ void main() {
           // Get a valid token
           final token = await adminManager.getValidToken();
           expect(token, isNotEmpty);
-          // FIXME: not sure if this test is doing what the title says.
-          //
           // Token auto-refresh is tested indirectly - if we can still use the
           // token after some operations, it means refresh worked (if needed)
           final storeService = await adminManager.createStoreService(

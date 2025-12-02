@@ -1,13 +1,12 @@
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 
+import '../server_addr.dart' show authServiceUrl, storeServiceUrl;
+
 /// Health check utilities for integration tests
 ///
 /// Provides conditional service availability verification
 /// based on which module is being tested.
-
-const String authServiceUrl = 'http://localhost:8000';
-const String storeServiceUrl = 'http://localhost:8001';
 
 /// Check if Auth service is available
 Future<bool> checkAuthServiceHealth() async {

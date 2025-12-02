@@ -2,6 +2,8 @@ import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
+import '../server_addr.dart' show authServiceUrl;
+
 class MockHttpClient extends http.BaseClient {
   MockHttpClient(this.responses);
   final Map<String, http.Response> responses;
@@ -35,14 +37,14 @@ void main() {
     group('GET requests', () {
       test('GET returns response on 200', () async {
         final mockClient = MockHttpClient({
-          'GET http://localhost:8000/test': http.Response(
+          'GET $authServiceUrl/test': http.Response(
             '{"data": "test"}',
             200,
           ),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           httpClient: mockClient,
         );
 
@@ -52,14 +54,14 @@ void main() {
 
       test('GET includes authorization header when token provided', () async {
         final mockClient = MockHttpClient({
-          'GET http://localhost:8000/test': http.Response(
+          'GET $authServiceUrl/test': http.Response(
             '{"data": "test"}',
             200,
           ),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           token: 'test-token',
           httpClient: mockClient,
         );
@@ -73,14 +75,14 @@ void main() {
 
       test('GET throws AuthException on 401', () async {
         final mockClient = MockHttpClient({
-          'GET http://localhost:8000/test': http.Response(
+          'GET $authServiceUrl/test': http.Response(
             '{"detail": "Not authenticated"}',
             401,
           ),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           httpClient: mockClient,
         );
 
@@ -92,14 +94,14 @@ void main() {
 
       test('GET throws PermissionException on 403', () async {
         final mockClient = MockHttpClient({
-          'GET http://localhost:8000/test': http.Response(
+          'GET $authServiceUrl/test': http.Response(
             '{"detail": "Not enough permissions"}',
             403,
           ),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           httpClient: mockClient,
         );
 
@@ -111,14 +113,14 @@ void main() {
 
       test('GET throws ResourceNotFoundException on 404', () async {
         final mockClient = MockHttpClient({
-          'GET http://localhost:8000/test': http.Response(
+          'GET $authServiceUrl/test': http.Response(
             '{"detail": "Not found"}',
             404,
           ),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           httpClient: mockClient,
         );
 
@@ -130,14 +132,14 @@ void main() {
 
       test('GET throws ValidationException on 422', () async {
         final mockClient = MockHttpClient({
-          'GET http://localhost:8000/test': http.Response(
+          'GET $authServiceUrl/test': http.Response(
             '{"detail": [{"loc": ["body"], "msg": "invalid"}]}',
             422,
           ),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           httpClient: mockClient,
         );
 
@@ -149,14 +151,14 @@ void main() {
 
       test('GET throws ServerException on 500', () async {
         final mockClient = MockHttpClient({
-          'GET http://localhost:8000/test': http.Response(
+          'GET $authServiceUrl/test': http.Response(
             '{"detail": "Internal server error"}',
             500,
           ),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           httpClient: mockClient,
         );
 
@@ -170,14 +172,14 @@ void main() {
     group('POST requests', () {
       test('POST returns response on 201', () async {
         final mockClient = MockHttpClient({
-          'POST http://localhost:8000/test': http.Response(
+          'POST $authServiceUrl/test': http.Response(
             '{"id": 1, "name": "test"}',
             201,
           ),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           httpClient: mockClient,
         );
 
@@ -188,14 +190,14 @@ void main() {
 
       test('POST sends JSON body correctly', () async {
         final mockClient = MockHttpClient({
-          'POST http://localhost:8000/test': http.Response(
+          'POST $authServiceUrl/test': http.Response(
             '{"success": true}',
             201,
           ),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           httpClient: mockClient,
         );
 
@@ -207,14 +209,14 @@ void main() {
     group('PUT requests', () {
       test('PUT returns response on 200', () async {
         final mockClient = MockHttpClient({
-          'PUT http://localhost:8000/test': http.Response(
+          'PUT $authServiceUrl/test': http.Response(
             '{"updated": true}',
             200,
           ),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           httpClient: mockClient,
         );
 
@@ -226,14 +228,14 @@ void main() {
     group('PATCH requests', () {
       test('PATCH returns response on 200', () async {
         final mockClient = MockHttpClient({
-          'PATCH http://localhost:8000/test': http.Response(
+          'PATCH $authServiceUrl/test': http.Response(
             '{"patched": true}',
             200,
           ),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           httpClient: mockClient,
         );
 
@@ -245,11 +247,11 @@ void main() {
     group('DELETE requests', () {
       test('DELETE completes on 204', () async {
         final mockClient = MockHttpClient({
-          'DELETE http://localhost:8000/test': http.Response('', 204),
+          'DELETE $authServiceUrl/test': http.Response('', 204),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           httpClient: mockClient,
         );
 
@@ -261,14 +263,14 @@ void main() {
     group('Query parameters', () {
       test('GET includes query parameters in URL', () async {
         final mockClient = MockHttpClient({
-          'GET http://localhost:8000/test?page=1&limit=10': http.Response(
+          'GET $authServiceUrl/test?page=1&limit=10': http.Response(
             '{"data": []}',
             200,
           ),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           httpClient: mockClient,
         );
 
@@ -285,21 +287,21 @@ void main() {
     group('Base URL handling', () {
       test('Correctly builds full URL from base and endpoint', () async {
         final mockClient = MockHttpClient({
-          'GET http://localhost:8000/api/users': http.Response(
+          'GET $authServiceUrl/api/users': http.Response(
             '[]',
             200,
           ),
         });
 
         final client = HttpClientWrapper(
-          baseUrl: 'http://localhost:8000',
+          baseUrl: authServiceUrl,
           httpClient: mockClient,
         );
 
         await client.get('/api/users');
         expect(
           mockClient.lastRequest.url.toString(),
-          'http://localhost:8000/api/users',
+          '$authServiceUrl/api/users',
         );
       });
     });

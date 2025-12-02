@@ -33,10 +33,10 @@ class StoreManager {
 
   /// Create guest mode store manager (no authentication)
   ///
-  /// [baseUrl] - Store service base URL (default: http://localhost:8001)
-  factory StoreManager.guest({String? baseUrl}) {
+  /// [baseUrl] - Store service base URL
+  factory StoreManager.guest({required String baseUrl}) {
     final storeService = StoreService(
-      baseUrl: baseUrl ?? 'http://localhost:8001',
+      baseUrl: baseUrl,
     );
     return StoreManager(storeService: storeService);
   }
