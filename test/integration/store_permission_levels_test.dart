@@ -1,6 +1,7 @@
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 
+import '../test_helpers.dart';
 import 'health_check_test.dart';
 
 /// Test store permission levels via StoreManager
@@ -35,11 +36,10 @@ void main() {
       await ensureBothServicesHealthy();
 
       // Setup admin session
-      adminSession = SessionManager.initialize();
+      adminSession = SessionManager.initialize(createTestServerConfig());
       await adminSession.login(
         adminUsername,
         adminPassword,
-        authBaseUrl: authServiceBaseUrl,
       );
 
       // Create admin user manager and store manager
@@ -50,7 +50,6 @@ void main() {
 
       adminStoreManager = await StoreManager.authenticated(
         sessionManager: adminSession,
-        baseUrl: storeServiceBaseUrl,
       );
 
       // Create test users with different permissions
@@ -96,37 +95,31 @@ void main() {
       testEntityId = (entityResult.data.id as dynamic) as int;
 
       // Create managers for test users
-      final writeSession = SessionManager.initialize();
+      final writeSession = SessionManager.initialize(createTestServerConfig());
       await writeSession.login(
         '${testUserPrefix}write_user',
         'TestPass123',
-        authBaseUrl: authServiceBaseUrl,
       );
       writeOnlyManager = await StoreManager.authenticated(
         sessionManager: writeSession,
-        baseUrl: storeServiceBaseUrl,
       );
 
-      final readSession = SessionManager.initialize();
+      final readSession = SessionManager.initialize(createTestServerConfig());
       await readSession.login(
         '${testUserPrefix}read_user',
         'TestPass123',
-        authBaseUrl: authServiceBaseUrl,
       );
       readOnlyManager = await StoreManager.authenticated(
         sessionManager: readSession,
-        baseUrl: storeServiceBaseUrl,
       );
 
-      final noneSession = SessionManager.initialize();
+      final noneSession = SessionManager.initialize(createTestServerConfig());
       await noneSession.login(
         '${testUserPrefix}none_user',
         'TestPass123',
-        authBaseUrl: authServiceBaseUrl,
       );
       noPermissionsManager = await StoreManager.authenticated(
         sessionManager: noneSession,
-        baseUrl: storeServiceBaseUrl,
       );
     });
 

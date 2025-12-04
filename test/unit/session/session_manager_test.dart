@@ -1,12 +1,14 @@
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 
+import '../../test_helpers.dart';
+
 void main() {
   group('SessionManager Tests', () {
     late SessionManager manager;
 
     setUp(() {
-      manager = SessionManager.initialize();
+      manager = SessionManager.initialize(createTestServerConfig());
     });
 
     group('Initialization', () {
@@ -80,30 +82,23 @@ void main() {
         );
       });
 
-      test('createStoreService accepts optional baseUrl', () async {
-        // Without login, should throw, but we verify the parameter signature
+      test('createStoreService throws when not logged in', () async {
         expect(
-          () => manager.createStoreService(
-            baseUrl: 'http://localhost:8001',
-          ),
+          () => manager.createStoreService(),
           throwsA(isA<NotLoggedInException>()),
         );
       });
 
-      test('createComputeService accepts optional baseUrl', () async {
+      test('createComputeService throws when not logged in', () async {
         expect(
-          () => manager.createComputeService(
-            baseUrl: computeServiceBaseUrl,
-          ),
+          () => manager.createComputeService(),
           throwsA(isA<NotLoggedInException>()),
         );
       });
 
-      test('createAuthService accepts optional baseUrl', () async {
+      test('createAuthService throws when not logged in', () async {
         expect(
-          () => manager.createAuthService(
-            baseUrl: 'http://localhost:8000',
-          ),
+          () => manager.createAuthService(),
           throwsA(isA<NotLoggedInException>()),
         );
       });

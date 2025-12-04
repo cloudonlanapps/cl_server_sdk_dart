@@ -1,8 +1,3 @@
-/// Default service base URLs
-const String authServiceBaseUrl = 'http://192.168.0.105:8000';
-const String storeServiceBaseUrl = 'http://192.168.0.105:8001';
-const String computeServiceBaseUrl = 'http://192.168.0.105:8002';
-
 /// Auth Service Endpoints
 class AuthServiceEndpoints {
   static const String health = '/';
@@ -34,13 +29,12 @@ class StoreServiceEndpoints {
 
 /// Compute Service Endpoints
 class ComputeServiceEndpoints {
-  static const String createJob = '/api/v1/job/{task_type}';
-  static const String getJobStatus = '/api/v1/job/{job_id}';
-  static const String deleteJob = '/api/v1/job/{job_id}';
-  static const String listWorkers = '/api/v1/workers';
-  static const String getWorkerStatus = '/api/v1/workers/status/{worker_id}';
-  static const String getStorageSize = '/api/v1/admin/storage/size';
-  static const String cleanupOldJobs = '/api/v1/admin/cleanup';
+  static const String createJob = '/job/{task_type}';
+  static const String getJobStatus = '/job/{job_id}';
+  static const String deleteJob = '/job/{job_id}';
+  static const String getCapabilities = '/job/capability';
+  static const String getStorageSize = '/job/admin/storage/size';
+  static const String cleanupOldJobs = '/job/admin/cleanup';
 }
 
 /// HTTP Headers

@@ -88,10 +88,10 @@ class SessionNotifier {
   Future<void> login(
     String username,
     String password, {
-    String? baseUrl,
+    required String baseUrl,
   }) async {
     try {
-      final authService = AuthService(baseUrl: baseUrl);
+      final authService = AuthService(baseUrl);
       final tokenResponse = await authService.generateToken(
         username: username,
         password: password,

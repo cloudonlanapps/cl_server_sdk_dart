@@ -54,10 +54,17 @@ void main(List<String> args) async {
 
     // Initialize store manager
     final isGuest = results['guest'] as bool;
+    final authUrl = results['auth-url'] as String;
     final storeUrl = results['store-url'] as String;
 
+    // Create server configuration
+    final config = ServerConfig(
+      authServiceBaseUrl: authUrl,
+      storeServiceBaseUrl: storeUrl,
+    );
+
     if (isGuest) {
-      storeManager = StoreManager.guest(baseUrl: storeUrl);
+      storeManager = StoreManager.guest(storeUrl);
     } else {
       // Authenticated mode
       final username = results['username'] as String?;
@@ -71,16 +78,10 @@ void main(List<String> args) async {
       }
 
       try {
-        final authUrl = results['auth-url'] as String;
-        final sessionManager = SessionManager.initialize();
-        await sessionManager.login(
-          username,
-          password,
-          authBaseUrl: authUrl,
-        );
+        final sessionManager = SessionManager.initialize(config);
+        await sessionManager.login(username, password);
         storeManager = await StoreManager.authenticated(
           sessionManager: sessionManager,
-          baseUrl: storeUrl,
         );
       } on Exception catch (e) {
         stderr.writeln('❌ Authentication failed: $e');

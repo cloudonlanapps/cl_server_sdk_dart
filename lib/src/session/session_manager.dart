@@ -1,5 +1,6 @@
 import 'package:solidart/solidart.dart';
 
+import '../core/server_config.dart';
 import '../services/auth_service.dart';
 import '../services/compute_service.dart';
 import '../services/store_service.dart';
@@ -24,33 +25,39 @@ class SessionManager {
   SessionManager._({
     required SessionNotifier notifier,
     required TokenStorage storage,
+    required ServerConfig serverConfig,
   }) : _notifier = notifier,
-       _storage = storage;
+       _storage = storage,
+       _serverConfig = serverConfig;
 
   /// Factory to initialize SessionManager with dependencies
-  factory SessionManager.initialize() {
+  factory SessionManager.initialize(ServerConfig serverConfig) {
     final storage = TokenStorage();
-    final authService = AuthService();
+    final authService = AuthService(serverConfig.authServiceBaseUrl);
     final notifier = SessionNotifier(
       authService: authService,
       storage: storage,
     );
 
-    return SessionManager._(notifier: notifier, storage: storage);
+    return SessionManager._(
+      notifier: notifier,
+      storage: storage,
+      serverConfig: serverConfig,
+    );
   }
   final SessionNotifier _notifier;
   final TokenStorage _storage;
+  final ServerConfig _serverConfig;
 
   /// Login user with username and password
   Future<void> login(
     String username,
-    String password, {
-    String? authBaseUrl,
-  }) async {
+    String password,
+  ) async {
     await _notifier.login(
       username,
       password,
-      baseUrl: authBaseUrl,
+      baseUrl: _serverConfig.authServiceBaseUrl,
     );
   }
 
@@ -78,21 +85,24 @@ class SessionManager {
   }
 
   /// Create a pre-authenticated StoreService
-  Future<StoreService> createStoreService({String? baseUrl}) async {
+  Future<StoreService> createStoreService() async {
     final token = await getValidToken();
-    return StoreService(baseUrl: baseUrl, token: token);
+    return StoreService(_serverConfig.storeServiceBaseUrl, token: token);
   }
 
   /// Create a pre-authenticated ComputeService
-  Future<ComputeService> createComputeService({String? baseUrl}) async {
+  Future<ComputeService> createComputeService() async {
     final token = await getValidToken();
-    return ComputeService(baseUrl: baseUrl, token: token);
+    return ComputeService(
+      _serverConfig.getComputeServiceBaseUrl(),
+      token: token,
+    );
   }
 
   /// Create a pre-authenticated AuthService
-  Future<AuthService> createAuthService({String? baseUrl}) async {
+  Future<AuthService> createAuthService() async {
     final token = await getValidToken();
-    return AuthService(baseUrl: baseUrl, token: token);
+    return AuthService(_serverConfig.authServiceBaseUrl, token: token);
   }
 
   // Accessors for session state

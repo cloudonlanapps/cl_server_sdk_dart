@@ -1,6 +1,7 @@
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 
+import '../test_helpers.dart';
 import 'health_check_test.dart';
 
 /// Test admin user operations via UserManager
@@ -24,13 +25,12 @@ void main() {
       await ensureAuthServiceHealthy();
 
       // Initialize session manager
-      sessionManager = SessionManager.initialize();
+      sessionManager = SessionManager.initialize(createTestServerConfig());
 
       // Login as admin
       await sessionManager.login(
         adminUsername,
         adminPassword,
-        authBaseUrl: authServiceBaseUrl,
       );
 
       // Create user manager

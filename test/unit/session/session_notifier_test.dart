@@ -1,13 +1,15 @@
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 
+import '../../test_helpers.dart';
+
 void main() {
   group('SessionNotifier Tests', () {
     late AuthService authService;
     late TokenStorage tokenStorage;
 
     setUp(() {
-      authService = AuthService();
+      authService = AuthService(authServiceBaseUrl);
       tokenStorage = TokenStorage();
     });
 

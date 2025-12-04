@@ -2,33 +2,7 @@ import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
-class MockHttpClient extends http.BaseClient {
-  MockHttpClient(this.responses);
-  final Map<String, http.Response> responses;
-  http.BaseRequest? lastRequest;
-
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    lastRequest = request;
-    final key = '${request.method} ${request.url}';
-    final response = responses[key];
-
-    if (response != null) {
-      return http.StreamedResponse(
-        Stream.value(response.bodyBytes),
-        response.statusCode,
-        headers: response.headers,
-        request: request,
-      );
-    }
-
-    return http.StreamedResponse(
-      Stream.value([]),
-      404,
-      request: request,
-    );
-  }
-}
+import '../../test_helpers.dart';
 
 void main() {
   group('AuthService Tests', () {
@@ -41,7 +15,7 @@ void main() {
       });
 
       final authService = AuthService(
-        baseUrl: authServiceBaseUrl,
+        authServiceBaseUrl,
         httpClient: mockClient,
       );
       final token = await authService.generateToken(
@@ -62,7 +36,7 @@ void main() {
       });
 
       final authService = AuthService(
-        baseUrl: authServiceBaseUrl,
+        authServiceBaseUrl,
         httpClient: mockClient,
       );
 
@@ -81,7 +55,7 @@ void main() {
       });
 
       final authService = AuthService(
-        baseUrl: authServiceBaseUrl,
+        authServiceBaseUrl,
         httpClient: mockClient,
       );
       final publicKey = await authService.getPublicKey();
@@ -99,7 +73,7 @@ void main() {
       });
 
       final authService = AuthService(
-        baseUrl: authServiceBaseUrl,
+        authServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );
@@ -119,7 +93,7 @@ void main() {
       });
 
       final authService = AuthService(
-        baseUrl: authServiceBaseUrl,
+        authServiceBaseUrl,
         httpClient: mockClient,
       );
 
@@ -138,7 +112,7 @@ void main() {
       });
 
       final authService = AuthService(
-        baseUrl: authServiceBaseUrl,
+        authServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );
@@ -158,7 +132,7 @@ void main() {
       });
 
       final authService = AuthService(
-        baseUrl: authServiceBaseUrl,
+        authServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );
@@ -177,7 +151,7 @@ void main() {
       });
 
       final authService = AuthService(
-        baseUrl: authServiceBaseUrl,
+        authServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );
@@ -197,7 +171,7 @@ void main() {
       });
 
       final authService = AuthService(
-        baseUrl: authServiceBaseUrl,
+        authServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );
@@ -220,7 +194,7 @@ void main() {
       });
 
       final authService = AuthService(
-        baseUrl: authServiceBaseUrl,
+        authServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );
@@ -238,7 +212,7 @@ void main() {
       });
 
       final authService = AuthService(
-        baseUrl: authServiceBaseUrl,
+        authServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );
@@ -255,7 +229,7 @@ void main() {
       });
 
       final authService = AuthService(
-        baseUrl: authServiceBaseUrl,
+        authServiceBaseUrl,
         httpClient: mockClient,
       );
       final response = await authService.healthCheck();

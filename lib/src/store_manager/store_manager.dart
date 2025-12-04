@@ -34,10 +34,8 @@ class StoreManager {
   /// Create guest mode store manager (no authentication)
   ///
   /// [baseUrl] - Store service base URL
-  factory StoreManager.guest({required String baseUrl}) {
-    final storeService = StoreService(
-      baseUrl: baseUrl,
-    );
+  factory StoreManager.guest(String baseUrl) {
+    final storeService = StoreService(baseUrl);
     return StoreManager(storeService: storeService);
   }
 
@@ -47,16 +45,12 @@ class StoreManager {
   ///
   /// Requires an authenticated SessionManager instance.
   /// [sessionManager] - Authenticated session manager
-  /// [baseUrl] - Store service base URL (optional, overrides session config)
   ///
   /// Returns StoreManager instance with authenticated StoreService
   static Future<StoreManager> authenticated({
     required SessionManager sessionManager,
-    String? baseUrl,
   }) async {
-    final storeService = await sessionManager.createStoreService(
-      baseUrl: baseUrl,
-    );
+    final storeService = await sessionManager.createStoreService();
     return StoreManager(storeService: storeService);
   }
 

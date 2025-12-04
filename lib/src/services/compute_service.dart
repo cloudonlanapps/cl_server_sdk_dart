@@ -6,15 +6,15 @@ import '../core/http_client.dart';
 import '../core/models/compute_models.dart';
 import '../utils/constants.dart';
 
-/// Client for CL Server Compute Service (Port 8002)
+/// Client for CL Server Compute Service (manages compute jobs via store service)
 class ComputeService {
-  ComputeService({
-    String? baseUrl,
+  ComputeService(
+    this.baseUrl, {
     this.token,
     http.Client? httpClient,
-  }) : baseUrl = baseUrl ?? computeServiceBaseUrl {
+  }) {
     _httpClient = HttpClientWrapper(
-      baseUrl: this.baseUrl,
+      baseUrl: baseUrl,
       token: token,
       httpClient: httpClient,
     );
@@ -24,7 +24,7 @@ class ComputeService {
   late final HttpClientWrapper _httpClient;
 
   /// Create a new compute job
-  /// POST /api/v1/job/{task_type}
+  /// POST /job/{task_type}
   ///
   /// Parameters:
   /// - [taskType]: The type of task to execute
@@ -58,7 +58,7 @@ class ComputeService {
   }
 
   /// Get job status
-  /// GET /api/v1/job/{job_id}
+  /// GET /job/{job_id}
   Future<Job> getJobStatus(String jobId) async {
     final endpoint = ComputeServiceEndpoints.getJobStatus.replaceAll(
       '{job_id}',
@@ -70,7 +70,7 @@ class ComputeService {
   }
 
   /// Delete job
-  /// DELETE /api/v1/job/{job_id}
+  /// DELETE /job/{job_id}
   Future<void> deleteJob(String jobId) async {
     final endpoint = ComputeServiceEndpoints.deleteJob.replaceAll(
       '{job_id}',
@@ -79,27 +79,17 @@ class ComputeService {
     await _httpClient.delete(endpoint);
   }
 
-  /// List all workers
-  /// GET /api/v1/workers
-  Future<WorkersListResponse> listWorkers() async {
-    final response = await _httpClient.get(ComputeServiceEndpoints.listWorkers);
-    return WorkersListResponse.fromJson(response);
-  }
-
-  /// Get specific worker status
-  /// GET /api/v1/workers/status/{worker_id}
-  Future<WorkerStatus> getWorkerStatus(String workerId) async {
-    final endpoint = ComputeServiceEndpoints.getWorkerStatus.replaceAll(
-      '{worker_id}',
-      workerId,
+  /// Get available worker capabilities
+  /// GET /job/capability
+  Future<Map<String, dynamic>> getCapabilities() async {
+    final response = await _httpClient.get(
+      ComputeServiceEndpoints.getCapabilities,
     );
-
-    final response = await _httpClient.get(endpoint);
-    return WorkerStatus.fromJson(response);
+    return response;
   }
 
   /// Get storage size
-  /// GET /api/v1/admin/storage/size
+  /// GET /job/admin/storage/size
   Future<StorageSize> getStorageSize() async {
     final response = await _httpClient.get(
       ComputeServiceEndpoints.getStorageSize,
@@ -108,7 +98,7 @@ class ComputeService {
   }
 
   /// Cleanup old jobs
-  /// DELETE /api/v1/admin/cleanup?days=7
+  /// DELETE /job/admin/cleanup?days=7
   Future<CleanupResponse> cleanupOldJobs({
     required int days,
   }) async {

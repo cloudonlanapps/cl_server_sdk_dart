@@ -2,33 +2,7 @@ import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
-class MockHttpClient extends http.BaseClient {
-  MockHttpClient(this.responses);
-  final Map<String, http.Response> responses;
-  late http.BaseRequest lastRequest;
-
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    lastRequest = request;
-    final key = '${request.method} ${request.url}';
-    final response = responses[key];
-
-    if (response != null) {
-      return http.StreamedResponse(
-        Stream.value(response.bodyBytes),
-        response.statusCode,
-        headers: response.headers,
-        request: request,
-      );
-    }
-
-    return http.StreamedResponse(
-      Stream.value([]),
-      404,
-      request: request,
-    );
-  }
-}
+import '../../test_helpers.dart';
 
 void main() {
   group('StoreService Tests', () {
@@ -60,7 +34,7 @@ void main() {
       });
 
       final storeService = StoreService(
-        baseUrl: storeServiceBaseUrl,
+        storeServiceBaseUrl,
         httpClient: mockClient,
       );
       final response = await storeService.listEntities();
@@ -88,7 +62,7 @@ void main() {
       });
 
       final storeService = StoreService(
-        baseUrl: storeServiceBaseUrl,
+        storeServiceBaseUrl,
         httpClient: mockClient,
       );
       final entity = await storeService.getEntity(1);
@@ -106,7 +80,7 @@ void main() {
       });
 
       final storeService = StoreService(
-        baseUrl: storeServiceBaseUrl,
+        storeServiceBaseUrl,
         httpClient: mockClient,
       );
 
@@ -133,7 +107,7 @@ void main() {
       });
 
       final storeService = StoreService(
-        baseUrl: storeServiceBaseUrl,
+        storeServiceBaseUrl,
         httpClient: mockClient,
       );
       final versions = await storeService.getVersions(1);
@@ -161,7 +135,7 @@ void main() {
       });
 
       final storeService = StoreService(
-        baseUrl: storeServiceBaseUrl,
+        storeServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );
@@ -183,7 +157,7 @@ void main() {
       });
 
       final storeService = StoreService(
-        baseUrl: storeServiceBaseUrl,
+        storeServiceBaseUrl,
         httpClient: mockClient,
       );
 
@@ -211,7 +185,7 @@ void main() {
       });
 
       final storeService = StoreService(
-        baseUrl: storeServiceBaseUrl,
+        storeServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );
@@ -242,7 +216,7 @@ void main() {
       });
 
       final storeService = StoreService(
-        baseUrl: storeServiceBaseUrl,
+        storeServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );
@@ -260,7 +234,7 @@ void main() {
       });
 
       final storeService = StoreService(
-        baseUrl: storeServiceBaseUrl,
+        storeServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );
@@ -277,7 +251,7 @@ void main() {
       });
 
       final storeService = StoreService(
-        baseUrl: storeServiceBaseUrl,
+        storeServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );
@@ -300,7 +274,7 @@ void main() {
       });
 
       final storeService = StoreService(
-        baseUrl: storeServiceBaseUrl,
+        storeServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );
@@ -324,7 +298,7 @@ void main() {
       });
 
       final storeService = StoreService(
-        baseUrl: storeServiceBaseUrl,
+        storeServiceBaseUrl,
         token: 'test-token',
         httpClient: mockClient,
       );

@@ -6,13 +6,13 @@ import '../utils/constants.dart';
 
 /// Client for CL Server Authentication Service (Port 8000)
 class AuthService {
-  AuthService({
-    String? baseUrl,
+  AuthService(
+    this.baseUrl, {
     this.token,
     http.Client? httpClient,
-  }) : baseUrl = baseUrl ?? authServiceBaseUrl {
+  }) {
     _httpClient = HttpClientWrapper(
-      baseUrl: this.baseUrl,
+      baseUrl: baseUrl,
       token: token,
       httpClient: httpClient,
     );

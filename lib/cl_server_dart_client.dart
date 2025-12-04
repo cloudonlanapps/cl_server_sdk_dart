@@ -34,6 +34,9 @@ export 'src/core/exceptions.dart';
 // Core HTTP client
 export 'src/core/http_client.dart';
 
+// Core configuration
+export 'src/core/server_config.dart';
+
 // Core models
 export 'src/core/models/base_response.dart';
 export 'src/core/models/auth_models.dart';

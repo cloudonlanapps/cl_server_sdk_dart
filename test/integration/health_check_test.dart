@@ -1,6 +1,8 @@
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 
+import '../test_helpers.dart';
+
 /// Health check utilities for integration tests
 ///
 /// Provides conditional service availability verification
@@ -9,7 +11,7 @@ import 'package:test/test.dart';
 /// Check if Auth service is available
 Future<bool> checkAuthServiceHealth() async {
   try {
-    final authService = AuthService(baseUrl: authServiceBaseUrl);
+    final authService = AuthService(authServiceBaseUrl);
     await authService.getPublicKey();
     return true;
   } on Exception catch (_) {
@@ -20,7 +22,7 @@ Future<bool> checkAuthServiceHealth() async {
 /// Check if Store service is available
 Future<bool> checkStoreServiceHealth() async {
   try {
-    final storeService = StoreService(baseUrl: storeServiceBaseUrl);
+    final storeService = StoreService(storeServiceBaseUrl);
     await storeService.listEntities(pageSize: 1);
     return true;
   } on Exception catch (_) {

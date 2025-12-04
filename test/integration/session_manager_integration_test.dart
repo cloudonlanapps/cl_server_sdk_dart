@@ -3,12 +3,10 @@
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 
+import '../test_helpers.dart';
+
 void main() {
   group('SessionManager Integration Tests - Live Servers', () {
-    // Configuration for live servers
-    const authBaseUrl = authServiceBaseUrl;
-    const storeBaseUrl = storeServiceBaseUrl;
-    const computeBaseUrl = computeServiceBaseUrl;
 
     // Test credentials
     const adminUsername = 'admin';
@@ -21,7 +19,7 @@ void main() {
 
     setUpAll(() async {
       // Initialize with admin credentials
-      adminManager = SessionManager.initialize();
+      adminManager = SessionManager.initialize(createTestServerConfig());
     });
 
     tearDownAll(() async {
@@ -37,7 +35,6 @@ void main() {
           await adminManager.login(
             adminUsername,
             adminPassword,
-            authBaseUrl: authBaseUrl,
           );
 
           expect(adminManager.isLoggedIn, true);
@@ -69,9 +66,7 @@ void main() {
 
       test('Admin can create a test user', () async {
         try {
-          final authService = await adminManager.createAuthService(
-            baseUrl: authBaseUrl,
-          );
+          final authService = await adminManager.createAuthService();
 
           final user = await authService.createUser(
             username: testUsername,
@@ -91,11 +86,10 @@ void main() {
     group('Test User Session Management', () {
       test('Test user login succeeds', () async {
         try {
-          testUserManager = SessionManager.initialize();
+          testUserManager = SessionManager.initialize(createTestServerConfig());
           await testUserManager!.login(
             testUsername,
             testPassword,
-            authBaseUrl: authBaseUrl,
           );
 
           expect(testUserManager!.isLoggedIn, true);
@@ -129,13 +123,10 @@ void main() {
             await adminManager.login(
               adminUsername,
               adminPassword,
-              authBaseUrl: authBaseUrl,
             );
           }
 
-          final storeService = await adminManager.createStoreService(
-            baseUrl: storeBaseUrl,
-          );
+          final storeService = await adminManager.createStoreService();
           expect(storeService, isNotNull);
         } on Exception catch (e) {
           fail('Creating StoreService failed: $e');
@@ -148,13 +139,10 @@ void main() {
             await adminManager.login(
               adminUsername,
               adminPassword,
-              authBaseUrl: authBaseUrl,
             );
           }
 
-          final storeService = await adminManager.createStoreService(
-            baseUrl: storeBaseUrl,
-          );
+          final storeService = await adminManager.createStoreService();
           final response = await storeService.listEntities();
 
           expect(response, isNotNull);
@@ -171,13 +159,10 @@ void main() {
             await adminManager.login(
               adminUsername,
               adminPassword,
-              authBaseUrl: authBaseUrl,
             );
           }
 
-          final storeService = await adminManager.createStoreService(
-            baseUrl: storeBaseUrl,
-          );
+          final storeService = await adminManager.createStoreService();
           final entity = await storeService.createEntity(
             isCollection: true,
             label: 'Integration Test Collection',
@@ -200,39 +185,13 @@ void main() {
             await adminManager.login(
               adminUsername,
               adminPassword,
-              authBaseUrl: authBaseUrl,
             );
           }
 
-          final computeService = await adminManager.createComputeService(
-            baseUrl: computeBaseUrl,
-          );
+          final computeService = await adminManager.createComputeService();
           expect(computeService, isNotNull);
         } on Exception catch (e) {
           fail('Creating ComputeService failed: $e');
-        }
-      });
-
-      test('ComputeService can list workers', () async {
-        try {
-          if (!adminManager.isLoggedIn) {
-            await adminManager.login(
-              adminUsername,
-              adminPassword,
-              authBaseUrl: authBaseUrl,
-            );
-          }
-
-          final computeService = await adminManager.createComputeService(
-            baseUrl: computeBaseUrl,
-          );
-          final response = await computeService.listWorkers();
-
-          expect(response, isNotNull);
-          expect(response.workers, isNotNull);
-          print('Listed ${response.workers.length} workers');
-        } on Exception catch (e) {
-          fail('Listing workers failed: $e');
         }
       });
 
@@ -241,12 +200,9 @@ void main() {
           await adminManager.login(
             adminUsername,
             adminPassword,
-            authBaseUrl: authBaseUrl,
           );
 
-          final computeService = await adminManager.createComputeService(
-            baseUrl: computeBaseUrl,
-          );
+          final computeService = await adminManager.createComputeService();
           final job = await computeService.createJob(
             taskType: 'test_task',
             metadata: {'test': 'integration_test'},
@@ -274,13 +230,10 @@ void main() {
             await adminManager.login(
               adminUsername,
               adminPassword,
-              authBaseUrl: authBaseUrl,
             );
           }
 
-          final authServiceInstance = await adminManager.createAuthService(
-            baseUrl: authBaseUrl,
-          );
+          final authServiceInstance = await adminManager.createAuthService();
           expect(authServiceInstance, isNotNull);
         } on Exception catch (e) {
           fail('Creating AuthService failed: $e');
@@ -293,13 +246,10 @@ void main() {
             await adminManager.login(
               adminUsername,
               adminPassword,
-              authBaseUrl: authBaseUrl,
             );
           }
 
-          final authServiceInstance = await adminManager.createAuthService(
-            baseUrl: authBaseUrl,
-          );
+          final authServiceInstance = await adminManager.createAuthService();
           final user = await authServiceInstance.getCurrentUser();
 
           expect(user, isNotNull);
@@ -318,7 +268,6 @@ void main() {
             await adminManager.login(
               adminUsername,
               adminPassword,
-              authBaseUrl: authBaseUrl,
             );
           }
 
@@ -341,7 +290,6 @@ void main() {
             await adminManager.login(
               adminUsername,
               adminPassword,
-              authBaseUrl: authBaseUrl,
             );
           }
 
@@ -350,9 +298,7 @@ void main() {
           expect(token, isNotEmpty);
           // Token auto-refresh is tested indirectly - if we can still use the
           // token after some operations, it means refresh worked (if needed)
-          final storeService = await adminManager.createStoreService(
-            baseUrl: storeBaseUrl,
-          );
+          final storeService = await adminManager.createStoreService();
           final response = await storeService.listEntities();
           expect(response, isNotNull);
         } on Exception catch (e) {
@@ -364,7 +310,7 @@ void main() {
     group('Session State Management', () {
       test('Session state is reactive and updates correctly', () async {
         try {
-          final manager = SessionManager.initialize();
+          final manager = SessionManager.initialize(createTestServerConfig());
 
           // Initially logged out
           expect(manager.isLoggedIn, false);
@@ -374,7 +320,6 @@ void main() {
           await manager.login(
             adminUsername,
             adminPassword,
-            authBaseUrl: authBaseUrl,
           );
 
           expect(manager.isLoggedIn, true);
@@ -392,7 +337,7 @@ void main() {
 
       test('Can listen to session state changes', () async {
         try {
-          final manager = SessionManager.initialize();
+          final manager = SessionManager.initialize(createTestServerConfig());
           var stateChanges = 0;
 
           manager.onSessionStateChanged((state) {
@@ -403,7 +348,6 @@ void main() {
           await manager.login(
             adminUsername,
             adminPassword,
-            authBaseUrl: authBaseUrl,
           );
 
           await manager.logout();
@@ -419,11 +363,10 @@ void main() {
     group('Error Handling', () {
       test('Login with wrong password throws AuthException', () async {
         try {
-          final manager = SessionManager.initialize();
+          final manager = SessionManager.initialize(createTestServerConfig());
           await manager.login(
             adminUsername,
             'wrong_password',
-            authBaseUrl: authBaseUrl,
           );
           fail('Should have thrown AuthException');
         } on AuthException {
@@ -438,7 +381,7 @@ void main() {
         'Getting valid token when not logged in throws NotLoggedInException',
         () async {
           try {
-            final manager = SessionManager.initialize();
+            final manager = SessionManager.initialize(createTestServerConfig());
             await manager.getValidToken();
             fail('Should have thrown NotLoggedInException');
           } on NotLoggedInException {
@@ -453,7 +396,7 @@ void main() {
       test('Service call with invalid token throws AuthException', () async {
         try {
           final storeService = StoreService(
-            baseUrl: storeBaseUrl,
+            storeServiceBaseUrl,
             token: 'invalid.jwt.token',
           );
           await storeService.listEntities();
@@ -471,13 +414,12 @@ void main() {
     group('Multi-Service Workflow', () {
       test('Complete workflow: Login -> Create Entity -> Create Job', () async {
         try {
-          final manager = SessionManager.initialize();
+          final manager = SessionManager.initialize(createTestServerConfig());
 
           // Step 1: Login with test user (who has ai_inference_support permission)
           await manager.login(
             adminUsername,
             adminPassword,
-            authBaseUrl: authBaseUrl,
           );
           print('✓ Logged in as $testUsername');
 
@@ -492,9 +434,7 @@ void main() {
           }
 
           // Step 2: Create entity via Store Service
-          final storeService = await manager.createStoreService(
-            baseUrl: storeBaseUrl,
-          );
+          final storeService = await manager.createStoreService();
           final entity = await storeService.createEntity(
             isCollection: true,
             label: 'Test Workflow Collection',
@@ -503,9 +443,7 @@ void main() {
           print('✓ Created entity: ${entity.id}');
 
           // Step 3: Create job via Compute Service
-          final computeService = await manager.createComputeService(
-            baseUrl: computeBaseUrl,
-          );
+          final computeService = await manager.createComputeService();
           final job = await computeService.createJob(
             taskType: 'test_task',
             metadata: {
@@ -522,9 +460,7 @@ void main() {
           print('✓ Created job: ${job.jobId}');
 
           // Step 4: Verify user via Auth Service
-          final authService = await manager.createAuthService(
-            baseUrl: authBaseUrl,
-          );
+          final authService = await manager.createAuthService();
           final user = await authService.getCurrentUser();
           print('✓ Verified user: ${user.username}');
 

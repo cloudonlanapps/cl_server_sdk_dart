@@ -2,33 +2,7 @@ import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
-class MockHttpClient extends http.BaseClient {
-  MockHttpClient(this.responses);
-  final Map<String, http.Response> responses;
-  late http.Request lastRequest;
-
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    lastRequest = request as http.Request;
-    final key = '${request.method} ${request.url}';
-    final response = responses[key];
-
-    if (response != null) {
-      return http.StreamedResponse(
-        Stream.value(response.bodyBytes),
-        response.statusCode,
-        headers: response.headers,
-        request: request,
-      );
-    }
-
-    return http.StreamedResponse(
-      Stream.value([]),
-      404,
-      request: request,
-    );
-  }
-}
+import '../test_helpers.dart';
 
 void main() {
   group('HttpClientWrapper Tests', () {

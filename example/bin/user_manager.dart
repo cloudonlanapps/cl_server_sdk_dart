@@ -147,8 +147,14 @@ Future<void> main(List<String> args) async {
     storeServiceUrl = results['store-url'] as String;
     userPrefix = results['prefix'] as String;
 
+    // Create server configuration
+    final config = ServerConfig(
+      authServiceBaseUrl: authServiceUrl,
+      storeServiceBaseUrl: storeServiceUrl,
+    );
+
     // Initialize session manager
-    sessionManager = SessionManager.initialize();
+    sessionManager = SessionManager.initialize(config);
 
     // Get admin credentials (support both --username/--password and --admin-user/--admin-password)
     var adminUsername = (results['username'] as String?) ??
@@ -188,11 +194,7 @@ Future<void> main(List<String> args) async {
     // Login as admin
     print('\n🔐 Logging in as admin...');
     try {
-      await sessionManager.login(
-        adminUsername,
-        adminPassword,
-        authBaseUrl: authServiceUrl,
-      );
+      await sessionManager.login(adminUsername, adminPassword);
       print('✓ Logged in successfully as: ${sessionManager.currentUsername}\n');
     } on Exception catch (e) {
       print('✗ Login failed: $e');

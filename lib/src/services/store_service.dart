@@ -6,13 +6,13 @@ import '../utils/constants.dart';
 
 /// Client for CL Server Store Service (Port 8001)
 class StoreService {
-  StoreService({
-    String? baseUrl,
+  StoreService(
+    this.baseUrl, {
     this.token,
     http.Client? httpClient,
-  }) : baseUrl = baseUrl ?? storeServiceBaseUrl {
+  }) {
     _httpClient = HttpClientWrapper(
-      baseUrl: this.baseUrl,
+      baseUrl: baseUrl,
       token: token,
       httpClient: httpClient,
     );
