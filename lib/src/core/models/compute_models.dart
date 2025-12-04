@@ -300,3 +300,50 @@ class CleanupResponse {
     );
   }
 }
+
+/// Worker capabilities model
+@immutable
+class WorkerCapabilities {
+  const WorkerCapabilities({
+    required this.numWorkers,
+    required this.capabilities,
+  });
+
+  factory WorkerCapabilities.fromJson(Map<String, dynamic> json) {
+    return WorkerCapabilities(
+      numWorkers: json['num_workers'] as int? ?? 0,
+      capabilities: Map<String, int>.from(
+        (json['capabilities'] as Map<dynamic, dynamic>? ?? {})
+            .cast<String, int>(),
+      ),
+    );
+  }
+
+  factory WorkerCapabilities.fromMap(Map<String, dynamic> map) {
+    return WorkerCapabilities.fromJson(map);
+  }
+
+  final int numWorkers;
+  final Map<String, int> capabilities;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'num_workers': numWorkers,
+      'capabilities': capabilities,
+    };
+  }
+
+  Map<String, dynamic> toMap() {
+    return toJson();
+  }
+
+  WorkerCapabilities copyWith({
+    int? numWorkers,
+    Map<String, int>? capabilities,
+  }) {
+    return WorkerCapabilities(
+      numWorkers: numWorkers ?? this.numWorkers,
+      capabilities: capabilities ?? this.capabilities,
+    );
+  }
+}

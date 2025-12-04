@@ -81,12 +81,12 @@ class ComputeService {
   }
 
   /// Get available worker capabilities
-  /// GET /compute/jobs/capability
-  Future<Map<String, dynamic>> getCapabilities() async {
+  /// GET /compute/capabilities
+  Future<WorkerCapabilities> getCapabilities() async {
     final response = await _httpClient.get(
       ComputeServiceEndpoints.getCapabilities,
     );
-    return response;
+    return WorkerCapabilities.fromMap(response);
   }
 
   /// Get storage size

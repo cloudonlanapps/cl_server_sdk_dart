@@ -144,6 +144,33 @@ void main() {
       expect(storage.jobCount, 5);
     });
 
+    test('getCapabilities returns WorkerCapabilities', () async {
+      final mockClient = MockHttpClient({
+        'GET $computeServiceBaseUrl${ComputeServiceEndpoints.getCapabilities}':
+            http.Response(
+              '''
+          {
+            "num_workers": 3,
+            "capabilities": {
+              "image_resize": 2,
+              "image_conversion": 1
+            }
+          }''',
+              200,
+            ),
+      });
+
+      final computeService = ComputeService(
+        computeServiceBaseUrl,
+        httpClient: mockClient,
+      );
+      final capabilities = await computeService.getCapabilities();
+
+      expect(capabilities.numWorkers, 3);
+      expect(capabilities.capabilities['image_resize'], 2);
+      expect(capabilities.capabilities['image_conversion'], 1);
+    });
+
     test('cleanupOldJobs returns CleanupResponse', () async {
       final mockClient = MockHttpClient({
         'DELETE $computeServiceBaseUrl'
