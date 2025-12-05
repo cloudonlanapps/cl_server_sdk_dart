@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
@@ -35,6 +36,7 @@ class HttpClientWrapper {
     Map<String, dynamic>? body,
     Map<String, String>? queryParameters,
     bool isFormData = false,
+    List<File>? files,
   }) async {
     try {
       final uri = _buildUri(endpoint, queryParameters);
@@ -51,6 +53,20 @@ class HttpClientWrapper {
               request.fields[key] = value.toString();
             }
           });
+        }
+        // Add files if provided
+        if (files != null && files.isNotEmpty) {
+          for (final file in files) {
+            final fileName = file.path.split('/').last;
+            request.files.add(
+              http.MultipartFile(
+                'upload_files',
+                file.openRead(),
+                await file.length(),
+                filename: fileName,
+              ),
+            );
+          }
         }
         final streamResponse = await _httpClient.send(request);
         response = await http.Response.fromStream(streamResponse);

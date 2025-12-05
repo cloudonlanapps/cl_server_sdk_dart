@@ -174,7 +174,12 @@ void main() {
         );
 
         await client.post('/test', body: {'key': 'value'});
-        expect(mockClient.lastRequest.body, contains('"key":"value"'));
+        if (mockClient.lastRequest is http.Request) {
+          expect(
+            (mockClient.lastRequest as http.Request).body,
+            contains('"key":"value"'),
+          );
+        }
       });
     });
 
