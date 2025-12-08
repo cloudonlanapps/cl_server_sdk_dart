@@ -29,7 +29,14 @@ class ComputeService {
 
   Future<WorkerCapabilities> getCapabilities() async {
     final json = await _httpClient.get('/compute/capabilities');
-    return Map<String, int>.from(json);
+    // Handle both flat format (tests) and nested format (real server)
+    final capabilitiesMap = json.containsKey('capabilities')
+        ? json['capabilities'] as Map<String, dynamic>
+        : json;
+    return capabilitiesMap.map<String, int>((key, value) {
+      final intValue = value is int ? value : (value as num).toInt();
+      return MapEntry(key, intValue);
+    });
   }
 
   /// ----------------------------
