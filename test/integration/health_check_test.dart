@@ -30,6 +30,17 @@ Future<bool> checkStoreServiceHealth() async {
   }
 }
 
+/// Check if Compute service is available
+Future<bool> checkComputeServiceHealth() async {
+  try {
+    final computeService = ComputeService(computeServiceBaseUrl);
+    await computeService.getCapabilities();
+    return true;
+  } on Exception catch (_) {
+    return false;
+  }
+}
+
 /// Verify health check - throws exception if services unavailable
 // ignore: unreachable_from_main Tests should be added
 Future<void> ensureAuthServiceHealthy() async {
@@ -43,6 +54,14 @@ Future<void> ensureAuthServiceHealthy() async {
 Future<void> ensureStoreServiceHealthy() async {
   if (!await checkStoreServiceHealth()) {
     throw Exception('Store service not available at $storeServiceBaseUrl');
+  }
+}
+
+/// Verify health check - throws exception if compute service unavailable
+// ignore: unreachable_from_main Tests should be added
+Future<void> ensureComputeServiceHealthy() async {
+  if (!await checkComputeServiceHealth()) {
+    throw Exception('Compute service not available at $computeServiceBaseUrl');
   }
 }
 
@@ -82,6 +101,15 @@ void main() {
         isHealthy,
         isTrue,
         reason: 'Store service should be available at $storeServiceBaseUrl',
+      );
+    });
+
+    test('Compute service is available', () async {
+      final isHealthy = await checkComputeServiceHealth();
+      expect(
+        isHealthy,
+        isTrue,
+        reason: 'Compute service should be available at $computeServiceBaseUrl',
       );
     });
 
