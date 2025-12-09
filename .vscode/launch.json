@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Compute -help",
+            "cwd": "example",
+            "program": "bin/compute.dart",
+            "request": "launch",
+            "type": "dart",
+            "args": ["--help"]
+        },
+        {
+            "name": "Resizer",
+            "cwd": "example",
+            "program": "bin/compute.dart",
+            "request": "launch",
+            "type": "dart",
+            "args": ["-u", "admin", "-p", "admin", "resize",  "-f", "Day 1.1.jpeg"],
+            "console": "debugConsole"
+        }
+    ]
+}
