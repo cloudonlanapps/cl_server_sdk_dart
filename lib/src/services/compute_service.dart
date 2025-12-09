@@ -51,7 +51,7 @@ class ComputeService {
   }) async {
     final caps = await getCapabilities();
     if (!caps.containsKey(taskType)) {
-      throw UnsupportedError(
+      throw Exception(
         "Task type '$taskType' not supported. "
         "Available: ${caps.keys.join(', ')}",
       );

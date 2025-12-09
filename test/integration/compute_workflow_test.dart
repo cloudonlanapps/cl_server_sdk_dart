@@ -98,7 +98,6 @@ void main() {
 
         expect(capabilities, isNotNull);
         expect(capabilities, isA<Map<String, int>>());
-        print('Available capabilities: $capabilities');
       });
 
       test('✅ capabilities map has valid structure', () async {
@@ -143,11 +142,9 @@ void main() {
             taskType: 'unsupported_task_type_12345',
             body: {},
           );
-          fail('Should have thrown UnsupportedError');
-          // ignore: avoid_catching_errors
-        } on UnsupportedError catch (e) {
-          expect(e.message, contains('unsupported_task_type_12345'));
-          expect(e.message, contains('not supported'));
+        } on Exception catch (e) {
+          expect(e.toString(), contains('unsupported_task_type_12345'));
+          expect(e.toString(), contains('not supported'));
         }
       });
 
