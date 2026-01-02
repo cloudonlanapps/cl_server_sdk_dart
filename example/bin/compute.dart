@@ -204,9 +204,8 @@ ${parser.usage}
   print('Command Options');
   for (final command in knownCommands.entries) {
     print('\t${command.key}:');
-    print(
-      '\t'
-      '${(command.value['parser'] as ArgParser).usage.replaceAll('\n', '\n\t')}',
-    );
+    final usage =
+        (command.value['parser'] as ArgParser).usage.replaceAll('\n', '\n\t');
+    print('\t$usage');
   }
 }

@@ -34,9 +34,9 @@ class UserManager {
     required AuthService authService,
     required StoreService storeService,
     String prefix = 't#',
-  })  : _authService = authService,
-        _storeService = storeService,
-        _prefix = prefix;
+  }) : _authService = authService,
+       _storeService = storeService,
+       _prefix = prefix;
 
   final AuthService _authService;
   final StoreService _storeService;
@@ -75,13 +75,12 @@ class UserManager {
     required String password,
     bool isAdmin = false,
     List<String>? permissions,
-  }) =>
-      CreateUserCommand(_authService, _prefix).execute(
-        username: username,
-        password: password,
-        isAdmin: isAdmin,
-        permissions: permissions,
-      );
+  }) => CreateUserCommand(_authService, _prefix).execute(
+    username: username,
+    password: password,
+    isAdmin: isAdmin,
+    permissions: permissions,
+  );
 
   /// Get a single user by ID
   ///
@@ -90,8 +89,7 @@ class UserManager {
   /// Returns UserOperationResult with user details or error
   Future<UserOperationResult<dynamic>> getUser({
     required int userId,
-  }) =>
-      GetUserCommand(_authService).execute(userId: userId);
+  }) => GetUserCommand(_authService).execute(userId: userId);
 
   /// List users with optional filtering
   ///
@@ -100,10 +98,9 @@ class UserManager {
   /// Returns UserOperationResult with list of users or error
   Future<UserOperationResult<dynamic>> listUsers({
     UserListOptions? options,
-  }) =>
-      ListUsersCommand(_authService, _prefix).execute(
-        options: options ?? UserListOptions(),
-      );
+  }) => ListUsersCommand(_authService, _prefix).execute(
+    options: options ?? UserListOptions(),
+  );
 
   /// Update a user (partial updates allowed)
   ///
@@ -120,14 +117,13 @@ class UserManager {
     List<String>? permissions,
     bool? isAdmin,
     bool? isActive,
-  }) =>
-      UpdateUserCommand(_authService).execute(
-        userId: userId,
-        password: password,
-        permissions: permissions,
-        isAdmin: isAdmin,
-        isActive: isActive,
-      );
+  }) => UpdateUserCommand(_authService).execute(
+    userId: userId,
+    password: password,
+    permissions: permissions,
+    isAdmin: isAdmin,
+    isActive: isActive,
+  );
 
   /// Delete a user by ID
   ///
@@ -136,8 +132,7 @@ class UserManager {
   /// Returns UserOperationResult with success message or error
   Future<UserOperationResult<void>> deleteUser({
     required int userId,
-  }) =>
-      DeleteUserCommand(_authService).execute(userId: userId);
+  }) => DeleteUserCommand(_authService).execute(userId: userId);
 
   /// Get permissions for a user
   ///
@@ -146,8 +141,7 @@ class UserManager {
   /// Returns UserOperationResult with list of permissions or error
   Future<UserOperationResult<dynamic>> getUserPermissions({
     required int userId,
-  }) =>
-      GetUserPermissionsCommand(_authService).execute(userId: userId);
+  }) => GetUserPermissionsCommand(_authService).execute(userId: userId);
 
   /// Get store configuration
   ///
@@ -162,6 +156,5 @@ class UserManager {
   /// Returns UserOperationResult with updated config or error
   Future<UserOperationResult<dynamic>> updateReadAuth({
     required bool enabled,
-  }) =>
-      UpdateReadAuthCommand(_storeService).execute(enabled: enabled);
+  }) => UpdateReadAuthCommand(_storeService).execute(enabled: enabled);
 }

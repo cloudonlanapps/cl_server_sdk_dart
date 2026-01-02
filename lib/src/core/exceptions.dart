@@ -61,3 +61,18 @@ class NetworkException extends CLServerException {
   /// Creates a new [NetworkException].
   NetworkException({required super.message, super.statusCode});
 }
+
+/// Exception thrown when MQTT connection or operation fails
+class MqttConnectionException implements Exception {
+  /// Creates a new [MqttConnectionException].
+  ///
+  /// Parameters:
+  /// - [message]: The error message describing the MQTT failure
+  MqttConnectionException(this.message);
+
+  /// The error message.
+  final String message;
+
+  @override
+  String toString() => 'MqttConnectionException: $message';
+}

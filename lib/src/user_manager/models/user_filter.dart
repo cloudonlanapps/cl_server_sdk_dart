@@ -17,6 +17,7 @@ class UserListOptions {
   final bool showAll;
 
   @override
-  String toString() =>
-      'UserListOptions(skip: $skip, limit: $limit, showAll: $showAll)';
+  String toString() {
+    return 'UserListOptions(skip: $skip, limit: $limit, showAll: $showAll)';
+  }
 }

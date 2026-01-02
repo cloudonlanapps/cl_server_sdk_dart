@@ -64,7 +64,7 @@ void main() {
       await ensureComputeServiceHealthy();
 
       // Setup admin session
-      adminManager = SessionManager.initialize(createTestServerConfig());
+      adminManager = SessionManager.initialize(await createTestServerConfig());
       await adminManager.login(adminUsername, adminPassword);
 
       // Create compute service
@@ -173,7 +173,8 @@ void main() {
 
         for (final taskType in capabilities.keys) {
           print(
-            'Discovered task type: $taskType (${capabilities[taskType]} workers)',
+            'Discovered task type: $taskType '
+            '(${capabilities[taskType]} workers)',
           );
         }
       });
@@ -541,7 +542,8 @@ void main() {
 
         for (final taskType in capabilities.keys.take(2)) {
           final tempFile = File(
-            'test_type_${taskType}_${DateTime.now().millisecondsSinceEpoch}.txt',
+            'test_type_${taskType}_'
+            '${DateTime.now().millisecondsSinceEpoch}.txt',
           );
           await tempFile.writeAsString('test');
           testFiles.add(tempFile.path);
@@ -634,7 +636,8 @@ void main() {
         expect(storageInfo.jobCount, greaterThanOrEqualTo(0));
 
         print(
-          'Storage: ${storageInfo.totalSize} bytes, ${storageInfo.jobCount} jobs',
+          'Storage: ${storageInfo.totalSize} bytes, '
+          '${storageInfo.jobCount} jobs',
         );
       });
 
@@ -656,7 +659,8 @@ void main() {
         expect(result.freedSpace, greaterThanOrEqualTo(0));
 
         print(
-          'Cleanup: ${result.deletedCount} jobs, ${result.freedSpace} bytes freed',
+          'Cleanup: ${result.deletedCount} jobs, '
+          '${result.freedSpace} bytes freed',
         );
       });
 
@@ -817,19 +821,362 @@ void main() {
       });
     });
 
-    group('MQTT Wait Tests', () {
-      test('⚠️ MQTT integration test placeholder', () async {
-        // TODO: Implement MQTT integration tests when MQTT infrastructure is ready
-        // This would require:
-        // 1. MQTT broker connection setup
-        // 2. Subscribe to job update topic
-        // 3. Create a job and verify updates received via MQTT
-        // 4. Test waitForJobCompletionWithMQTT with real MQTT stream
+    group('MQTT Integration Tests', () {
+      late MqttService mqttService;
+      final createdTestImages = <String>[];
 
-        markTestSkipped(
-          'MQTT integration tests require MQTT broker setup. '
-          'Unit tests for MQTT functionality exist in compute_service_test.dart',
+      setUp(() async {
+        // Check if MQTT broker is available
+        if (!await checkMqttBrokerHealth()) {
+          markTestSkipped('MQTT broker not available at localhost:1883');
+          return;
+        }
+
+        // Create and connect MQTT service
+        mqttService = MqttService(
+          brokerUrl: 'localhost',
+          brokerPort: 1883,
+          topic: 'inference/events',
         );
+
+        await mqttService.connect();
+        expect(mqttService.isConnected, isTrue);
+      });
+
+      tearDown(() async {
+        if (mqttService.isConnected) {
+          await mqttService.disconnect();
+        }
+
+        // Cleanup test images
+        await cleanupTestImages(createdTestImages);
+        createdTestImages.clear();
+      });
+
+      test('✅ Complete job workflow with MQTT updates', () async {
+        // Skip if image_resize not available
+        if (!await hasTaskType('image_resize')) {
+          markTestSkipped('image_resize task type not available');
+          return;
+        }
+
+        // Generate test image
+        final imagePath = await generateTestImage(
+          width: 1024,
+          height: 768,
+          fileName: 'test_mqtt_workflow.png',
+        );
+        createdTestImages.add(imagePath);
+
+        // Create job
+        final response = await createTestJob(
+          taskType: 'image_resize',
+          params: {'width': '512', 'height': '384'},
+          file: File(imagePath),
+        );
+
+        print('Created job: ${response.jobId}');
+
+        // Wait for MQTT completion (returns jobId only)
+        final completedJobId = await mqttService.waitForCompletion(
+          jobId: response.jobId,
+          timeout: const Duration(minutes: 2),
+        );
+
+        expect(completedJobId, equals(response.jobId));
+
+        // Fetch full Job from API
+        final job = await computeService.getJob(completedJobId);
+
+        // Verify job completed successfully
+        expect(job.status, equals('completed'));
+        expect(job.taskOutput, isNotNull);
+        print('Job completed with output: ${job.taskOutput}');
+      });
+
+      test('✅ Track status transitions via MQTT', () async {
+        // Skip if image_resize not available
+        if (!await hasTaskType('image_resize')) {
+          markTestSkipped('image_resize task type not available');
+          return;
+        }
+
+        // Generate test image
+        final imagePath = await generateTestImage(
+          width: 800,
+          height: 600,
+          fileName: 'test_mqtt_transitions.png',
+        );
+        createdTestImages.add(imagePath);
+
+        final statusUpdates = <JobStatus>[];
+
+        // Listen to status stream
+        final subscription = mqttService.statusStream.listen((status) {
+          print(
+            'Status update: ${status.jobId} - ${status.status} '
+            '(${status.progress}%)',
+          );
+        });
+
+        // Create job
+        final response = await createTestJob(
+          taskType: 'image_resize',
+          params: {'width': '400', 'height': '300'},
+          file: File(imagePath),
+        );
+
+        // Collect status updates for this job
+        final jobSubscription = mqttService.statusStream
+            .where((status) => status.jobId == response.jobId)
+            .listen(statusUpdates.add);
+
+        // Wait for completion
+        await mqttService.waitForCompletion(
+          jobId: response.jobId,
+          timeout: const Duration(minutes: 2),
+        );
+
+        // Wait a bit for final status updates
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+
+        await subscription.cancel();
+        await jobSubscription.cancel();
+
+        // Verify we received status updates
+        expect(statusUpdates.isNotEmpty, isTrue);
+
+        // Print transition sequence
+        print('Status transitions:');
+        for (final status in statusUpdates) {
+          print('  ${status.status} (${status.progress}%)');
+        }
+      });
+
+      test('✅ Handle multiple concurrent jobs', () async {
+        // Skip if image_resize not available
+        if (!await hasTaskType('image_resize')) {
+          markTestSkipped('image_resize task type not available');
+          return;
+        }
+
+        // Create 3 test images
+        final imagePaths = <String>[];
+        for (var i = 0; i < 3; i++) {
+          final path = await generateTestImage(
+            width: 640,
+            height: 480,
+            fileName: 'test_mqtt_concurrent_$i.png',
+          );
+          imagePaths.add(path);
+          createdTestImages.add(path);
+        }
+
+        // Create 3 jobs
+        final jobResponses = <CreateJobResponse>[];
+        for (var i = 0; i < 3; i++) {
+          final response = await createTestJob(
+            taskType: 'image_resize',
+            params: {'width': '320', 'height': '240'},
+            file: File(imagePaths[i]),
+          );
+          jobResponses.add(response);
+          print('Created job ${i + 1}/3: ${response.jobId}');
+        }
+
+        // Wait for all jobs to complete concurrently
+        final completedJobIds = await Future.wait(
+          jobResponses.map(
+            (response) => mqttService.waitForCompletion(
+              jobId: response.jobId,
+              timeout: const Duration(minutes: 3),
+            ),
+          ),
+        );
+
+        // Verify all jobs completed
+        expect(completedJobIds.length, equals(3));
+        for (var i = 0; i < 3; i++) {
+          expect(completedJobIds[i], equals(jobResponses[i].jobId));
+          print('Job ${i + 1}/3 completed: ${completedJobIds[i]}');
+        }
+      });
+
+      test('❌ Timeout when job never completes', () async {
+        // Skip if image_resize not available
+        if (!await hasTaskType('image_resize')) {
+          markTestSkipped('image_resize task type not available');
+          return;
+        }
+
+        // Generate test image
+        final imagePath = await generateTestImage(
+          width: 512,
+          height: 384,
+          fileName: 'test_mqtt_timeout.png',
+        );
+        createdTestImages.add(imagePath);
+
+        // Create job
+        final response = await createTestJob(
+          taskType: 'image_resize',
+          params: {'width': '256', 'height': '192'},
+          file: File(imagePath),
+        );
+
+        print('Created job for timeout test: ${response.jobId}');
+
+        // Delete job immediately so MQTT never sends completion
+        await computeService.deleteJob(response.jobId);
+        print('Deleted job to simulate timeout');
+
+        // Expect TimeoutException after 3 seconds
+        expect(
+          () => mqttService.waitForCompletion(
+            jobId: response.jobId,
+            timeout: const Duration(seconds: 3),
+          ),
+          throwsA(isA<TimeoutException>()),
+        );
+      });
+
+      test('✅ MQTT faster than polling (performance comparison)', () async {
+        // Skip if image_resize not available
+        if (!await hasTaskType('image_resize')) {
+          markTestSkipped('image_resize task type not available');
+          return;
+        }
+
+        // Generate two identical test images
+        final imagePath1 = await generateTestImage(
+          width: 800,
+          height: 600,
+          fileName: 'test_mqtt_perf1.png',
+        );
+        final imagePath2 = await generateTestImage(
+          width: 800,
+          height: 600,
+          fileName: 'test_mqtt_perf2.png',
+        );
+        createdTestImages.addAll([imagePath1, imagePath2]);
+
+        // Test MQTT speed
+        final mqttStopwatch = Stopwatch()..start();
+        final mqttResponse = await createTestJob(
+          taskType: 'image_resize',
+          params: {'width': '400', 'height': '300'},
+          file: File(imagePath1),
+        );
+
+        await mqttService.waitForCompletion(
+          jobId: mqttResponse.jobId,
+          timeout: const Duration(minutes: 2),
+        );
+        mqttStopwatch.stop();
+
+        print('MQTT completion time: ${mqttStopwatch.elapsedMilliseconds}ms');
+
+        // Small delay between tests
+        await Future<void>.delayed(const Duration(seconds: 1));
+
+        // Test polling speed (2s interval)
+        final pollingStopwatch = Stopwatch()..start();
+        final pollingResponse = await createTestJob(
+          taskType: 'image_resize',
+          params: {'width': '400', 'height': '300'},
+          file: File(imagePath2),
+        );
+
+        await computeService.waitForJobCompletionWithPolling(
+          pollingResponse.jobId,
+          interval: const Duration(seconds: 2),
+          timeout: const Duration(minutes: 2),
+        );
+        pollingStopwatch.stop();
+
+        print(
+          'Polling completion time: '
+          '${pollingStopwatch.elapsedMilliseconds}ms',
+        );
+
+        // Calculate speedup
+        final speedup =
+            pollingStopwatch.elapsedMilliseconds /
+            mqttStopwatch.elapsedMilliseconds;
+        print('MQTT speedup: ${speedup.toStringAsFixed(2)}x faster');
+
+        // MQTT should generally be faster (or within tolerance)
+        // We allow some variance due to system load
+        expect(
+          mqttStopwatch.elapsedMilliseconds,
+          lessThanOrEqualTo(pollingStopwatch.elapsedMilliseconds + 5000),
+          reason: 'MQTT should be faster or comparable to polling',
+        );
+      });
+
+      test('✅ Query status cache', () async {
+        // Skip if image_resize not available
+        if (!await hasTaskType('image_resize')) {
+          markTestSkipped('image_resize task type not available');
+          return;
+        }
+
+        // Generate test image
+        final imagePath = await generateTestImage(
+          width: 640,
+          height: 480,
+          fileName: 'test_mqtt_cache.png',
+        );
+        createdTestImages.add(imagePath);
+
+        // Create job
+        final response = await createTestJob(
+          taskType: 'image_resize',
+          params: {'width': '320', 'height': '240'},
+          file: File(imagePath),
+        );
+
+        // Wait for some status updates
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+
+        // Query cache
+        final cachedStatus = mqttService.getStatus(response.jobId);
+
+        if (cachedStatus != null) {
+          print(
+            'Cached status: ${cachedStatus.status} '
+            '(${cachedStatus.progress}%)',
+          );
+          expect(cachedStatus.jobId, equals(response.jobId));
+        } else {
+          print('No cached status yet (job might be very fast or not started)');
+        }
+
+        // Wait for completion
+        await mqttService.waitForCompletion(
+          jobId: response.jobId,
+          timeout: const Duration(minutes: 2),
+        );
+
+        // Query cache again - should have final status
+        final finalStatus = mqttService.getStatus(response.jobId);
+        expect(finalStatus, isNotNull);
+        expect(finalStatus!.isFinished, isTrue);
+        print('Final cached status: ${finalStatus.status}');
+      });
+
+      test('✅ Handle connection loss gracefully', () async {
+        expect(mqttService.isConnected, isTrue);
+
+        // Disconnect
+        await mqttService.disconnect();
+        expect(mqttService.isConnected, isFalse);
+
+        // Reconnect
+        await mqttService.connect();
+        expect(mqttService.isConnected, isTrue);
+
+        print('Successfully disconnected and reconnected to MQTT broker');
       });
     });
   });

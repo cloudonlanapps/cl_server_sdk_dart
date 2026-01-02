@@ -1,4 +1,7 @@
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
+import 'package:http/http.dart' as http;
+import 'package:mqtt_client/mqtt_client.dart';
+import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:test/test.dart';
 
 import '../test_helpers.dart';
@@ -11,9 +14,8 @@ import '../test_helpers.dart';
 /// Check if Auth service is available
 Future<bool> checkAuthServiceHealth() async {
   try {
-    final authService = AuthService(authServiceBaseUrl);
-    await authService.getPublicKey();
-    return true;
+    final response = await http.get(Uri.parse(authServiceBaseUrl));
+    return response.statusCode == 200;
   } on Exception catch (_) {
     return false;
   }
@@ -22,9 +24,8 @@ Future<bool> checkAuthServiceHealth() async {
 /// Check if Store service is available
 Future<bool> checkStoreServiceHealth() async {
   try {
-    final storeService = StoreService(storeServiceBaseUrl);
-    await storeService.listEntities(pageSize: 1);
-    return true;
+    final response = await http.get(Uri.parse(storeServiceBaseUrl));
+    return response.statusCode == 200;
   } on Exception catch (_) {
     return false;
   }
@@ -33,10 +34,35 @@ Future<bool> checkStoreServiceHealth() async {
 /// Check if Compute service is available
 Future<bool> checkComputeServiceHealth() async {
   try {
-    final computeService = ComputeService(computeServiceBaseUrl);
-    await computeService.getCapabilities();
-    return true;
+    final response = await http.get(Uri.parse(computeServiceBaseUrl));
+    return response.statusCode == 200;
   } on Exception catch (_) {
+    return false;
+  }
+}
+
+/// Check if MQTT broker is available
+///
+/// Attempts to connect to MQTT broker at localhost:1883.
+/// Returns true if connection succeeds, false otherwise.
+Future<bool> checkMqttBrokerHealth() async {
+  try {
+    final client = MqttServerClient(
+      'localhost',
+      'health_check_${DateTime.now().millisecondsSinceEpoch}',
+    );
+    client.port = 1883;
+    client.logging(on: false);
+    client.keepAlivePeriod = 20;
+
+    await client.connect();
+
+    if (client.connectionStatus?.state == MqttConnectionState.connected) {
+      client.disconnect();
+      return true;
+    }
+    return false;
+  } catch (e) {
     return false;
   }
 }

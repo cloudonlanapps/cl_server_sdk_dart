@@ -49,7 +49,8 @@ void main() {
       test('returns multiple task types', () async {
         final mockClient = MockHttpClient({
           'GET $computeServiceBaseUrl/compute/capabilities': http.Response(
-            '''{"image_resize": 3, "image_conversion": 2, "video_transcode": 1, "audio_process": 4}''',
+            '{"image_resize": 3, "image_conversion": 2, '
+            '"video_transcode": 1, "audio_process": 4}',
             200,
           ),
         });
@@ -78,10 +79,7 @@ void main() {
           httpClient: mockClient,
         );
 
-        expect(
-          service.getCapabilities,
-          throwsA(isA<ServerException>()),
-        );
+        expect(service.getCapabilities, throwsA(isA<ServerException>()));
       });
 
       test('throws NetworkException on network error', () async {
@@ -142,10 +140,7 @@ void main() {
           );
 
           expect(
-            () => service.createJob(
-              taskType: 'unsupported_task',
-              body: {},
-            ),
+            () => service.createJob(taskType: 'unsupported_task', body: {}),
             throwsA(isA<Exception>()),
           );
         },
@@ -166,21 +161,12 @@ void main() {
 
         // Should fail for unsupported task without making POST request
         try {
-          await service.createJob(
-            taskType: 'video_transcode',
-            body: {},
-          );
+          await service.createJob(taskType: 'video_transcode', body: {});
           fail('Should have thrown UnsupportedError');
         } on Exception catch (e) {
           print(e);
-          expect(
-            e.toString(),
-            contains('video_transcode'),
-          );
-          expect(
-            e.toString(),
-            contains('not supported'),
-          );
+          expect(e.toString(), contains('video_transcode'));
+          expect(e.toString(), contains('not supported'));
         }
       });
 
@@ -210,10 +196,7 @@ void main() {
         // MockHttpClient doesn't allow us to inspect request body easily,
         // but we can verify the call succeeds
         expect(mockClient.lastRequest.method, 'POST');
-        expect(
-          mockClient.lastRequest.url.path,
-          '/compute/jobs/image_resize',
-        );
+        expect(mockClient.lastRequest.url.path, '/compute/jobs/image_resize');
       });
 
       test('includes file in multipart request when provided', () async {
@@ -300,10 +283,7 @@ void main() {
         );
 
         expect(
-          () => service.createJob(
-            taskType: 'image_resize',
-            body: {},
-          ),
+          () => service.createJob(taskType: 'image_resize', body: {}),
           throwsA(isA<AuthException>()),
         );
       });
@@ -327,10 +307,7 @@ void main() {
         );
 
         expect(
-          () => service.createJob(
-            taskType: 'image_resize',
-            body: {},
-          ),
+          () => service.createJob(taskType: 'image_resize', body: {}),
           throwsA(isA<PermissionException>()),
         );
       });
@@ -435,10 +412,7 @@ void main() {
           httpClient: mockClient,
         );
 
-        expect(
-          () => service.getJob('test-job'),
-          throwsA(isA<AuthException>()),
-        );
+        expect(() => service.getJob('test-job'), throwsA(isA<AuthException>()));
       });
     });
 
@@ -446,10 +420,7 @@ void main() {
       test('completes successfully on 204', () async {
         final mockClient = MockHttpClient({
           'DELETE $computeServiceBaseUrl/compute/jobs/test-job-123':
-              http.Response(
-                '',
-                204,
-              ),
+              http.Response('', 204),
         });
 
         final service = ComputeService(
@@ -457,10 +428,7 @@ void main() {
           httpClient: mockClient,
         );
 
-        await expectLater(
-          service.deleteJob('test-job-123'),
-          completes,
-        );
+        await expectLater(service.deleteJob('test-job-123'), completes);
       });
 
       test('throws ResourceNotFoundException on 404', () async {
@@ -594,10 +562,7 @@ void main() {
           httpClient: mockClient,
         );
 
-        expect(
-          service.getStorageSize,
-          throwsA(isA<PermissionException>()),
-        );
+        expect(service.getStorageSize, throwsA(isA<PermissionException>()));
       });
 
       test('throws AuthException on 401', () async {
@@ -614,10 +579,7 @@ void main() {
           httpClient: mockClient,
         );
 
-        expect(
-          service.getStorageSize,
-          throwsA(isA<AuthException>()),
-        );
+        expect(service.getStorageSize, throwsA(isA<AuthException>()));
       });
     });
 
@@ -694,10 +656,7 @@ void main() {
         );
         await service.cleanupOldJobs(days: 14);
 
-        expect(
-          mockClient.lastRequest.url.queryParameters['days'],
-          '14',
-        );
+        expect(mockClient.lastRequest.url.queryParameters['days'], '14');
       });
 
       test('throws PermissionException on 403 (non-admin)', () async {
@@ -714,18 +673,14 @@ void main() {
           httpClient: mockClient,
         );
 
-        expect(
-          service.cleanupOldJobs,
-          throwsA(isA<PermissionException>()),
-        );
+        expect(service.cleanupOldJobs, throwsA(isA<PermissionException>()));
       });
     });
 
     group('waitForJobCompletionWithPolling', () {
       test('returns completed job when status is completed', () async {
         final mockClient = MockHttpClient({
-          'GET $computeServiceBaseUrl/compute/jobs/test-job': http.Response(
-            '''
+          'GET $computeServiceBaseUrl/compute/jobs/test-job': http.Response('''
             {
               "job_id": "test-job",
               "task_type": "image_resize",
@@ -734,9 +689,7 @@ void main() {
               "progress": 100,
               "created_at": 1704067200000
             }
-            ''',
-            200,
-          ),
+            ''', 200),
         });
 
         final service = ComputeService(
@@ -754,8 +707,7 @@ void main() {
 
       test('returns failed job when status is failed', () async {
         final mockClient = MockHttpClient({
-          'GET $computeServiceBaseUrl/compute/jobs/test-job': http.Response(
-            '''
+          'GET $computeServiceBaseUrl/compute/jobs/test-job': http.Response('''
             {
               "job_id": "test-job",
               "task_type": "image_resize",
@@ -764,9 +716,7 @@ void main() {
               "error_message": "Processing error",
               "created_at": 1704067200000
             }
-            ''',
-            200,
-          ),
+            ''', 200),
         });
 
         final service = ComputeService(
@@ -785,8 +735,7 @@ void main() {
 
       test('calls onProgress callback on each poll', () async {
         final mockClient = MockHttpClient({
-          'GET $computeServiceBaseUrl/compute/jobs/test-job': http.Response(
-            '''
+          'GET $computeServiceBaseUrl/compute/jobs/test-job': http.Response('''
             {
               "job_id": "test-job",
               "task_type": "image_resize",
@@ -795,9 +744,7 @@ void main() {
               "progress": 100,
               "created_at": 1704067200000
             }
-            ''',
-            200,
-          ),
+            ''', 200),
         });
 
         var callbackInvoked = false;
@@ -807,7 +754,8 @@ void main() {
         );
 
         // Note: Due to MockHttpClient limitations, we can't easily simulate
-        // multiple different responses. This test verifies the callback is invoked.
+        // multiple different responses. This test verifies the callback is
+        // invoked.
         final job = await service.waitForJobCompletionWithPolling(
           'test-job',
           interval: const Duration(milliseconds: 100),
@@ -822,8 +770,7 @@ void main() {
 
       test('throws TimeoutException when timeout exceeded', () async {
         final mockClient = MockHttpClient({
-          'GET $computeServiceBaseUrl/compute/jobs/test-job': http.Response(
-            '''
+          'GET $computeServiceBaseUrl/compute/jobs/test-job': http.Response('''
             {
               "job_id": "test-job",
               "task_type": "image_resize",
@@ -832,9 +779,7 @@ void main() {
               "progress": 50,
               "created_at": 1704067200000
             }
-            ''',
-            200,
-          ),
+            ''', 200),
         });
 
         final service = ComputeService(
@@ -854,8 +799,7 @@ void main() {
 
       test('respects custom interval', () async {
         final mockClient = MockHttpClient({
-          'GET $computeServiceBaseUrl/compute/jobs/test-job': http.Response(
-            '''
+          'GET $computeServiceBaseUrl/compute/jobs/test-job': http.Response('''
             {
               "job_id": "test-job",
               "task_type": "image_resize",
@@ -863,9 +807,7 @@ void main() {
               "status": "completed",
               "created_at": 1704067200000
             }
-            ''',
-            200,
-          ),
+            ''', 200),
         });
 
         final service = ComputeService(
@@ -1062,10 +1004,7 @@ void main() {
         // Emit an error
         controller.addError(Exception('Stream error'));
 
-        expect(
-          () => future,
-          throwsA(isA<Exception>()),
-        );
+        expect(() => future, throwsA(isA<Exception>()));
 
         await controller.close();
       });

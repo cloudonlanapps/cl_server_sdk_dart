@@ -18,7 +18,7 @@ void main() {
 
     setUpAll(() async {
       // Initialize with admin credentials
-      adminManager = SessionManager.initialize(createTestServerConfig());
+      adminManager = SessionManager.initialize(await createTestServerConfig());
     });
 
     tearDownAll(() async {
@@ -85,7 +85,8 @@ void main() {
     group('Test User Session Management', () {
       test('Test user login succeeds', () async {
         try {
-          testUserManager = SessionManager.initialize(createTestServerConfig());
+          testUserManager =
+              SessionManager.initialize(await createTestServerConfig());
           await testUserManager!.login(
             testUsername,
             testPassword,
@@ -282,7 +283,8 @@ void main() {
     group('Session State Management', () {
       test('Session state is reactive and updates correctly', () async {
         try {
-          final manager = SessionManager.initialize(createTestServerConfig());
+          final manager =
+              SessionManager.initialize(await createTestServerConfig());
 
           // Initially logged out
           expect(manager.isLoggedIn, false);
@@ -309,7 +311,8 @@ void main() {
 
       test('Can listen to session state changes', () async {
         try {
-          final manager = SessionManager.initialize(createTestServerConfig());
+          final manager =
+              SessionManager.initialize(await createTestServerConfig());
           var stateChanges = 0;
 
           manager.onSessionStateChanged((state) {
@@ -335,7 +338,8 @@ void main() {
     group('Error Handling', () {
       test('Login with wrong password throws AuthException', () async {
         try {
-          final manager = SessionManager.initialize(createTestServerConfig());
+          final manager =
+              SessionManager.initialize(await createTestServerConfig());
           await manager.login(
             adminUsername,
             'wrong_password',
@@ -353,7 +357,8 @@ void main() {
         'Getting valid token when not logged in throws NotLoggedInException',
         () async {
           try {
-            final manager = SessionManager.initialize(createTestServerConfig());
+            final manager =
+              SessionManager.initialize(await createTestServerConfig());
             await manager.getValidToken();
             fail('Should have thrown NotLoggedInException');
           } on NotLoggedInException {

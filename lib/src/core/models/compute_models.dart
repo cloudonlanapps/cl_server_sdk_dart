@@ -5,10 +5,7 @@ import 'package:meta/meta.dart';
 
 /// Response returned when job is created
 class CreateJobResponse {
-  CreateJobResponse({
-    required this.jobId,
-    required this.status,
-  });
+  CreateJobResponse({required this.jobId, required this.status});
 
   factory CreateJobResponse.fromJson(Map<String, dynamic> json) {
     return CreateJobResponse(
@@ -131,7 +128,11 @@ class Job {
 
   @override
   String toString() {
-    return 'Job(jobId: $jobId, taskType: $taskType, params: $params, status: $status, progress: $progress, taskOutput: $taskOutput, errorMessage: $errorMessage, priority: $priority, createdAt: $createdAt, updatedAt: $updatedAt, startedAt: $startedAt, completedAt: $completedAt)';
+    return 'Job(jobId: $jobId, taskType: $taskType, params: $params, '
+        'status: $status, progress: $progress, taskOutput: $taskOutput, '
+        'errorMessage: $errorMessage, priority: $priority, '
+        'createdAt: $createdAt, updatedAt: $updatedAt, '
+        'startedAt: $startedAt, completedAt: $completedAt)';
   }
 
   @override
@@ -170,6 +171,100 @@ class Job {
   }
 
   String toJson() => json.encode(toMap());
+}
+
+/// Lightweight job status from MQTT updates
+///
+/// Only tracks status, progress, and timestamp. Does NOT contain output/error.
+/// Clients must call ComputeService.getJob() to fetch full Job with results.
+///
+/// MQTT Message → JobStatus Mapping:
+/// - event_type → status
+/// - job_id → jobId
+/// - data.progress → progress
+/// - timestamp → timestamp
+@immutable
+class JobStatus {
+  const JobStatus({
+    required this.jobId,
+    required this.status,
+    required this.progress,
+    required this.timestamp,
+  });
+
+  /// Create JobStatus from MQTT message payload
+  factory JobStatus.fromMqttMessage(Map<String, dynamic> json) {
+    return JobStatus(
+      jobId: json['job_id'] as String,
+      status: json['event_type'] as String, // MQTT event_type → status
+      progress: (json['data']?['progress'] as num?)?.toInt() ?? 0,
+      timestamp: json['timestamp'] as int,
+    );
+  }
+
+  factory JobStatus.fromMap(Map<String, dynamic> json) {
+    return JobStatus.fromMqttMessage(json);
+  }
+
+  factory JobStatus.fromJson(String source) =>
+      JobStatus.fromMap(json.decode(source) as Map<String, dynamic>);
+
+  final String jobId;
+  final String status; // 'queued', 'processing', 'completed', 'failed'
+  final int progress; // 0-100
+  final int timestamp; // Unix timestamp (milliseconds)
+
+  /// Check if job is finished (completed or failed)
+  bool get isFinished => status == 'completed' || status == 'failed';
+
+  JobStatus copyWith({
+    String? jobId,
+    String? status,
+    int? progress,
+    int? timestamp,
+  }) {
+    return JobStatus(
+      jobId: jobId ?? this.jobId,
+      status: status ?? this.status,
+      progress: progress ?? this.progress,
+      timestamp: timestamp ?? this.timestamp,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'job_id': jobId,
+      'status': status,
+      'progress': progress,
+      'timestamp': timestamp,
+    };
+  }
+
+  String toJson() => json.encode(toMap());
+
+  @override
+  String toString() {
+    return 'JobStatus(jobId: $jobId, status: $status, '
+        'progress: $progress, timestamp: $timestamp)';
+  }
+
+  @override
+  bool operator ==(covariant JobStatus other) {
+    if (identical(this, other)) return true;
+
+    return other.jobId == jobId &&
+        other.status == status &&
+        other.progress == progress &&
+        other.timestamp == timestamp;
+  }
+
+  @override
+  int get hashCode {
+    return jobId.hashCode ^
+        status.hashCode ^
+        progress.hashCode ^
+        timestamp.hashCode;
+  }
 }
 
 class StorageInfo {
@@ -234,11 +329,7 @@ class WorkerStatus {
     return toJson();
   }
 
-  WorkerStatus copyWith({
-    String? workerId,
-    bool? running,
-    int? ttlRemaining,
-  }) {
+  WorkerStatus copyWith({String? workerId, bool? running, int? ttlRemaining}) {
     return WorkerStatus(
       workerId: workerId ?? this.workerId,
       running: running ?? this.running,
@@ -250,10 +341,7 @@ class WorkerStatus {
 /// Workers list response model
 @immutable
 class WorkersListResponse {
-  const WorkersListResponse({
-    required this.workers,
-    required this.total,
-  });
+  const WorkersListResponse({required this.workers, required this.total});
 
   factory WorkersListResponse.fromJson(Map<String, dynamic> json) {
     return WorkersListResponse(
@@ -271,20 +359,14 @@ class WorkersListResponse {
   final int total;
 
   Map<String, dynamic> toJson() {
-    return {
-      'workers': workers.map((e) => e.toJson()).toList(),
-      'total': total,
-    };
+    return {'workers': workers.map((e) => e.toJson()).toList(), 'total': total};
   }
 
   Map<String, dynamic> toMap() {
     return toJson();
   }
 
-  WorkersListResponse copyWith({
-    List<WorkerStatus>? workers,
-    int? total,
-  }) {
+  WorkersListResponse copyWith({List<WorkerStatus>? workers, int? total}) {
     return WorkersListResponse(
       workers: workers ?? this.workers,
       total: total ?? this.total,
@@ -328,11 +410,7 @@ class StorageSize {
     return toJson();
   }
 
-  StorageSize copyWith({
-    int? totalBytes,
-    double? totalMb,
-    int? jobCount,
-  }) {
+  StorageSize copyWith({int? totalBytes, double? totalMb, int? jobCount}) {
     return StorageSize(
       totalBytes: totalBytes ?? this.totalBytes,
       totalMb: totalMb ?? this.totalMb,
@@ -344,10 +422,7 @@ class StorageSize {
 /// Cleanup response model
 @immutable
 class CleanupResponse {
-  const CleanupResponse({
-    required this.message,
-    required this.deletedCount,
-  });
+  const CleanupResponse({required this.message, required this.deletedCount});
 
   factory CleanupResponse.fromJson(Map<String, dynamic> json) {
     return CleanupResponse(
@@ -363,20 +438,14 @@ class CleanupResponse {
   final int deletedCount;
 
   Map<String, dynamic> toJson() {
-    return {
-      'message': message,
-      'deleted_count': deletedCount,
-    };
+    return {'message': message, 'deleted_count': deletedCount};
   }
 
   Map<String, dynamic> toMap() {
     return toJson();
   }
 
-  CleanupResponse copyWith({
-    String? message,
-    int? deletedCount,
-  }) {
+  CleanupResponse copyWith({String? message, int? deletedCount}) {
     return CleanupResponse(
       message: message ?? this.message,
       deletedCount: deletedCount ?? this.deletedCount,

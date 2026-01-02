@@ -31,7 +31,7 @@ void main() {
       await ensureBothServicesHealthy();
 
       // Setup admin session
-      adminSession = SessionManager.initialize(createTestServerConfig());
+      adminSession = SessionManager.initialize(await createTestServerConfig());
       await adminSession.login(
         adminUsername,
         adminPassword,

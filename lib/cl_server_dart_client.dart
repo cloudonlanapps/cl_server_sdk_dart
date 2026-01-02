@@ -47,6 +47,18 @@ export 'src/core/models/compute_models.dart';
 export 'src/services/auth_service.dart';
 export 'src/services/store_service.dart';
 export 'src/services/compute_service.dart';
+export 'src/services/mqtt_service.dart';
+
+// Compute plugin clients
+export 'src/compute/plugins/clip_embedding_client.dart';
+export 'src/compute/plugins/dino_embedding_client.dart';
+export 'src/compute/plugins/exif_client.dart';
+export 'src/compute/plugins/face_detection_client.dart';
+export 'src/compute/plugins/face_embedding_client.dart';
+export 'src/compute/plugins/hash_client.dart';
+export 'src/compute/plugins/hls_streaming_client.dart';
+export 'src/compute/plugins/image_conversion_client.dart';
+export 'src/compute/plugins/media_thumbnail_client.dart';
 
 // Session management
 export 'src/session/session_manager.dart';

@@ -67,7 +67,9 @@ void main() {
     test('getCurrentUser returns User on success with token', () async {
       final mockClient = MockHttpClient({
         'GET $authServiceBaseUrl/users/me': http.Response(
-          '''{"id": 1, "username": "admin", "is_admin": true, "is_active": true, "created_at": "2024-01-15T10:30:00", "permissions": ["*"]}''',
+          '{"id": 1, "username": "admin", "is_admin": true, '
+          '"is_active": true, "created_at": "2024-01-15T10:30:00", '
+          '"permissions": ["*"]}',
           200,
         ),
       });
@@ -97,16 +99,20 @@ void main() {
         httpClient: mockClient,
       );
 
-      expect(
-        authService.getCurrentUser,
-        throwsA(isA<AuthException>()),
-      );
+      expect(authService.getCurrentUser, throwsA(isA<AuthException>()));
     });
 
     test('listUsers returns list of users', () async {
       final mockClient = MockHttpClient({
         'GET $authServiceBaseUrl/users/?skip=0&limit=100': http.Response(
-          '''[{"id": 1, "username": "admin", "is_admin": true, "is_active": true, "created_at": "2024-01-15T10:30:00", "permissions": ["*"]}, {"id": 2, "username": "user", "is_admin": false, "is_active": true, "created_at": "2024-01-15T10:35:00", "permissions": ["read:data"]}]''',
+          '['
+          '{"id": 1, "username": "admin", "is_admin": true, '
+          '"is_active": true, "created_at": "2024-01-15T10:30:00", '
+          '"permissions": ["*"]}, '
+          '{"id": 2, "username": "user", "is_admin": false, '
+          '"is_active": true, "created_at": "2024-01-15T10:35:00", '
+          '"permissions": ["read:data"]}'
+          ']',
           200,
         ),
       });
@@ -126,7 +132,9 @@ void main() {
     test('getUser returns single user by ID', () async {
       final mockClient = MockHttpClient({
         'GET $authServiceBaseUrl/users/1': http.Response(
-          '''{"id": 1, "username": "admin", "is_admin": true, "is_active": true, "created_at": "2024-01-15T10:30:00", "permissions": ["*"]}''',
+          '{"id": 1, "username": "admin", "is_admin": true, '
+          '"is_active": true, "created_at": "2024-01-15T10:30:00", '
+          '"permissions": ["*"]}',
           200,
         ),
       });
@@ -165,7 +173,9 @@ void main() {
     test('createUser returns created user', () async {
       final mockClient = MockHttpClient({
         'POST $authServiceBaseUrl/users/': http.Response(
-          '''{"id": 2, "username": "newuser", "is_admin": false, "is_active": true, "created_at": "2024-01-15T10:35:00", "permissions": ["read:data"]}''',
+          '{"id": 2, "username": "newuser", "is_admin": false, '
+          '"is_active": true, "created_at": "2024-01-15T10:35:00", '
+          '"permissions": ["read:data"]}',
           201,
         ),
       });
@@ -188,7 +198,9 @@ void main() {
     test('updateUser returns updated user', () async {
       final mockClient = MockHttpClient({
         'PUT $authServiceBaseUrl/users/2': http.Response(
-          '''{"id": 2, "username": "newuser", "is_admin": true, "is_active": true, "created_at": "2024-01-15T10:35:00", "permissions": ["admin"]}''',
+          '{"id": 2, "username": "newuser", "is_admin": true, '
+          '"is_active": true, "created_at": "2024-01-15T10:35:00", '
+          '"permissions": ["admin"]}',
           200,
         ),
       });
@@ -198,10 +210,7 @@ void main() {
         token: 'test-token',
         httpClient: mockClient,
       );
-      final user = await authService.updateUser(
-        2,
-        isAdmin: true,
-      );
+      final user = await authService.updateUser(2, isAdmin: true);
 
       expect(user.isAdmin, true);
     });

@@ -7,6 +7,16 @@ import 'package:cl_server_dart_client/src/core/models/compute_models.dart'
     show CleanupResult, CreateJobResponse, Job, StorageInfo, WorkerCapabilities;
 import 'package:http/http.dart' as http;
 
+import '../compute/plugins/clip_embedding_client.dart';
+import '../compute/plugins/dino_embedding_client.dart';
+import '../compute/plugins/exif_client.dart';
+import '../compute/plugins/face_detection_client.dart';
+import '../compute/plugins/face_embedding_client.dart';
+import '../compute/plugins/hash_client.dart';
+import '../compute/plugins/hls_streaming_client.dart';
+import '../compute/plugins/image_conversion_client.dart';
+import '../compute/plugins/media_thumbnail_client.dart';
+
 class ComputeService {
   ComputeService(
     this.baseUrl, {
@@ -134,10 +144,14 @@ class ComputeService {
   }
 
   /// ----------------------------
-  /// Wait for completion — MQTT
-  /// (Implementation unchanged — same topic + payload pattern)
+  /// Wait for completion — MQTT (DEPRECATED)
   /// ----------------------------
 
+  @Deprecated(
+    'MqttService provides JobStatus stream and does not depend on '
+    'ComputeService. '
+    'See MqttService documentation for usage examples.',
+  )
   Future<Job> waitForJobCompletionWithMQTT({
     required String jobId,
     required Stream<Job> jobUpdateStream,
@@ -162,4 +176,78 @@ class ComputeService {
     final caps = await getCapabilities();
     return caps.containsKey(taskType);
   }
+
+  /// ----------------------------
+  /// Plugin Clients
+  /// ----------------------------
+
+  ClipEmbeddingClient? _clipEmbedding;
+
+  /// CLIP embedding plugin client
+  ///
+  /// Generates 512-dimensional CLIP embeddings from images.
+  ClipEmbeddingClient get clipEmbedding =>
+      _clipEmbedding ??= ClipEmbeddingClient(this);
+
+  DinoEmbeddingClient? _dinoEmbedding;
+
+  /// DINO embedding plugin client
+  ///
+  /// Generates 384-dimensional DINO embeddings from images.
+  DinoEmbeddingClient get dinoEmbedding =>
+      _dinoEmbedding ??= DinoEmbeddingClient(this);
+
+  ExifClient? _exif;
+
+  /// EXIF metadata extraction plugin client
+  ///
+  /// Extracts EXIF metadata from images.
+  ExifClient get exif => _exif ??= ExifClient(this);
+
+  FaceDetectionClient? _faceDetection;
+
+  /// Face detection plugin client
+  ///
+  /// Detects faces in images with bounding boxes.
+  FaceDetectionClient get faceDetection =>
+      _faceDetection ??= FaceDetectionClient(this);
+
+  FaceEmbeddingClient? _faceEmbedding;
+
+  /// Face embedding plugin client
+  ///
+  /// Generates 128-dimensional face embeddings.
+  FaceEmbeddingClient get faceEmbedding =>
+      _faceEmbedding ??= FaceEmbeddingClient(this);
+
+  HashClient? _hash;
+
+  /// Perceptual hash plugin client
+  ///
+  /// Computes perceptual hashes (phash, dhash) for images.
+  HashClient get hash => _hash ??= HashClient(this);
+
+  HlsStreamingClient? _hlsStreaming;
+
+  /// HLS streaming plugin client
+  ///
+  /// Generates HLS manifests for video streaming.
+  HlsStreamingClient get hlsStreaming =>
+      _hlsStreaming ??= HlsStreamingClient(this);
+
+  ImageConversionClient? _imageConversion;
+
+  /// Image conversion plugin client
+  ///
+  /// Converts images between formats with quality control.
+  ImageConversionClient get imageConversion =>
+      _imageConversion ??= ImageConversionClient(this);
+
+  MediaThumbnailClient? _mediaThumbnail;
+
+  /// Media thumbnail plugin client
+  ///
+  /// Generates thumbnails from images and videos.
+  MediaThumbnailClient get mediaThumbnail =>
+      _mediaThumbnail ??= MediaThumbnailClient(this);
 }

@@ -123,8 +123,8 @@ class TokenStorage {
       // Handle empty string as special case - encrypt adds a marker
       final passwordToEncrypt = password.isEmpty ? '___EMPTY___' : password;
       final encrypted = encrypter.encrypt(passwordToEncrypt, iv: _iv);
-      final encryptedString =
-          '${encrypted.base64}:${_iv.base64}'; // Store IV with cipher
+      // Store IV with cipher
+      final encryptedString = '${encrypted.base64}:${_iv.base64}';
       _cache[_encryptedPasswordKey] = encryptedString;
     } on Exception catch (e) {
       throw PasswordEncryptionException('Failed to encrypt password: $e');

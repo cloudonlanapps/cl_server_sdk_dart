@@ -7,8 +7,8 @@ void main() {
   group('SessionManager Tests', () {
     late SessionManager manager;
 
-    setUp(() {
-      manager = SessionManager.initialize(createTestServerConfig());
+    setUp(() async {
+      manager = SessionManager.initialize(await createTestServerConfig());
     });
 
     group('Initialization', () {

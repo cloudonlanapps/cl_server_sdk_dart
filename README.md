@@ -18,6 +18,23 @@ A comprehensive Dart client library for interacting with CL Server microservices
 - 🔌 HTTP client wrapper with intelligent error mapping
 - 💾 Built-in token persistence and encryption
 - ⚡ Automatic token refresh with configurable strategies
+- 🎨 **9 Plugin Clients**: CLIP, DINO, EXIF, Face Detection, Face Embedding, Hash, HLS Streaming, Image Conversion, Media Thumbnail
+- 📡 **MQTT Real-time Monitoring**: Primary workflow for job status tracking
+- 🔄 **HTTP Polling**: Secondary workflow as fallback
+- 👥 **UserManager Module**: High-level user management with command pattern architecture
+- 🏪 **StoreManager Module**: High-level store entity management API
+
+## Unique Features
+
+This SDK includes some features not yet present in the Python SDK:
+
+- **UserManager Module**: High-level user management API with command pattern architecture
+- **StoreManager Module**: High-level store entity management API
+- **User Prefixing System**: Automatic prefixing for utility-created users (prevents namespace conflicts)
+- **Command Pattern**: Clean architecture for store and user operations with Result wrapper pattern
+- **Dual Workflow Architecture**: MQTT primary workflow with HTTP polling fallback
+
+See [PYSDK_ADOPTION.md](./PYSDK_ADOPTION.md) for details on these features and recommendations for adopting them in the Python SDK.
 
 ## Installation
 
@@ -109,7 +126,7 @@ final versions = await storeService.getVersions(entity.id);
 
 #### ComputeService
 
-Manage compute jobs and workers.
+Manage compute jobs and workers with 9 plugin clients.
 
 ```dart
 final computeService = ComputeService(
@@ -117,14 +134,48 @@ final computeService = ComputeService(
   token: authToken,
 );
 
-// Create job
-final job = await computeService.createJob(
-  taskType: 'image_resize',
+// Use plugin clients for typed operations
+final job = await computeService.clipEmbedding.embedImage(
+  image: File('photo.jpg'),
+  wait: true,  // Use HTTP polling
+  timeout: Duration(seconds: 30),
+);
+
+// Or use MQTT for real-time monitoring
+final mqttService = MqttService(
+  brokerUrl: 'localhost',
+  brokerPort: 1883,
+);
+await mqttService.connect();
+
+final job2 = await computeService.clipEmbedding.embedImage(
+  image: File('photo.jpg'),
+  onProgress: (status) => print('Progress: ${status.progress}%'),
+  onComplete: (status) async {
+    final fullJob = await computeService.getJob(status.jobId);
+    print('Result: ${fullJob.taskOutput}');
+  },
+);
+
+// Available plugins:
+// - clipEmbedding (512-dim CLIP embeddings)
+// - dinoEmbedding (384-dim DINO embeddings)
+// - exif (EXIF metadata extraction)
+// - faceDetection (Face detection with bounding boxes)
+// - faceEmbedding (128-dim face embeddings)
+// - hash (Perceptual hashing - phash, dhash)
+// - hlsStreaming (HLS manifest generation)
+// - imageConversion (Format conversion with quality control)
+// - mediaThumbnail (Thumbnail generation)
+
+// Legacy: Create job manually
+final manualJob = await computeService.createJob(
+  taskType: 'clip_embedding',
   metadata: {'width': 800, 'height': 600},
 );
 
 // Get job status
-final status = await computeService.getJobStatus(job.jobId);
+final status = await computeService.getJobStatus(manualJob.jobId);
 
 // List workers
 final workers = await computeService.listWorkers();

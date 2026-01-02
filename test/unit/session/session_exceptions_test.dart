@@ -74,8 +74,9 @@ void main() {
       });
 
       test('handles special characters in details', () {
-        final exception =
-            RefreshFailedException('Error: "Invalid" token & failed');
+        final exception = RefreshFailedException(
+          'Error: "Invalid" token & failed',
+        );
         expect(
           exception.message,
           contains('Error: "Invalid" token & failed'),
