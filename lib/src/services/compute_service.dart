@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cl_server_dart_client/src/core/http_client.dart'
     show HttpClientWrapper;
@@ -92,6 +93,16 @@ class ComputeService {
 
   Future<void> deleteJob(String jobId) async {
     await _httpClient.delete('/compute/jobs/$jobId');
+  }
+
+  /// Download file from job's output directory
+  ///
+  /// [jobId] - Job ID
+  /// [filePath] - Relative file path from task output
+  /// Returns file content as bytes
+  Future<Uint8List> downloadJobFile(String jobId, String filePath) async {
+    final response = await _httpClient.getBytes('/compute/jobs/$jobId/files/$filePath');
+    return response;
   }
 
   /// ----------------------------

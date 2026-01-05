@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -180,6 +181,36 @@ class HttpClientWrapper {
       final uri = _buildUri(endpoint, queryParameters);
       final response = await _httpClient.delete(uri, headers: _buildHeaders());
       return _handleResponse(response);
+    } on CLServerException {
+      rethrow;
+    } catch (e) {
+      throw NetworkException(message: 'Network error: $e');
+    }
+  }
+
+  /// Make a GET request and return raw bytes
+  Future<Uint8List> getBytes(String endpoint) async {
+    try {
+      final uri = _buildUri(endpoint, null);
+      final response = await _httpClient.get(uri, headers: _buildHeaders());
+
+      // For non-200 responses, try to parse error and throw appropriate exception
+      if (response.statusCode != 200) {
+        try {
+          final dynamic responseBody = jsonDecode(response.body);
+          // Reuse the same error handling logic from _handleResponse
+          _handleResponse(response);
+        } catch (e) {
+          if (e is CLServerException) rethrow;
+          // If JSON parsing fails, throw generic exception
+          throw CLServerException(
+            statusCode: response.statusCode,
+            message: 'HTTP ${response.statusCode}',
+          );
+        }
+      }
+
+      return response.bodyBytes;
     } on CLServerException {
       rethrow;
     } catch (e) {
