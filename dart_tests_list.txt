@@ -1,0 +1,124 @@
+test/auth_client_test.dart:      test('test_auth_client_default_config', () {
+test/auth_client_test.dart:      test('test_auth_client_custom_base_url', () {
+test/auth_client_test.dart:      test('test_login_success', () async {
+test/auth_client_test.dart:      test('test_login_invalid_credentials', () async {
+test/auth_client_test.dart:      test('test_refresh_token_success', () async {
+test/auth_client_test.dart:      test('test_get_current_user_success', () async {
+test/auth_client_test.dart:      test('test_create_user_success', () async {
+test/auth_client_test.dart:      test('test_list_users_success', () async {
+test/config_test.dart:    test('test_default_values', () {
+test/config_test.dart:    test('test_mqtt_config', () {
+test/config_test.dart:    test('test_core_endpoints', () {
+test/config_test.dart:    test('test_plugin_endpoints', () {
+test/config_test.dart:    test('test_get_plugin_endpoint_success', () {
+test/config_test.dart:    test('test_get_plugin_endpoint_invalid', () {
+test/config_test.dart:    test('test_job_monitoring_config', () {
+test/config_test.dart:    test('test_worker_validation_config', () {
+test/store_client_test.dart:      test('test_init_default', () {
+test/store_client_test.dart:      test('test_init_with_auth', () {
+test/store_client_test.dart:      test('test_list_entities', () async {
+test/store_client_test.dart:      test('test_read_entity', () async {
+test/store_client_test.dart:      test('test_create_entity_collection', () async {
+test/store_client_test.dart:      test('test_update_entity', () async {
+test/store_client_test.dart:      test('test_update_entity_with_patch', () async {
+test/store_manager_test.dart:    test('test_list_entities_success', () async {
+test/store_manager_test.dart:    test('test_create_entity', () async {
+test/store_manager_test.dart:    test('test_monitor_entity', () async {
+test/store_manager_test.dart:    test('test_wait_for_entity_status_success', () async {
+test/store_manager_test.dart:    test('test_wait_for_entity_status_timeout', () async {
+test/session_manager_test.dart:    test('test_session_manager_default_config', () {
+test/session_manager_test.dart:    test('test_login_success', () async {
+test/session_manager_test.dart:    test('test_login_invalid_credentials', () async {
+test/session_manager_test.dart:    test('test_logout', () async {
+test/session_manager_test.dart:    test('test_get_current_user_cached', () async {
+test/session_manager_test.dart:    test('test_get_current_user_fetch_from_server', () async {
+test/session_manager_test.dart:    test('test_get_current_user_guest_mode', () async {
+test/session_manager_test.dart:    test('test_get_token_not_authenticated', () {
+test/session_manager_test.dart:    test('test_create_compute_client_guest_mode', () {
+test/session_manager_test.dart:    test('test_create_compute_client_authenticated', () async {
+test/session_manager_test.dart:    test('test_create_store_manager_not_authenticated', () {
+test/store_models_test.dart:    test('test_entity_serialization', () {
+test/store_models_test.dart:    test('test_list_response_serialization', () {
+test/auth_models_test.dart:      test('test_token_response_valid', () {
+test/auth_models_test.dart:      test('test_token_response_to_json', () {
+test/auth_models_test.dart:      test('test_token_response_missing_fields', () {
+test/auth_models_test.dart:      test('test_public_key_response_valid', () {
+test/auth_models_test.dart:      test('test_user_response_valid', () {
+test/auth_models_test.dart:      test('test_user_response_defaults', () {
+test/auth_models_test.dart:      test('test_user_response_to_json', () {
+test/auth_models_test.dart:      test('test_user_create_request_valid', () {
+test/auth_models_test.dart:      test('test_user_create_request_defaults', () {
+test/auth_models_test.dart:      test('test_user_create_request_to_json', () {
+test/auth_models_test.dart:      test('test_user_update_request_all_fields', () {
+test/auth_models_test.dart:      test('test_user_update_request_partial', () {
+test/auth_models_test.dart:      test('test_user_update_request_to_json_excludes_none', () {
+test/integration/store_integration_test.dart:    test('test_store_crud_flow', () async {
+test/integration/store_integration_test.dart:    test('test_mqtt_monitoring', () async {
+test/integration/auth_integration_test.dart:    test('test_login_success', () async {
+test/integration/auth_integration_test.dart:    test('test_login_failure', () async {
+test/integration/auth_integration_test.dart:    test('test_create_clients_authenticated', () async {
+test/integration/compute_integration_test.dart:    test('test_compute_submit_job', () async {
+test/integration/compute_integration_test.dart:    test('test_compute_plugins', () async {
+test/models_test.dart:    test('test_job_response_basic', () {
+test/models_test.dart:    test('test_job_response_with_output', () {
+test/models_test.dart:    test('test_worker_capabilities_response', () {
+test/models_test.dart:    test('test_worker_capability', () {
+test/compute_client_test.dart:      test('test_init_with_defaults', () async {
+test/compute_client_test.dart:      test('test_init_with_custom_parameters', () async {
+test/compute_client_test.dart:      test('test_get_job_success', () async {
+test/compute_client_test.dart:      test('test_delete_job_success', () async {
+test/compute_client_test.dart:      test('test_download_job_file_success', () async {
+test/compute_client_test.dart:      test('test_get_capabilities_success', () async {
+test/compute_client_test.dart:      test('test_wait_for_workers_success', () async {
+test/compute_client_test.dart:      test('test_wait_for_workers_no_requirements', () async {
+test/compute_client_test.dart:      test('test_wait_for_workers_timeout', () async {
+test/compute_client_test.dart:      test('test_subscribe_job_updates', () {
+test/compute_client_test.dart:      test('test_unsubscribe', () {
+test/compute_client_test.dart:      test('test_wait_for_job_success', () async {
+test/compute_client_test.dart:      test('test_wait_for_job_timeout', () async {
+test/exceptions_test.dart:    test('test_compute_client_error', () {
+test/exceptions_test.dart:    test('test_job_not_found_error', () {
+test/exceptions_test.dart:    test('test_job_failed_error', () {
+test/exceptions_test.dart:    test('test_authentication_error', () {
+test/exceptions_test.dart:    test('test_permission_error', () {
+test/exceptions_test.dart:    test('test_worker_unavailable_error', () {
+test/mqtt_monitor_test.dart:    test('test_init_connects_to_broker', () async {
+test/mqtt_monitor_test.dart:    test('test_subscribe_job_updates_returns_subscription_id', () async {
+test/mqtt_monitor_test.dart:    test('test_two_callback_system', () async {
+test/mqtt_monitor_test.dart:    test('test_worker_capability_tracking', () async {
+test/mqtt_monitor_test.dart:    test('test_subscribe_worker_updates', () async {
+test/mqtt_monitor_test.dart:    test('test_wait_for_capability_timeout', () async {
+test/mqtt_monitor_test.dart:    test('test_wait_for_capability_success', () async {
+test/mqtt_monitor_test.dart:    test('test_worker_disconnect_lwt', () async {
+test/mqtt_monitor_test.dart:    test('test_close', () async {
+test/auth_test.dart:    test('test_no_auth_provider', () {
+test/auth_test.dart:    test('test_jwt_auth_provider', () {
+test/auth_test.dart:    test('test_jwt_auth_provider_with_token', () {
+test/auth_test.dart:    test('test_jwt_auth_provider_no_arguments', () {
+test/auth_test.dart:    test('test_jwt_auth_provider_get_token', () {
+test/auth_test.dart:    test('test_should_refresh_expired_token', () {
+test/auth_test.dart:    test('test_should_refresh_token_expiring_soon', () {
+test/auth_test.dart:    test('test_should_not_refresh_fresh_token', () {
+test/auth_test.dart:    test('test_should_refresh_boundary', () {
+test/auth_test.dart:    test('test_should_refresh_no_expiry_returns_false', () {
+test/auth_test.dart:    test('test_should_refresh_invalid_token_returns_false', () {
+test/auth_test.dart:    test('test_should_refresh_float_timestamp', () {
+test/auth_test.dart:    test('test_parse_token_expiry_invalid_format', () {
+test/auth_test.dart:    test('test_parse_token_expiry_invalid_base64', () {
+test/auth_test.dart:    test('test_parse_token_expiry_invalid_json', () {
+test/auth_test.dart:    test('test_parse_token_expiry_non_numeric_exp', () {
+test/auth_test.dart:    test('test_parse_token_expiry_with_padding', () {
+test/server_config_test.dart:    test('test_server_config_defaults', () {
+test/server_config_test.dart:    test('test_server_config_custom_values', () {
+test/server_config_test.dart:    test('test_server_config_partial_custom', () {
+test/server_config_test.dart:    test('test_server_config_equality', () {
+test/server_config_test.dart:    test('test_server_config_from_env', () {
+test/plugins_test.dart:    test('test_base_plugin_init', () {
+test/plugins_test.dart:    test('test_base_plugin_submit_job_not_implemented', () async {
+test/plugins_test.dart:    test('test_base_plugin_submit_with_files', () async {
+test/plugins_test.dart:    test('test_base_plugin_submit_with_files_and_wait', () async {
+test/plugins_test.dart:    test('test_base_plugin_submit_with_callbacks', () async {
+test/plugins_test.dart:    test('test_base_plugin_file_not_found', () async {
+test/plugins_test.dart:    test('test_all_plugins_init', () {
+test/plugins_test.dart:    test('test_clip_embedding_embed_image', () async {
+test/plugins_test.dart:    test('test_image_conversion_convert', () async {

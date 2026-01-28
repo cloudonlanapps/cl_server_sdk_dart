@@ -1,0 +1,487 @@
+import 'dart:async';
+
+import 'package:uuid/uuid.dart';
+
+import '../auth.dart';
+import '../clients/store_client.dart';
+import '../exceptions.dart';
+import '../models/intelligence_models.dart';
+import '../models/store_models.dart';
+import '../mqtt_monitor.dart';
+import '../server_config.dart';
+import '../types.dart';
+
+/// High-level manager for store operations.
+class StoreManager {
+  StoreManager(this.storeClient, [this._config, MQTTJobMonitor? mqttMonitor])
+    : _mqttMonitor = mqttMonitor;
+
+  // Factory constructors
+
+  factory StoreManager.guest({
+    String baseUrl = 'http://localhost:8001',
+    Duration timeout = const Duration(seconds: 30),
+  }) {
+    // Guest mode
+    return StoreManager(StoreClient(baseUrl: baseUrl, timeout: timeout));
+  }
+
+  factory StoreManager.authenticated({
+    required ServerConfig config,
+    String Function()? getCachedToken,
+    Future<String> Function()? getValidTokenAsync,
+    String? baseUrl,
+    Duration timeout = const Duration(seconds: 30),
+  }) {
+    final authProvider = JWTAuthProvider(
+      getCachedToken: getCachedToken,
+      getValidTokenAsync: getValidTokenAsync,
+    );
+
+    return StoreManager(
+      StoreClient(
+        baseUrl: baseUrl ?? config.storeUrl,
+        authProvider: authProvider,
+        timeout: timeout,
+      ),
+      config,
+    );
+  }
+  final StoreClient storeClient;
+  MQTTJobMonitor? _mqttMonitor;
+  ServerConfig? _config;
+  final Map<String, String> _mqttSubscriptions = {};
+
+  // MQTT related
+
+  Future<MQTTJobMonitor> _getMqttMonitor() async {
+    if (_mqttMonitor != null) return _mqttMonitor!;
+
+    final broker = _config?.mqttBroker ?? 'localhost';
+    final port = _config?.mqttPort ?? 1883;
+
+    _mqttMonitor = getMqttMonitor(broker: broker, port: port);
+    // Note: Python connects in init, but here we might want to connect lazily or explicit await?
+    // MqttMonitor connect is async.
+    // We should probably rely on user to connect monitor or implicitly connect?
+    // Python code _connect() is called in init.
+    // Dart MqttClient connect is async future.
+    // We can't await in sync getter.
+    // We'll rely on explicit connection or check later.
+
+    if (!_mqttMonitor!.isConnected) {
+      await _mqttMonitor!.connect();
+    }
+
+    return _mqttMonitor!;
+  }
+
+  Future<void> close() async {
+    storeClient.close();
+    if (_mqttMonitor != null) {
+      releaseMqttMonitor(_mqttMonitor!);
+      _mqttMonitor = null;
+    }
+  }
+
+  StoreOperationResult<T> _handleError<T>(dynamic error) {
+    if (error is AuthenticationError) {
+      return StoreOperationResult<T>(
+        error: 'Unauthorized: Invalid or missing token',
+      );
+    } else if (error is PermissionError) {
+      return StoreOperationResult<T>(
+        error: 'Forbidden: Insufficient permissions',
+      );
+    } else if (error is JobNotFoundError) {
+      return StoreOperationResult<T>(error: error.message);
+    } else if (error is ComputeClientError) {
+      return StoreOperationResult<T>(error: error.message);
+    } else {
+      return StoreOperationResult<T>(error: 'Unexpected error: $error');
+    }
+  }
+
+  // Read operations
+
+  Future<StoreOperationResult<EntityListResponse>> listEntities({
+    int page = 1,
+    int pageSize = 20,
+    String? searchQuery,
+    bool excludeDeleted = false,
+  }) async {
+    try {
+      final result = await storeClient.listEntities(
+        page: page,
+        pageSize: pageSize,
+        searchQuery: searchQuery,
+        excludeDeleted: excludeDeleted,
+      );
+      return StoreOperationResult(
+        success: 'Entities retrieved successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<Entity>> readEntity(
+    int entityId, {
+    int? version,
+  }) async {
+    try {
+      final result = await storeClient.readEntity(entityId, version: version);
+      return StoreOperationResult(
+        success: 'Entity retrieved successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<List<EntityVersion>>> getVersions(
+    int entityId,
+  ) async {
+    try {
+      final result = await storeClient.getVersions(entityId);
+      return StoreOperationResult(
+        success: 'Version history retrieved successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<String> monitorEntity(
+    int entityId,
+    void Function(EntityStatusPayload) callback,
+  ) async {
+    final monitor = await _getMqttMonitor();
+
+    // Determine store port
+    var storePort = 8001;
+    if (_config != null) {
+      try {
+        final uri = Uri.parse(_config!.storeUrl);
+        if (uri.hasPort) storePort = uri.port;
+      } on Object catch (_) {}
+    }
+
+    final internalSubId = monitor.subscribeEntityStatus(
+      entityId,
+      storePort,
+      callback,
+    );
+    final userSubId = const Uuid().v4();
+    _mqttSubscriptions[userSubId] = internalSubId;
+    return userSubId;
+  }
+
+  void stopMonitoring(String subscriptionId) {
+    if (_mqttSubscriptions.containsKey(subscriptionId)) {
+      final internalId = _mqttSubscriptions[subscriptionId]!;
+      if (_mqttMonitor != null) {
+        _mqttMonitor!.unsubscribeEntityStatus(internalId);
+      }
+      _mqttSubscriptions.remove(subscriptionId);
+    }
+  }
+
+  Future<EntityStatusPayload> waitForEntityStatus(
+    int entityId, {
+    String targetStatus = 'completed',
+    Duration timeout = const Duration(seconds: 60),
+    bool failOnError = true,
+  }) async {
+    final completer = Completer<EntityStatusPayload>();
+
+    void callback(EntityStatusPayload payload) {
+      if (completer.isCompleted) return;
+
+      if (payload.status == targetStatus) {
+        completer.complete(payload);
+      } else if (failOnError && payload.status == 'failed') {
+        completer.completeError('Entity processing failed: ${payload.status}');
+      }
+    }
+
+    final subId = await monitorEntity(entityId, callback);
+
+    try {
+      return await completer.future.timeout(timeout);
+    } on TimeoutException {
+      throw TimeoutException(
+        'Timeout waiting for entity $entityId to reach $targetStatus',
+      );
+    } finally {
+      stopMonitoring(subId);
+    }
+  }
+
+  // Write operations
+
+  Future<StoreOperationResult<Entity>> createEntity({
+    String? label,
+    String? description,
+    bool isCollection = false,
+    int? parentId,
+    String? imagePath,
+  }) async {
+    try {
+      final result = await storeClient.createEntity(
+        isCollection: isCollection,
+        label: label,
+        description: description,
+        parentId: parentId,
+        imagePath: imagePath,
+      );
+      return StoreOperationResult(
+        success: 'Entity created successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<Entity>> updateEntity(
+    int entityId, {
+    required String label,
+    String? description,
+    bool isCollection = false,
+    int? parentId,
+    String? imagePath,
+  }) async {
+    try {
+      final result = await storeClient.updateEntity(
+        entityId,
+        isCollection: isCollection,
+        label: label,
+        description: description,
+        parentId: parentId,
+        imagePath: imagePath,
+      );
+      return StoreOperationResult(
+        success: 'Entity updated successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<Entity>> patchEntity(
+    int entityId, {
+    Object? label = const Unset(),
+    Object? description = const Unset(),
+    Object? parentId = const Unset(),
+    Object? isDeleted = const Unset(),
+    Object? isCollection = const Unset(),
+  }) async {
+    try {
+      final result = await storeClient.patchEntity(
+        entityId,
+        label: label,
+        description: description,
+        parentId: parentId,
+        isDeleted: isDeleted,
+        isCollection: isCollection,
+      );
+      return StoreOperationResult(
+        success: 'Entity patched successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<void>> deleteEntity(int entityId) async {
+    try {
+      // Soft delete first
+      await storeClient.patchEntity(entityId, isDeleted: true);
+    } on Object catch (_) {
+      // Ignore if fail? Python code checks error.
+    }
+
+    try {
+      await storeClient.deleteEntity(entityId);
+      return StoreOperationResult(
+        success: 'Entity deleted successfully',
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Admin
+
+  Future<StoreOperationResult<StoreConfig>> getConfig() async {
+    try {
+      final result = await storeClient.getConfig();
+      return StoreOperationResult(
+        success: 'Configuration retrieved successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<StoreConfig>> updateGuestMode({
+    required bool guestMode,
+  }) async {
+    try {
+      final result = await storeClient.updateGuestMode(guestMode: guestMode);
+      return StoreOperationResult(
+        success: 'Guest mode configuration updated successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<Map<String, dynamic>>> getMInsightStatus() async {
+    try {
+      final result = await storeClient.getMInsightStatus();
+      return StoreOperationResult(
+        success: 'MInsight status retrieved successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  // Intelligence
+
+  Future<StoreOperationResult<List<FaceResponse>>> getEntityFaces(
+    int entityId,
+  ) async {
+    try {
+      final result = await storeClient.getEntityFaces(entityId);
+      return StoreOperationResult(
+        success: 'Faces retrieved successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<List<EntityJobResponse>>> getEntityJobs(
+    int entityId,
+  ) async {
+    try {
+      final result = await storeClient.getEntityJobs(entityId);
+      return StoreOperationResult(
+        success: 'Jobs retrieved successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<List<int>>> downloadEntityClipEmbedding(
+    int entityId,
+  ) async {
+    try {
+      final result = await storeClient.downloadEntityClipEmbedding(entityId);
+      return StoreOperationResult(
+        success: 'CLIP embedding downloaded successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<List<int>>> downloadEntityDinoEmbedding(
+    int entityId,
+  ) async {
+    try {
+      final result = await storeClient.downloadEntityDinoEmbedding(entityId);
+      return StoreOperationResult(
+        success: 'DINO embedding downloaded successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<List<int>>> downloadFaceEmbedding(
+    int faceId,
+  ) async {
+    try {
+      final result = await storeClient.downloadFaceEmbedding(faceId);
+      return StoreOperationResult(
+        success: 'Face embedding downloaded successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<List<KnownPersonResponse>>>
+  getKnownPersons() async {
+    try {
+      final result = await storeClient.getKnownPersons();
+      return StoreOperationResult(
+        success: 'Known persons retrieved successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<KnownPersonResponse>> getKnownPerson(
+    int personId,
+  ) async {
+    try {
+      final result = await storeClient.getKnownPerson(personId);
+      return StoreOperationResult(
+        success: 'Known person details retrieved successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<List<FaceResponse>>> getPersonFaces(
+    int personId,
+  ) async {
+    try {
+      final result = await storeClient.getPersonFaces(personId);
+      return StoreOperationResult(
+        success: 'Person faces retrieved successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<KnownPersonResponse>> updateKnownPersonName(
+    int personId,
+    String name,
+  ) async {
+    try {
+      final result = await storeClient.updateKnownPersonName(personId, name);
+      return StoreOperationResult(
+        success: 'Person name updated successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+}

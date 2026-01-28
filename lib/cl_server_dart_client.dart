@@ -1,83 +1,35 @@
-/// Dart client library for CL Server microservices.
+/// Dart client for CoLAN Server.
 ///
-/// Provides clients for interacting with three CL Server services:
-/// - Authentication Service (Port 8000)
-/// - Store Service (Port 8001)
-/// - Compute Service (Port 8002)
-///
-/// Example usage:
-/// ```dart
-/// import 'package:cl_server_dart_client/cl_server_dart_client.dart';
-///
-/// // Create auth service client
-/// final authService = AuthService();
-///
-/// // Login
-/// final token = await authService.generateToken(
-///   username: 'admin',
-///   password: 'admin',
-/// );
-///
-/// // Create store service client with token
-/// final storeService = StoreService(token: token.accessToken);
-///
-/// // List entities
-/// final entities = await storeService.listEntities();
-/// ```
-// ignore_for_file: directives_ordering
-
+/// Provides access to Compute (inference) and Store (media/metadata) services.
 library;
 
-// Core exceptions
-export 'src/core/exceptions.dart';
-
-// Core HTTP client
-export 'src/core/http_client.dart';
-
-// Core configuration
-export 'src/core/server_config.dart';
-
-// Core models
-export 'src/core/models/base_response.dart';
-export 'src/core/models/auth_models.dart';
-export 'src/core/models/store_models.dart';
-export 'src/core/models/compute_models.dart';
-
-// Services
-export 'src/services/auth_service.dart';
-export 'src/services/store_service.dart';
-export 'src/services/compute_service.dart';
-export 'src/services/mqtt_service.dart';
-
-// Compute plugin clients
-export 'src/compute/plugins/clip_embedding_client.dart';
-export 'src/compute/plugins/dino_embedding_client.dart';
-export 'src/compute/plugins/exif_client.dart';
-export 'src/compute/plugins/face_detection_client.dart';
-export 'src/compute/plugins/face_embedding_client.dart';
-export 'src/compute/plugins/hash_client.dart';
-export 'src/compute/plugins/hls_streaming_client.dart';
-export 'src/compute/plugins/image_conversion_client.dart';
-export 'src/compute/plugins/media_thumbnail_client.dart';
-
-// Session management
-export 'src/session/session_manager.dart';
-export 'src/session/session_notifier.dart';
-export 'src/session/session_state.dart';
-export 'src/session/session_exceptions.dart';
-export 'src/session/token_storage.dart';
-export 'src/session/utils/jwt_utils.dart';
-
-// Store Manager module
-export 'src/store_manager/store_manager.dart';
-export 'src/store_manager/models/result_model.dart';
-export 'src/store_manager/exceptions.dart';
-
-// User Manager module
-export 'src/user_manager/user_manager.dart';
-export 'src/user_manager/models/result_model.dart';
-export 'src/user_manager/models/user_filter.dart';
-export 'src/user_manager/exceptions.dart';
-
-// Constants
-export 'src/utils/constants.dart';
+// Core
+export 'src/auth.dart';
+// Clients
+export 'src/clients/auth_client.dart';
+export 'src/clients/compute_client.dart';
+export 'src/clients/store_client.dart';
+export 'src/config.dart';
+export 'src/exceptions.dart';
+// Managers
+export 'src/managers/store_manager.dart';
+export 'src/models/auth_models.dart';
+export 'src/models/intelligence_models.dart';
+// Models
+export 'src/models/models.dart';
+export 'src/models/store_models.dart';
+export 'src/mqtt_monitor.dart';
+// Plugins
+export 'src/plugins/base.dart';
+export 'src/plugins/clip_embedding.dart';
+export 'src/plugins/dino_embedding.dart';
+export 'src/plugins/exif.dart';
+export 'src/plugins/face_detection.dart';
+export 'src/plugins/face_embedding.dart';
+export 'src/plugins/hash.dart';
+export 'src/plugins/hls_streaming.dart';
+export 'src/plugins/image_conversion.dart';
+export 'src/plugins/media_thumbnail.dart';
+export 'src/server_config.dart';
+export 'src/session_manager.dart';
+export 'src/types.dart';
