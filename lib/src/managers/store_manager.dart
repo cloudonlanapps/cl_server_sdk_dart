@@ -196,6 +196,32 @@ class StoreManager {
     Duration timeout = const Duration(seconds: 60),
     bool failOnError = true,
   }) async {
+    // Optimization: Check current status first.
+    // This allows us to return immediately for duplicates or fast jobs,
+    // and avoids issues with stale retained MQTT messages from ID reuse.
+    final entityResult = await readEntity(entityId);
+    if (entityResult.data != null) {
+      final intelligence = entityResult.data!.intelligenceData;
+      if (intelligence != null) {
+        if (intelligence.overallStatus == targetStatus) {
+          return EntityStatusPayload(
+            entityId: entityId,
+            status: intelligence.overallStatus,
+            timestamp: intelligence.lastUpdated,
+            faceDetection: intelligence.inferenceStatus.faceDetection,
+            faceCount: intelligence.faceCount,
+            clipEmbedding: intelligence.inferenceStatus.clipEmbedding,
+            dinoEmbedding: intelligence.inferenceStatus.dinoEmbedding,
+            faceEmbeddings: intelligence.inferenceStatus.faceEmbeddings,
+          );
+        } else if (failOnError && intelligence.overallStatus == 'failed') {
+          throw Exception(
+            'Entity processing failed: ${intelligence.overallStatus}',
+          );
+        }
+      }
+    }
+
     final completer = Completer<EntityStatusPayload>();
 
     void callback(EntityStatusPayload payload) {
@@ -203,26 +229,40 @@ class StoreManager {
 
       if (payload.status == targetStatus) {
         completer.complete(payload);
-      } else if (failOnError && payload.status == 'failed') {
-        completer.completeError('Entity processing failed: ${payload.status}');
+      } else if (payload.status == 'failed') {
+        if (failOnError) {
+          completer.completeError(
+            Exception('Entity processing failed: ${payload.status}'),
+          );
+        } else {
+          // If not failing on error, return the failed payload as a terminal state
+          completer.complete(payload);
+        }
       }
     }
 
-    final subId = await monitorEntity(entityId, callback);
-    return completer.future
-        .timeout(
-          timeout,
-          onTimeout: () {
-            stopMonitoring(subId);
-            throw Exception(
-              'Timeout waiting for entity $entityId status $targetStatus',
-            );
-          },
-        )
-        .then((value) {
-          stopMonitoring(subId);
-          return value;
-        });
+    String? subId;
+    try {
+      // Use the provided timeout for the entire operation including setup
+      subId = await monitorEntity(entityId, callback).timeout(timeout);
+      return await completer.future.timeout(
+        timeout,
+        onTimeout: () {
+          throw TimeoutException(
+            'Timeout waiting for entity $entityId to reach status $targetStatus',
+            timeout,
+          );
+        },
+      );
+    } on TimeoutException {
+      throw Exception(
+        'Timeout waiting for entity $entityId status $targetStatus after ${timeout.inSeconds}s',
+      );
+    } finally {
+      if (subId != null) {
+        stopMonitoring(subId);
+      }
+    }
   }
 
   /// Create a new entity (image or collection).

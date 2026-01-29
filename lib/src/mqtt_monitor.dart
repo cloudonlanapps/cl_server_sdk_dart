@@ -99,9 +99,21 @@ class MQTTJobMonitor {
 
   bool get isConnected => _connected;
 
+  Future<void>? _connectFuture;
+
   Future<void> connect() async {
     if (_connected) return;
+    if (_connectFuture != null) return _connectFuture;
 
+    _connectFuture = _doConnect();
+    try {
+      await _connectFuture;
+    } finally {
+      _connectFuture = null;
+    }
+  }
+
+  Future<void> _doConnect() async {
     final clientIdentifier = 'dart_client_${_uuid.v4()}';
     _client = _clientFactory != null
         ? _clientFactory(broker, clientIdentifier)
@@ -168,11 +180,14 @@ class MQTTJobMonitor {
   }
 
   void _onMessage(List<MqttReceivedMessage<MqttMessage>> c) {
+    if (c.isEmpty) return;
     final recvMsg = c[0].payload as MqttPublishMessage;
     final topic = c[0].topic;
     final pt = MqttPublishPayload.bytesToStringAsString(
       recvMsg.payload.message,
     );
+
+    //print('MQTT RECV [$topic]');
 
     try {
       if (topic.startsWith('inference/workers/')) {
@@ -182,8 +197,9 @@ class MQTTJobMonitor {
       } else if (topic.contains('entity_item_status')) {
         _handleEntityStatus(topic, pt);
       }
-    } on Object catch (_) {
-      // Log error?
+    } on Object catch (e) {
+      // ignore: avoid_print
+      print('Error handling MQTT message on $topic: $e');
     }
   }
 
@@ -342,6 +358,8 @@ class MQTTJobMonitor {
 
     // Subscribe to topic if connected
     final topic = 'mInsight/$storePort/entity_item_status/$entityId';
+    // ignore: avoid_print
+    print('Subscribing to MQTT topic: $topic (connected: $_connected)');
     if (_connected) {
       _client!.subscribe(topic, MqttQos.atLeastOnce);
     }

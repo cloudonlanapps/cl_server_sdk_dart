@@ -10,8 +10,9 @@ void main() {
     late StoreManager store;
 
     setUpAll(() async {
+      printConfig();
       session = await IntegrationHelper.createSession();
-      store = session.createStoreManager();
+      store = await IntegrationHelper.createStoreManager(session);
     });
 
     tearDownAll(() async {
@@ -68,6 +69,11 @@ void main() {
               isCollection: false,
               imagePath: uniqueImage.path,
             );
+            if (!createResult.isSuccess) {
+              print(
+                'Create entity failed for $filename: ${createResult.error}',
+              );
+            }
             expect(createResult.isSuccess, isTrue);
             final entity = createResult.data!;
 

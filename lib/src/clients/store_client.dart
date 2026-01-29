@@ -153,6 +153,7 @@ class StoreClient {
 
   // Write operations
 
+  /// Create a new entity (image or collection).
   Future<(Entity, int)> createEntity({
     required bool isCollection,
     String? label,
@@ -172,15 +173,13 @@ class StoreClient {
     if (parentId != null) request.fields['parent_id'] = parentId.toString();
 
     if (imagePath != null) {
-      request.files.add(
-        await HttpUtils.createMultipartFile('image', File(imagePath)),
-      );
+      request.files.add(await http.MultipartFile.fromPath('image', imagePath));
     }
 
     final streamResponse = await _client.send(request).timeout(timeout);
     final response = await http.Response.fromStream(streamResponse);
-    final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
-    return (Entity.fromMap(jsonMap), response.statusCode);
+    final data = await _handleResponse(response);
+    return (Entity.fromMap(data as Map<String, dynamic>), response.statusCode);
   }
 
   Future<Entity> updateEntity(
