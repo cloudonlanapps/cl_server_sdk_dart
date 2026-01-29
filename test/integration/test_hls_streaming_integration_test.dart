@@ -28,6 +28,7 @@ void main() {
       );
 
       expect(job.status, equals('completed'));
+      print('HLS Output: ${job.taskOutput}');
 
       final tempDir = await Directory.systemTemp.createTemp('hls_test');
       final outputFile = File('${tempDir.path}/master.m3u8');
@@ -35,7 +36,7 @@ void main() {
       try {
         await client.downloadJobFile(
           job.jobId,
-          'output/master.m3u8',
+          'output/adaptive.m3u8',
           outputFile,
         );
 

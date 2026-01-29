@@ -7,3 +7,4 @@
 pubspec.lock
 docs/services/**
 **/.DS_Store
+coverage/**

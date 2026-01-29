@@ -52,17 +52,27 @@ void main() {
     });
 
     test('test_thumbnail_generation_video', () async {
-      final video = await IntegrationHelper.getTestVideo(
+      final originalVideo = await IntegrationHelper.getTestVideo(
         'test_video_1080p_10s.mp4',
       );
+      final tempDirUnique = await Directory.systemTemp.createTemp(
+        'thumb_vid_unique',
+      );
+      final uniqueVideo = File('${tempDirUnique.path}/unique.mp4');
+      await IntegrationHelper.createUniqueCopy(originalVideo, uniqueVideo);
 
       final job = await client.mediaThumbnail.generate(
-        video,
+        uniqueVideo,
         width: 128,
         wait: true,
         timeout: const Duration(seconds: 60),
       );
 
+      if (job.status != 'completed') {
+        print(
+          'Thumbnail Job Failed: ${job.status}, Error: ${job.errorMessage}',
+        );
+      }
       expect(job.status, equals('completed'));
 
       final tempDir = await Directory.systemTemp.createTemp('thumb_test_vid');

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'package:image/image.dart' as img;
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 
 class IntegrationTestConfig {
@@ -192,19 +193,68 @@ class IntegrationHelper {
     }
   }
 
-  /// Create a unique copy of a file by appending random bytes.
+  /// Create a unique copy of a file.
+  /// If it's an image, we modify pixels to ensure perceptual hash changes.
+  /// Fallback to appending bytes for non-images or on error.
   static Future<File> createUniqueCopy(
     File source,
     File dest, {
     int offset = 0,
   }) async {
+    try {
+      final bytes = await source.readAsBytes();
+      final image = img.decodeImage(bytes);
+
+      if (image != null) {
+        // Modify last 16 pixels to ensure unique perceptual hash
+        // (Matching Python SDK logic)
+        final random = Random();
+        final uniqueBytes = List<int>.generate(16, (_) => random.nextInt(256));
+        final totalPixels = image.width * image.height;
+
+        for (var i = 0; i < uniqueBytes.length; i++) {
+          final idx = totalPixels - 1 - i;
+          if (idx < 0) break;
+
+          final x = idx % image.width;
+          final y = idx ~/ image.width;
+
+          // Get current pixel
+          final pixel = image.getPixel(x, y);
+
+          // Modify red channel (or first channel)
+          // Note: image 3.x uses int for colors typically 0xAABBGGRR or similar
+          // We'll just set a new color to ensure change
+          final newColor = img.getColor(
+            uniqueBytes[i],
+            img.getGreen(pixel),
+            img.getBlue(pixel),
+            img.getAlpha(pixel),
+          );
+
+          image.setPixel(x, y, newColor);
+        }
+
+        // Save as JPG (assuming test images are mostly JPG/PNG, re-encoding as JPG is safe for tests)
+        // or re-encode same format. For simplicity sticking to JPG for test inputs.
+        final encoded = img.encodeJpg(image, quality: 95);
+        await dest.writeAsBytes(encoded);
+        return dest;
+      }
+    } catch (e) {
+      print(
+        'Warning: Failed to modify image pixels: $e. Falling back to append.',
+      );
+    }
+
+    // Fallback: simple copy + append
     await source.copy(dest.path);
     final random = Random();
-    final bytes = List<int>.generate(
+    final appendBytes = List<int>.generate(
       16 + (offset % 16),
       (_) => random.nextInt(256),
     );
-    await dest.writeAsBytes(bytes, mode: FileMode.append);
+    await dest.writeAsBytes(appendBytes, mode: FileMode.append);
     return dest;
   }
 }

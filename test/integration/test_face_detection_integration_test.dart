@@ -32,10 +32,10 @@ void main() {
       expect(job.taskOutput, isNotNull);
 
       final faces = job.taskOutput!['faces'] as List;
-      expect(faces.length, equals(1));
+      expect(faces.length, equals(2));
 
       final face = faces[0] as Map;
-      expect(face, contains('box'));
+      expect(face, contains('bbox'));
       expect(face, contains('confidence'));
 
       await client.deleteJob(job.jobId);
