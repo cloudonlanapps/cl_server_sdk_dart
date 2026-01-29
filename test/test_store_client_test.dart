@@ -147,13 +147,14 @@ void main() {
           );
         });
 
-        final result = await client.createEntity(
+        final (result, statusCode) = await client.createEntity(
           isCollection: true,
           label: 'New Collection',
         );
 
         expect(result.id, equals(1));
         expect(result.isCollection, isTrue);
+        expect(statusCode, equals(200));
 
         verify(() => mockHttpClient.send(any())).called(1);
       });
@@ -182,13 +183,14 @@ void main() {
         final tempFile = File('temp_test.jpg')..writeAsBytesSync([1, 2, 3]);
 
         try {
-          final result = await client.createEntity(
+          final (result, statusCode) = await client.createEntity(
             isCollection: false,
             label: 'Photo',
             imagePath: tempFile.path,
           );
 
           expect(result.id, equals(2));
+          expect(statusCode, equals(200));
           verify(
             () => mockHttpClient.send(
               any(

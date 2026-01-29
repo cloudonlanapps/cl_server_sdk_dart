@@ -209,38 +209,50 @@ class StoreManager {
     }
 
     final subId = await monitorEntity(entityId, callback);
-
-    try {
-      return await completer.future.timeout(timeout);
-    } on TimeoutException {
-      throw TimeoutException(
-        'Timeout waiting for entity $entityId to reach $targetStatus',
-      );
-    } finally {
-      stopMonitoring(subId);
-    }
+    return completer.future
+        .timeout(
+          timeout,
+          onTimeout: () {
+            stopMonitoring(subId);
+            throw Exception(
+              'Timeout waiting for entity $entityId status $targetStatus',
+            );
+          },
+        )
+        .then((value) {
+          stopMonitoring(subId);
+          return value;
+        });
   }
 
-  // Write operations
-
+  /// Create a new entity (image or collection).
+  ///
+  /// For images, it triggers asynchronous intelligence processing.
   Future<StoreOperationResult<Entity>> createEntity({
+    required bool isCollection,
     String? label,
     String? description,
-    bool isCollection = false,
     int? parentId,
     String? imagePath,
   }) async {
     try {
-      final result = await storeClient.createEntity(
+      final (entity, statusCode) = await storeClient.createEntity(
         isCollection: isCollection,
         label: label,
         description: description,
         parentId: parentId,
         imagePath: imagePath,
       );
+
+      // 201 Created (New), 200 OK (Duplicate)
+      final successMsg = statusCode == 201
+          ? 'Entity created successfully'
+          : 'Duplicate entity found';
+
       return StoreOperationResult(
-        success: 'Entity created successfully',
-        data: result,
+        success: successMsg,
+        data: entity,
+        isDuplicate: statusCode == 200,
       );
     } on Object catch (e) {
       return _handleError(e);

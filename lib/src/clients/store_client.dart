@@ -153,7 +153,7 @@ class StoreClient {
 
   // Write operations
 
-  Future<Entity> createEntity({
+  Future<(Entity, int)> createEntity({
     required bool isCollection,
     String? label,
     String? description,
@@ -180,7 +180,7 @@ class StoreClient {
     final streamResponse = await _client.send(request).timeout(timeout);
     final response = await http.Response.fromStream(streamResponse);
     final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
-    return Entity.fromMap(jsonMap);
+    return (Entity.fromMap(jsonMap), response.statusCode);
   }
 
   Future<Entity> updateEntity(

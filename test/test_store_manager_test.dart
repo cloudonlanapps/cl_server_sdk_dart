@@ -168,7 +168,7 @@ void main() {
           description: 'Test photo',
           imagePath: '/tmp/test.jpg',
         ),
-      ).thenAnswer((_) async => entity);
+      ).thenAnswer((_) async => (entity, 201));
 
       final result = await manager.createEntity(
         label: 'Photo',
@@ -316,7 +316,10 @@ void main() {
               mockStoreClient.createEntity(isCollection: false, label: 'Test'),
         ).thenThrow(PermissionError('Forbidden'));
 
-        final result = await manager.createEntity(label: 'Test');
+        final result = await manager.createEntity(
+          isCollection: false,
+          label: 'Test',
+        );
 
         expect(result.isError, isTrue);
         expect(result.error, contains('Forbidden'));

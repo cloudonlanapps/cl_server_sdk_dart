@@ -25,14 +25,18 @@ void main() {
       ('test_image_1920x1080.jpg', 0),
       ('IMG20240901130125.jpg', 3),
       ('IMG20240901202523.jpg', 5),
+      ('IMG20240901194834.jpg', 3),
+      ('IMG20240901193819.jpg', 11),
+      ('IMG20240901153107.jpg', 1),
     ];
 
     test(
       'test_full_embedding_flow',
-      timeout: const Timeout(Duration(minutes: 5)),
+      timeout: const Timeout(Duration(minutes: 10)),
       () async {
-        final timeout = const Duration(seconds: 300);
+        final timeout = const Duration(seconds: 600);
         final pendingVerifications = <Map<String, dynamic>>[];
+        String? firstUniquePath;
 
         try {
           // 1. Upload all test images and start monitoring immediately
@@ -55,6 +59,10 @@ void main() {
               uniqueImage,
             );
 
+            if (firstUniquePath == null) {
+              firstUniquePath = uniqueImage.path;
+            }
+
             final createResult = await store.createEntity(
               label: 'Test Integration $filename (Unique)',
               isCollection: false,
@@ -63,12 +71,16 @@ void main() {
             expect(createResult.isSuccess, isTrue);
             final entity = createResult.data!;
 
-            // Start monitoring
-            final waitFuture = store.waitForEntityStatus(
-              entity.id,
-              targetStatus: 'completed',
-              timeout: timeout,
-            );
+            // Start monitoring only if it's a new entity or not yet completed
+            Future<EntityStatusPayload>? waitFuture;
+            if (!createResult.isDuplicate ||
+                entity.intelligenceStatus != 'completed') {
+              waitFuture = store.waitForEntityStatus(
+                entity.id,
+                targetStatus: 'completed',
+                timeout: timeout,
+              );
+            }
 
             pendingVerifications.add({
               'entity': entity,
@@ -82,21 +94,27 @@ void main() {
             final entity = item['entity'] as Entity;
             final expectedFaces = item['expectedFaces'] as int;
             final waitFuture =
-                item['waitFuture'] as Future<EntityStatusPayload>;
+                item['waitFuture'] as Future<EntityStatusPayload>?;
 
-            // Await completion
-            await waitFuture;
+            // Await completion if we started a wait
+            if (waitFuture != null) {
+              await waitFuture;
+            }
 
             // Verify Artifacts
-
             // A. Verify Face Count
             final facesResult = await store.getEntityFaces(entity.id);
             expect(facesResult.isSuccess, isTrue);
             final faces = facesResult.data!;
+            // ignore: avoid_print
+            print(
+              'Entity ${entity.id} (${entity.label}) faces: ${faces.length}',
+            );
+
             expect(
               faces.length,
               equals(expectedFaces),
-              reason: 'Faces mismatch for ${entity.label}',
+              reason: 'Faces mismatch for ${entity.id} (${entity.label})',
             );
 
             // B. Verify CLIP Embedding
@@ -129,6 +147,41 @@ void main() {
               }
             }
           }
+
+          // 3. Verify Deduplication Logic (Logical 200 OK)
+          // ignore: avoid_print
+          print('\nVerifying Deduplication Logic...');
+          final firstImageEntry = testImages.first;
+          final filename = firstImageEntry.$1;
+          final expectedFaces = firstImageEntry.$2;
+
+          final dupResult = await store.createEntity(
+            label: 'Deduplicated $filename',
+            isCollection: false,
+            imagePath: firstUniquePath,
+          );
+
+          expect(dupResult.isSuccess, isTrue);
+          expect(
+            dupResult.isDuplicate,
+            isTrue,
+            reason: 'Second upload of original image should be a duplicate',
+          );
+
+          final duplicateEntity = dupResult.data!;
+          // Should be 'completed' immediately if the original processed successfully
+          expect(duplicateEntity.intelligenceStatus, equals('completed'));
+
+          final dupFacesResult = await store.getEntityFaces(duplicateEntity.id);
+          expect(dupFacesResult.isSuccess, isTrue);
+          expect(
+            dupFacesResult.data!.length,
+            equals(expectedFaces),
+            reason:
+                'Deduplicated entity should have correct face count immediately',
+          );
+          // ignore: avoid_print
+          print('Deduplication verification PASSED for $filename\n');
         } finally {
           // Cleanup
           for (final item in pendingVerifications) {
