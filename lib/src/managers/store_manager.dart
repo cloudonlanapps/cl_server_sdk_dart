@@ -19,7 +19,7 @@ class StoreManager {
   // Factory constructors
 
   factory StoreManager.guest({
-    String baseUrl = 'http://localhost:8001',
+    String baseUrl = 'http://localhost:8011',
     Duration timeout = const Duration(seconds: 30),
   }) {
     // Guest mode

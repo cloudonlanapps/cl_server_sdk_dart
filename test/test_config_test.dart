@@ -5,10 +5,10 @@ void main() {
   group('ComputeClientConfig', () {
     test('test_default_values', () {
       expect(ComputeClientConfig.defaultHost, equals('localhost'));
-      expect(ComputeClientConfig.defaultPort, equals(8002));
+      expect(ComputeClientConfig.defaultPort, equals(8012));
       expect(
         ComputeClientConfig.defaultBaseUrl,
-        equals('http://localhost:8002'),
+        equals('http://localhost:8012'),
       );
       expect(ComputeClientConfig.defaultTimeout.inSeconds, equals(30));
     });

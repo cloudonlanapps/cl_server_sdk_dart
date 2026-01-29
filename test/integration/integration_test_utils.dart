@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 
 class IntegrationTestConfig {
@@ -113,21 +114,42 @@ class IntegrationHelper {
     if (IntegrationTestConfig.isAuthEnabled) {
       return session.createStoreManager();
     } else {
-      return StoreManager.guest();
+      return StoreManager.guest(baseUrl: IntegrationTestConfig.storeUrl);
     }
   }
 
-  static Future<File> getTestImage() async {
-    final file = File('test_image.jpg');
-    if (!file.existsSync()) {
-      // Create a dummy image or download?
-      // For now just create empty file to pass "File" check,
-      // but server will fail if not valid image.
-      // We assume integration environment sets up media.
-      // Or we write simple bytes.
-      await file.writeAsBytes(List.filled(100, 0));
+  static String get testVectorsDir {
+    if (Platform.environment.containsKey('TEST_VECTORS_DIR')) {
+      return Platform.environment['TEST_VECTORS_DIR']!;
     }
-    return file;
+    return '/Users/anandasarangaram/Work/cl_server_test_media';
+  }
+
+  static Future<File> getTestImage([
+    String name = 'test_image_1920x1080.jpg',
+  ]) async {
+    final file = File('$testVectorsDir/images/$name');
+    if (file.existsSync()) return file;
+
+    // Fallback/Fallback
+    final fallback = File(name);
+    if (!fallback.existsSync()) {
+      await fallback.writeAsBytes(List.filled(100, 0));
+    }
+    return fallback;
+  }
+
+  static Future<File> getTestVideo([
+    String name = 'test_video_1080p_10s.mp4',
+  ]) async {
+    final file = File('$testVectorsDir/videos/$name');
+    if (file.existsSync()) return file;
+
+    final fallback = File(name);
+    if (!fallback.existsSync()) {
+      await fallback.writeAsBytes(List.filled(100, 0));
+    }
+    return fallback;
   }
 
   static Future<void> cleanupStoreEntities() async {
@@ -140,19 +162,50 @@ class IntegrationHelper {
     // Python tests do bulk delete or list & delete.
     // We can implement list & delete loop.
     try {
+      // Try minimal bulk delete first (exposed via client)
+      await store.storeClient.deleteAllEntities();
+      print('Called deleteAllEntities()');
+    } catch (_) {
+      // Fallback to individual
+    }
+
+    try {
+      var deletedCount = 0;
       var result = await store.listEntities(pageSize: 100);
       while (result.isSuccess && result.data!.items.isNotEmpty) {
         for (final item in result.data!.items) {
-          await store.deleteEntity(item.id);
+          try {
+            await store.deleteEntity(item.id);
+            deletedCount++;
+          } catch (e) {
+            print('Cleanup error deleting ${item.id}: $e');
+          }
         }
         result = await store.listEntities(pageSize: 100);
       }
+      if (deletedCount > 0) print('Cleaned up $deletedCount entities.');
     } on Object catch (e) {
       // ignore: avoid_print
       print('Cleanup warning: $e');
     } finally {
       await session.close();
     }
+  }
+
+  /// Create a unique copy of a file by appending random bytes.
+  static Future<File> createUniqueCopy(
+    File source,
+    File dest, {
+    int offset = 0,
+  }) async {
+    await source.copy(dest.path);
+    final random = Random();
+    final bytes = List<int>.generate(
+      16 + (offset % 16),
+      (_) => random.nextInt(256),
+    );
+    await dest.writeAsBytes(bytes, mode: FileMode.append);
+    return dest;
   }
 }
 

@@ -2,7 +2,7 @@
 class ComputeClientConfig {
   // Server Connection
   static const String defaultHost = 'localhost';
-  static const int defaultPort = 8002;
+  static const int defaultPort = 8012;
   static const String defaultBaseUrl = 'http://$defaultHost:$defaultPort';
   static const Duration defaultTimeout = Duration(seconds: 30);
 

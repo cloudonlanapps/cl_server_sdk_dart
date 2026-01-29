@@ -260,11 +260,14 @@ class MQTTJobMonitor {
   // Public API
   // ===================================
 
-  Future<void> waitForCapability(
+  Map<String, WorkerCapability> getWorkerCapabilities() =>
+      Map.unmodifiable(_workers);
+
+  Future<bool> waitForCapability(
     String taskType, {
     Duration timeout = const Duration(seconds: 30),
   }) async {
-    final completer = Completer<void>();
+    final completer = Completer<bool>();
     final timer = Timer(timeout, () {
       if (!completer.isCompleted) {
         completer.completeError(
@@ -279,7 +282,7 @@ class MQTTJobMonitor {
     void check() {
       for (final w in _workers.values) {
         if (w.capabilities.contains(taskType) && w.idleCount > 0) {
-          if (!completer.isCompleted) completer.complete();
+          if (!completer.isCompleted) completer.complete(true);
           return;
         }
       }
@@ -288,7 +291,7 @@ class MQTTJobMonitor {
     check();
     if (completer.isCompleted) {
       timer.cancel();
-      return;
+      return true;
     }
 
     subscribeWorkerUpdates((id, cap) {
@@ -296,7 +299,7 @@ class MQTTJobMonitor {
     });
 
     try {
-      await completer.future;
+      return await completer.future;
     } finally {
       timer.cancel();
       // Cleanup listener if implemented removal mechanism

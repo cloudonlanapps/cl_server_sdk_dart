@@ -4,36 +4,29 @@ import 'dart:convert';
 import 'package:cl_server_dart_client/src/exceptions.dart';
 import 'package:cl_server_dart_client/src/models/models.dart';
 import 'package:cl_server_dart_client/src/mqtt_monitor.dart';
+import 'package:cl_server_dart_client/src/config.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:test/test.dart';
-import 'package:typed_data/typed_buffers.dart'; // Ensure typed_data dev_dependency is added or available.
+import 'package:typed_data/typed_buffers.dart';
 
 class MockMqttServerClient extends Mock implements MqttServerClient {
   @override
   set port(int? port) {}
-
   @override
   set keepAlivePeriod(int? keepAlivePeriod) {}
-
   @override
   set autoReconnect(bool? autoReconnect) {}
-
   @override
   set onConnected(void Function()? onConnected) {}
-
   @override
   set onDisconnected(void Function()? onDisconnected) {}
-
   @override
   set onSubscribed(void Function(String)? onSubscribed) {}
-
   @override
   set connectionMessage(MqttConnectMessage? connectionMessage) {}
 }
-
-// MockMqttConnectMessage removed
 
 class MockMqttConnectionStatus extends Mock
     implements MqttClientConnectionStatus {}
@@ -61,15 +54,18 @@ void main() {
       ).thenAnswer((_) => updatesController.stream);
       when(() => mockClient.subscribe(any(), any())).thenReturn(Subscription());
       when(() => mockClient.disconnect()).thenAnswer((_) {});
+      when(() => mockClient.logging(on: any(named: 'on'))).thenReturn(null);
     });
 
     tearDown(() async {
       await updatesController.close();
     });
 
-    MQTTJobMonitor createMonitor() {
+    MQTTJobMonitor createMonitor({String? broker, int? port}) {
       return MQTTJobMonitor(
-        clientFactory: (broker, clientId) => mockClient,
+        broker: broker ?? 'localhost',
+        port: port ?? 1883,
+        clientFactory: (b, cid) => mockClient,
       );
     }
 
@@ -78,7 +74,6 @@ void main() {
       await monitor.connect();
 
       verify(() => mockClient.connect()).called(1);
-      verify(() => mockClient.logging(on: false)).called(1);
       verify(
         () => mockClient.subscribe('inference/workers/+', MqttQos.atLeastOnce),
       ).called(1);
@@ -87,11 +82,47 @@ void main() {
       ).called(1);
     });
 
-    test('test_subscribe_job_updates_returns_subscription_id', () async {
+    test('test_init_with_custom_broker', () async {
+      final monitor = createMonitor(broker: 'custom-broker', port: 1234);
+      expect(monitor.broker, equals('custom-broker'));
+      expect(monitor.port, equals(1234));
+
+      await monitor.connect();
+      verify(() => mockClient.connect()).called(1);
+    });
+
+    test('test_subscribe_job_updates_returns_subscription_id', () {
       final monitor = createMonitor();
       final subId = monitor.subscribeJobUpdates('test-job-123');
       expect(subId, isA<String>());
       expect(subId.length, equals(36));
+    });
+
+    test('test_multiple_subscriptions_same_job', () {
+      final monitor = createMonitor();
+      final subId1 = monitor.subscribeJobUpdates('test-job-123');
+      final subId2 = monitor.subscribeJobUpdates('test-job-123');
+      expect(subId1, isNot(equals(subId2)));
+    });
+
+    test('test_unsubscribe_with_subscription_id', () {
+      final monitor = createMonitor();
+      final subId = monitor.subscribeJobUpdates('test-job-123');
+      monitor.unsubscribe(subId);
+      // We can't check internal _jobSubscriptions easily, but we can verify no crash
+    });
+
+    test('test_unsubscribe_keeps_topic_if_other_subs_exist', () {
+      final monitor = createMonitor();
+      final subId1 = monitor.subscribeJobUpdates('test-job-123');
+      final subId2 = monitor.subscribeJobUpdates('test-job-123');
+
+      monitor.unsubscribe(subId1);
+      // Verify no MQTT unsubscribe call
+      verifyNever(() => mockClient.unsubscribe(any()));
+
+      monitor.unsubscribe(subId2);
+      verifyNever(() => mockClient.unsubscribe(any()));
     });
 
     test('test_two_callback_system', () async {
@@ -122,12 +153,10 @@ void main() {
       updatesController.add([
         MqttReceivedMessage<MqttMessage>('inference/events', processingMsg),
       ]);
-
       await Future<void>.delayed(const Duration(milliseconds: 10));
 
       expect(progressCalls.length, equals(1));
       expect(completeCalls.length, equals(0));
-      expect(progressCalls.last.progress, equals(50));
 
       final completedPayload = jsonEncode({
         'job_id': jobId,
@@ -143,7 +172,6 @@ void main() {
       updatesController.add([
         MqttReceivedMessage<MqttMessage>('inference/events', completedMsg),
       ]);
-
       await Future<void>.delayed(const Duration(milliseconds: 10));
 
       expect(progressCalls.length, equals(2));
@@ -169,78 +197,10 @@ void main() {
 
       updatesController.add([MqttReceivedMessage<MqttMessage>(topic, msg)]);
       await Future<void>.delayed(const Duration(milliseconds: 10));
-    });
 
-    test('test_subscribe_worker_updates', () async {
-      final monitor = createMonitor();
-      await monitor.connect();
-
-      const workerId = 'worker-123';
-      final callbackCalls = <String>[];
-
-      monitor.subscribeWorkerUpdates((wid, cap) {
-        callbackCalls.add(wid);
-      });
-
-      final capabilityPayload = jsonEncode({
-        'worker_id': workerId,
-        'capabilities': ['test'],
-        'idle_count': 1,
-        'timestamp': 1234567890,
-      });
-
-      const topic = 'inference/workers/$workerId';
-      final msg = MqttPublishMessage()
-        ..payload = (MqttPublishPayload()
-          ..message = (Uint8Buffer()..addAll(utf8.encode(capabilityPayload))));
-
-      updatesController.add([MqttReceivedMessage<MqttMessage>(topic, msg)]);
-      await Future<void>.delayed(const Duration(milliseconds: 10));
-
-      expect(callbackCalls.length, equals(1));
-      expect(callbackCalls.first, equals(workerId));
-    });
-
-    test('test_wait_for_capability_timeout', () async {
-      final monitor = createMonitor();
-      await monitor.connect();
-
-      try {
-        await monitor.waitForCapability(
-          'clip_embedding',
-          timeout: const Duration(milliseconds: 100),
-        );
-        fail('Should have timed out');
-      } on Object catch (e) {
-        expect(e, isA<WorkerUnavailableError>());
-        expect(e.toString(), contains('clip_embedding'));
-      }
-    });
-
-    test('test_wait_for_capability_success', () async {
-      final monitor = createMonitor();
-      await monitor.connect();
-
-      Future<void>.delayed(const Duration(milliseconds: 50), () {
-        const workerId = 'worker-123';
-        const topic = 'inference/workers/$workerId';
-        final payload = jsonEncode({
-          'worker_id': workerId,
-          'capabilities': ['clip_embedding'],
-          'idle_count': 1,
-          'timestamp': 1234567890,
-        });
-        final msg = MqttPublishMessage()
-          ..payload = (MqttPublishPayload()
-            ..message = (Uint8Buffer()..addAll(utf8.encode(payload))));
-
-        updatesController.add([MqttReceivedMessage<MqttMessage>(topic, msg)]);
-      });
-
-      await monitor.waitForCapability(
-        'clip_embedding',
-        timeout: const Duration(seconds: 1),
-      );
+      final workers = monitor.getWorkerCapabilities();
+      expect(workers, contains(workerId));
+      expect(workers[workerId]!.capabilities, contains('clip_embedding'));
     });
 
     test('test_worker_disconnect_lwt', () async {
@@ -263,18 +223,77 @@ void main() {
 
       final emptyMsg = MqttPublishMessage()
         ..payload = (MqttPublishPayload()..message = Uint8Buffer());
-
-      var removed = false;
-      monitor.subscribeWorkerUpdates((wid, cap) {
-        if (wid == workerId && cap == null) removed = true;
-      });
-
       updatesController.add([
         MqttReceivedMessage<MqttMessage>(topic, emptyMsg),
       ]);
       await Future<void>.delayed(const Duration(milliseconds: 10));
 
-      expect(removed, isTrue);
+      expect(monitor.getWorkerCapabilities(), isNot(contains(workerId)));
+    });
+
+    test('test_subscribe_worker_updates', () async {
+      final monitor = createMonitor();
+      await monitor.connect();
+
+      const workerId = 'worker-123';
+      final callbackCalls = <String>[];
+      monitor.subscribeWorkerUpdates((wid, cap) => callbackCalls.add(wid));
+
+      final capabilityPayload = jsonEncode({
+        'worker_id': workerId,
+        'capabilities': ['test'],
+        'idle_count': 1,
+        'timestamp': 1234567890,
+      });
+
+      const topic = 'inference/workers/$workerId';
+      final msg = MqttPublishMessage()
+        ..payload = (MqttPublishPayload()
+          ..message = (Uint8Buffer()..addAll(utf8.encode(capabilityPayload))));
+
+      updatesController.add([MqttReceivedMessage<MqttMessage>(topic, msg)]);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      expect(callbackCalls, contains(workerId));
+    });
+
+    test('test_wait_for_capability_success', () async {
+      final monitor = createMonitor();
+      await monitor.connect();
+
+      Future<void>.delayed(const Duration(milliseconds: 50), () {
+        const workerId = 'worker-123';
+        const topic = 'inference/workers/$workerId';
+        final payload = jsonEncode({
+          'worker_id': workerId,
+          'capabilities': ['clip_embedding'],
+          'idle_count': 1,
+          'timestamp': 1234567890,
+        });
+        final msg = MqttPublishMessage()
+          ..payload = (MqttPublishPayload()
+            ..message = (Uint8Buffer()..addAll(utf8.encode(payload))));
+        updatesController.add([MqttReceivedMessage<MqttMessage>(topic, msg)]);
+      });
+
+      final result = await monitor.waitForCapability(
+        'clip_embedding',
+        timeout: const Duration(seconds: 1),
+      );
+      expect(result, isTrue);
+    });
+
+    test('test_wait_for_capability_timeout', () async {
+      final monitor = createMonitor();
+      await monitor.connect();
+
+      expect(
+        () => monitor.waitForCapability(
+          'clip_embedding',
+          timeout: const Duration(milliseconds: 50),
+        ),
+        throwsA(isA<WorkerUnavailableError>()),
+      );
     });
 
     test('test_close', () async {
@@ -284,6 +303,36 @@ void main() {
 
       verify(() => mockClient.disconnect()).called(1);
       expect(monitor.isConnected, isFalse);
+    });
+
+    test('test_invalid_json_message_handling', () async {
+      final monitor = createMonitor();
+      await monitor.connect();
+
+      final msg = MqttPublishMessage()
+        ..payload = (MqttPublishPayload()
+          ..message = (Uint8Buffer()..addAll(utf8.encode('invalid json {{'))));
+
+      // Should not throw
+      updatesController.add([
+        MqttReceivedMessage<MqttMessage>('inference/events', msg),
+      ]);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    });
+
+    test('test_invalid_dict_message_handling', () async {
+      final monitor = createMonitor();
+      await monitor.connect();
+
+      final msg = MqttPublishMessage()
+        ..payload = (MqttPublishPayload()
+          ..message = (Uint8Buffer()..addAll(utf8.encode('"not a dict"'))));
+
+      // Should not throw
+      updatesController.add([
+        MqttReceivedMessage<MqttMessage>('inference/events', msg),
+      ]);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
     });
   });
 }

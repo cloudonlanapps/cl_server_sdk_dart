@@ -116,3 +116,8 @@ class JWTAuthProvider extends AuthProvider {
     return {'Authorization': 'Bearer $token'};
   }
 }
+
+/// Get default auth provider (no-auth for Phase 1).
+AuthProvider get_default_auth() {
+  return NoAuthProvider();
+}

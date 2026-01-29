@@ -1,0 +1,44 @@
+import 'package:cl_server_dart_client/cl_server_dart_client.dart';
+import 'package:test/test.dart';
+import 'integration_test_utils.dart';
+
+void main() {
+  group('Face Embedding Integration Tests', () {
+    late SessionManager session;
+    late ComputeClient client;
+
+    setUpAll(() async {
+      session = await IntegrationHelper.createSession();
+      client = session.createComputeClient();
+    });
+
+    tearDownAll(() async {
+      await client.close();
+      await session.close();
+    });
+
+    test('test_face_embedding_flow', () async {
+      final image = await IntegrationHelper.getTestImage(
+        'test_face_single.jpg',
+      );
+
+      final job = await client.faceEmbedding.embedFaces(
+        image,
+        wait: true,
+        timeout: const Duration(seconds: 40),
+      );
+
+      expect(job.status, equals('completed'));
+      expect(job.taskOutput, isNotNull);
+
+      final faces = job.taskOutput!['faces'] as List;
+      expect(faces.length, greaterThan(0));
+
+      final face = faces[0] as Map;
+      expect(face, contains('embedding'));
+      expect(face['embedding'] as List, isNotEmpty);
+
+      await client.deleteJob(job.jobId);
+    });
+  });
+}

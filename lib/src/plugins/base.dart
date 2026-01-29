@@ -61,6 +61,13 @@ class BasePluginClient {
     void Function(JobResponse)? onProgress,
     void Function(JobResponse)? onComplete,
   }) async {
+    // 0. Verify files exist
+    for (final file in files.values) {
+      if (!file.existsSync()) {
+        throw FileSystemException('File not found', file.path);
+      }
+    }
+
     // 1. Submit job (http)
     final jobId = await client.httpSubmitJob(
       endpoint,

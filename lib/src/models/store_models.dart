@@ -360,6 +360,11 @@ class StoreConfig {
   /// User who last updated the configuration
   final String? updatedBy;
 
+  /// Convert updatedAt (milliseconds) to DateTime.
+  DateTime? get updatedAtDatetime => updatedAt != null
+      ? DateTime.fromMillisecondsSinceEpoch(updatedAt!)
+      : null;
+
   Map<String, dynamic> toMap() {
     return {
       'guest_mode': guestMode,

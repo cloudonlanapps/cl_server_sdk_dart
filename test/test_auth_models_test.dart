@@ -1,63 +1,65 @@
+import 'dart:convert';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('test_auth_models', () {
-    group('TestTokenResponse', () {
-      test('test_token_response_valid', () {
-        final data = {'access_token': 'eyJhbGc...', 'token_type': 'bearer'};
-        final token = TokenResponse.fromMap(data);
+  group('TestTokenResponse', () {
+    test('test_token_response_valid', () {
+      final data = {'access_token': 'eyJhbGc...', 'token_type': 'bearer'};
+      final token = TokenResponse.fromMap(data);
 
-        expect(token.accessToken, equals('eyJhbGc...'));
-        expect(token.tokenType, equals('bearer'));
-      });
-
-      test('test_token_response_to_json', () {
-        final token = TokenResponse(
-          accessToken: 'test_token',
-          tokenType: 'bearer',
-        );
-        final data = token.toMap();
-
-        expect(
-          data,
-          equals({'access_token': 'test_token', 'token_type': 'bearer'}),
-        );
-      });
-
-      // Dart is statically typed, missing fields are checked at compile time or via named args.
-      // We can test null safety or missing keys in fromMap if we implemented validation logic there.
-      // Since manual fromMap implementation may throw or error on missing required keys.
-      test('test_token_response_missing_fields', () {
-        // If fromMap expects required keys and they are missing, it might crash or return null.
-        // Our implementation:
-        // accessToken: map['access_token'],
-        // If map lacks key, it returns null, but constructor might require non-null?
-        // Let's assume our implementation allows null but our fields might be required.
-        // Let's check implementation.
-        // required String accessToken.
-        // fromMap: accessToken: map['access_token'] as String
-        // This will throw TypeError if null or missing.
-        expect(
-          () => TokenResponse.fromMap({'token_type': 'bearer'}),
-          throwsA(isA<TypeError>()),
-        );
-      });
+      expect(token.accessToken, equals('eyJhbGc...'));
+      expect(token.tokenType, equals('bearer'));
     });
 
-    group('TestPublicKeyResponse', () {
-      test('test_public_key_response_valid', () {
-        final data = {
-          'public_key': '-----BEGIN PUBLIC KEY-----\n...',
-          'algorithm': 'ES256',
-        };
-        final response = PublicKeyResponse.fromMap(data);
+    test('test_token_response_from_json', () {
+      final data = {'access_token': 'test_token', 'token_type': 'bearer'};
+      final token = TokenResponse.fromJson(jsonEncode(data));
 
-        expect(response.publicKey, equals('-----BEGIN PUBLIC KEY-----\n...'));
-        expect(response.algorithm, equals('ES256'));
-      });
+      expect(token.accessToken, equals('test_token'));
+      expect(token.tokenType, equals('bearer'));
     });
 
+    test('test_token_response_to_json', () {
+      final token = TokenResponse(
+        accessToken: 'test_token',
+        tokenType: 'bearer',
+      );
+      final data = token.toMap();
+
+      expect(
+        data,
+        equals({'access_token': 'test_token', 'token_type': 'bearer'}),
+      );
+    });
+
+    test('test_token_response_missing_fields', () {
+      expect(
+        () => TokenResponse.fromMap({'access_token': 'test_token'}),
+        throwsA(isA<TypeError>()),
+      );
+    });
+  });
+
+  group('TestPublicKeyResponse', () {
+    test('test_public_key_response_valid', () {
+      final data = {
+        'public_key': '-----BEGIN PUBLIC KEY-----\n...',
+        'algorithm': 'ES256',
+      };
+      final response = PublicKeyResponse.fromMap(data);
+
+      expect(response.publicKey, equals('-----BEGIN PUBLIC KEY-----\n...'));
+      expect(response.algorithm, equals('ES256'));
+    });
+
+    test('test_public_key_response_from_json', () {
+      final data = {'public_key': 'test_key', 'algorithm': 'ES256'};
+      final response = PublicKeyResponse.fromJson(jsonEncode(data));
+
+      expect(response.publicKey, equals('test_key'));
+      expect(response.algorithm, equals('ES256'));
+    });
     group('TestUserResponse', () {
       test('test_user_response_valid', () {
         final now = DateTime.now().toUtc().toIso8601String();
@@ -80,14 +82,9 @@ void main() {
       });
 
       test('test_user_response_defaults', () {
-        // Our Dart implementation might not have defaults in fromMap unless handled?
-        // Python test relies on Pydantic defaults or logic.
-        // Let's check our UserResponse implementation for defaults.
-        // Assuming defaults are handled in constructor or fromMap.
         final now = DateTime.now().toUtc().toIso8601String();
         final data = {'id': 1, 'username': 'testuser', 'created_at': now};
 
-        // If our fromMap does: isAdmin: map['is_admin'] ?? false
         final user = UserResponse.fromMap(data);
 
         expect(user.isAdmin, isFalse);
@@ -95,8 +92,26 @@ void main() {
         expect(user.permissions, isEmpty);
       });
 
+      test('test_user_response_from_json', () {
+        final data = {
+          'id': 2,
+          'username': 'admin',
+          'is_admin': true,
+          'is_active': true,
+          'created_at': '2024-01-15T10:30:00Z',
+          'permissions': ['*'],
+        };
+
+        final user = UserResponse.fromJson(jsonEncode(data));
+
+        expect(user.id, equals(2));
+        expect(user.username, equals('admin'));
+        expect(user.isAdmin, isTrue);
+        expect(user.permissions, equals(['*']));
+      });
+
       test('test_user_response_to_json', () {
-        final now = DateTime.now();
+        final now = DateTime.now().toUtc();
         final user = UserResponse(
           id: 1,
           username: 'testuser',
@@ -142,6 +157,18 @@ void main() {
         expect(request.permissions, isEmpty);
       });
 
+      test('test_user_create_request_admin', () {
+        final request = UserCreateRequest(
+          username: 'admin',
+          password: 'adminpass',
+          isAdmin: true,
+          permissions: ['*'],
+        );
+
+        expect(request.isAdmin, isTrue);
+        expect(request.permissions, equals(['*']));
+      });
+
       test('test_user_create_request_to_json', () {
         final request = UserCreateRequest(
           username: 'testuser',
@@ -185,11 +212,16 @@ void main() {
         expect(request2.permissions, equals(['read:jobs']));
       });
 
+      test('test_user_update_request_empty', () {
+        final request = UserUpdateRequest();
+
+        expect(request.password, isNull);
+        expect(request.permissions, isNull);
+        expect(request.isActive, isNull);
+        expect(request.isAdmin, isNull);
+      });
+
       test('test_user_update_request_to_json_excludes_none', () {
-        // Our toMap implementation handles unsets (ignore) vs default logic.
-        // If we use Unset, we should ensure they are not in the map?
-        // Or our `toMap` logic should check for Unset/null.
-        // Let's assume toMap handles it correctly.
         final request = UserUpdateRequest(password: 'newpass', isAdmin: true);
         final data = request.toMap();
 

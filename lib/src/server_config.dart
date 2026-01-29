@@ -16,8 +16,8 @@ class ServerConfig {
   });
 
   /// Create ServerConfig from environment variables.
-  factory ServerConfig.fromEnv() {
-    final env = Platform.environment;
+  factory ServerConfig.fromEnv([Map<String, String>? environment]) {
+    final env = environment ?? Platform.environment;
     const defaultConf = ServerConfig();
 
     return ServerConfig(
@@ -29,13 +29,13 @@ class ServerConfig {
     );
   }
 
-  /// Auth service URL (default: http://localhost:8000)
+  /// Auth service URL (default: http://localhost:8010)
   final String authUrl;
 
-  /// Compute service URL (default: http://localhost:8002)
+  /// Compute service URL (default: http://localhost:8012)
   final String computeUrl;
 
-  /// Store service URL (default: http://localhost:8001)
+  /// Store service URL (default: http://localhost:8011)
   final String storeUrl;
 
   /// MQTT broker host (default: localhost)

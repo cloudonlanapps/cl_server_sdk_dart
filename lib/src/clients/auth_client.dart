@@ -173,9 +173,11 @@ class AuthClient {
           Uri.parse('$baseUrl/users/$userId'),
           headers: {
             'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: userUpdate.toJson(),
+          body: userUpdate.toApiPayload().map(
+            (k, v) => MapEntry(k, v.toString()),
+          ),
         )
         .timeout(timeout);
 

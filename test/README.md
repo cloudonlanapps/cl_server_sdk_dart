@@ -28,9 +28,9 @@ To run integration tests:
 
 ```bash
 # Set environment variables for your server
-export CL_AUTH_URL=http://localhost:8000
-export CL_COMPUTE_URL=http://localhost:8002
-export CL_STORE_URL=http://localhost:8001
+export CL_AUTH_URL=http://localhost:8010
+export CL_COMPUTE_URL=http://localhost:8012
+export CL_STORE_URL=http://localhost:8011
 export CL_USERNAME=admin
 export CL_PASSWORD=admin
 

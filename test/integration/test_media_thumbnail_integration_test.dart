@@ -1,0 +1,86 @@
+import 'dart:io';
+import 'package:cl_server_dart_client/cl_server_dart_client.dart';
+import 'package:test/test.dart';
+import 'integration_test_utils.dart';
+
+void main() {
+  group('Media Thumbnail Integration Tests', () {
+    late SessionManager session;
+    late ComputeClient client;
+
+    setUpAll(() async {
+      session = await IntegrationHelper.createSession();
+      client = session.createComputeClient();
+    });
+
+    tearDownAll(() async {
+      await client.close();
+      await session.close();
+    });
+
+    test('test_thumbnail_generation_image', () async {
+      final image = await IntegrationHelper.getTestImage(
+        'test_image_1920x1080.jpg',
+      );
+
+      final job = await client.mediaThumbnail.generate(
+        image,
+        width: 128,
+        height: 128,
+        wait: true,
+        timeout: const Duration(seconds: 30),
+      );
+
+      expect(job.status, equals('completed'));
+
+      final tempDir = await Directory.systemTemp.createTemp('thumb_test_img');
+      final outputFile = File('${tempDir.path}/thumbnail.jpg');
+
+      try {
+        await client.downloadJobFile(
+          job.jobId,
+          'output/thumbnail.jpg',
+          outputFile,
+        );
+
+        expect(outputFile.existsSync(), isTrue);
+        expect(outputFile.lengthSync(), greaterThan(0));
+      } finally {
+        await tempDir.delete(recursive: true);
+        await client.deleteJob(job.jobId);
+      }
+    });
+
+    test('test_thumbnail_generation_video', () async {
+      final video = await IntegrationHelper.getTestVideo(
+        'test_video_1080p_10s.mp4',
+      );
+
+      final job = await client.mediaThumbnail.generate(
+        video,
+        width: 128,
+        wait: true,
+        timeout: const Duration(seconds: 60),
+      );
+
+      expect(job.status, equals('completed'));
+
+      final tempDir = await Directory.systemTemp.createTemp('thumb_test_vid');
+      final outputFile = File('${tempDir.path}/thumbnail.jpg');
+
+      try {
+        await client.downloadJobFile(
+          job.jobId,
+          'output/thumbnail.jpg',
+          outputFile,
+        );
+
+        expect(outputFile.existsSync(), isTrue);
+        expect(outputFile.lengthSync(), greaterThan(0));
+      } finally {
+        await tempDir.delete(recursive: true);
+        await client.deleteJob(job.jobId);
+      }
+    });
+  });
+}

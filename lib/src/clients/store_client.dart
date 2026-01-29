@@ -13,7 +13,7 @@ import '../types.dart';
 /// Low-level HTTP client for store service operations.
 class StoreClient {
   StoreClient({
-    String baseUrl = 'http://localhost:8001',
+    String baseUrl = 'http://localhost:8011',
     this.authProvider,
     this.timeout = const Duration(seconds: 30),
     http.Client? client,
