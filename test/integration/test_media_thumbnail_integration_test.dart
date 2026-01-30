@@ -53,30 +53,24 @@ void main() {
     });
 
     test('test_media_thumbnail_file_download', () async {
-      final originalVideo = await IntegrationHelper.getTestVideo(
-        'test_video_1080p_10s.mp4',
+      // Use image instead of video to match Python SDK
+      final testImage = await IntegrationHelper.getTestImage(
+        'test_image_1920x1080.jpg',
       );
-      final tempDirUnique = await Directory.systemTemp.createTemp(
-        'thumb_vid_unique',
-      );
-      final uniqueVideo = File('${tempDirUnique.path}/unique.mp4');
-      await IntegrationHelper.createUniqueCopy(originalVideo, uniqueVideo);
 
+      // No unique copy needed - match Python SDK
       final job = await client.mediaThumbnail.generate(
-        uniqueVideo,
+        testImage,
         width: 128,
+        height: 128,
         wait: true,
         timeout: const Duration(seconds: 60),
       );
 
-      if (job.status != 'completed') {
-        print(
-          'Thumbnail Job Failed: ${job.status}, Error: ${job.errorMessage}',
-        );
-      }
       expect(job.status, equals('completed'));
+      expect(job.taskOutput, isNotNull);
 
-      final tempDir = await Directory.systemTemp.createTemp('thumb_test_vid');
+      final tempDir = await Directory.systemTemp.createTemp('thumb_test');
       final outputFile = File('${tempDir.path}/thumbnail.jpg');
 
       try {

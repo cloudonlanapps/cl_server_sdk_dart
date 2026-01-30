@@ -72,3 +72,15 @@ class NotFoundError extends ComputeClientError {
   @override
   String toString() => 'NotFoundError: $message';
 }
+
+/// HTTP error from server (matches Python's httpx.HTTPStatusError).
+class HttpStatusError extends ComputeClientError {
+  HttpStatusError(this.statusCode, String message, {this.responseBody})
+    : super(message);
+
+  final int statusCode;
+  final String? responseBody;
+
+  @override
+  String toString() => 'HttpStatusError($statusCode): $message';
+}

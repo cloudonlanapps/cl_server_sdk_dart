@@ -420,7 +420,7 @@ void main() {
           () => mockHttpClient.get(any(), headers: any(named: 'headers')),
         ).thenAnswer((_) async => http.Response('Not Found', 404));
 
-        expect(() => client.readEntity(999), throwsA(isA<JobNotFoundError>()));
+        expect(() => client.readEntity(999), throwsA(isA<HttpStatusError>()));
       });
     });
 

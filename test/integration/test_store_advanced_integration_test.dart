@@ -98,7 +98,7 @@ void main() {
       // 4. Test Error Response (404)
       final readNonExistent = await store.readEntity(999999);
       expect(readNonExistent.isError, isTrue);
-      expect(readNonExistent.error, contains('Not Found'));
+      expect(readNonExistent.error, contains('404'));
 
       // 5. Test Bulk Delete via IntegrationHelper
       await IntegrationHelper.cleanupStoreEntities();

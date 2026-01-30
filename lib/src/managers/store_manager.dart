@@ -258,10 +258,6 @@ class StoreManager {
           );
         },
       );
-    } on TimeoutException {
-      throw Exception(
-        'Timeout waiting for entity $entityId status $targetStatus after ${timeout.inSeconds}s',
-      );
     } finally {
       if (subId != null) {
         stopMonitoring(subId);

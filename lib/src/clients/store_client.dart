@@ -41,34 +41,26 @@ class StoreClient {
   }
 
   Future<dynamic> _handleResponse(http.Response response) async {
+    // Match Python SDK: don't wrap HTTP errors, throw generic exception
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      if (response.body.isNotEmpty) {
-        try {
-          return json.decode(response.body);
-        } on Object catch (_) {
-          // For endpoints returning bytes, handling is different,
-          // but this helper assumes JSON.
-          return null;
-        }
+      // Success - parse and return JSON
+      if (response.body.isEmpty) {
+        return null;
       }
-      return null;
-    } else if (response.statusCode == 400) {
-      throw ValidationError(response.body);
-    } else if (response.statusCode == 401) {
-      throw AuthenticationError();
-    } else if (response.statusCode == 403) {
-      throw PermissionError('Forbidden: Insufficient permissions');
-    } else if (response.statusCode == 404) {
-      // Extract detail if possible
       try {
-        final body = json.decode(response.body) as Map<String, dynamic>;
-        throw NotFoundError((body['detail'] as String?) ?? 'Not Found');
+        return json.decode(response.body);
       } on Object catch (_) {
-        throw NotFoundError('Not Found');
+        // Some 204s have no body but report content-type: application/json
+        return null;
       }
-    } else {
-      throw ComputeClientError('HTTP ${response.statusCode}: ${response.body}');
     }
+
+    // Any non-2xx status: throw generic HTTP exception (matches Python's httpx.HTTPStatusError)
+    throw HttpStatusError(
+      response.statusCode,
+      'HTTP ${response.statusCode}',
+      responseBody: response.body,
+    );
   }
 
   // Health check

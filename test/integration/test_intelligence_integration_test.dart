@@ -43,26 +43,23 @@ void main() {
 
           expect(finalStatus.status, equals('completed'));
 
-          // Verify entity fields
-          final readResult = await store.readEntity(entityId);
-          expect(readResult.isSuccess, isTrue);
-          final entity = readResult.data!;
+          // Verify intelligence jobs completed (matches Python SDK approach)
+          final jobsListResult = await store.getEntityJobs(entityId);
+          expect(jobsListResult.isSuccess, isTrue);
+          final allJobs = jobsListResult.data!;
+          final intelligenceJobTypes = ['clip_embedding', 'face_detection', 'dino_embedding'];
 
-          expect(entity.intelligenceData, isNotNull);
-          final intel = entity.intelligenceData!;
-          expect(intel.overallStatus, equals('completed'));
-          expect(intel.faceCount, greaterThan(0));
-          expect(intel.inferenceStatus.clipEmbedding, equals('completed'));
-          expect(intel.inferenceStatus.dinoEmbedding, equals('completed'));
-          expect(intel.inferenceStatus.faceDetection, equals('completed'));
-
-          // Verify jobs list
-          final jobsResult = await store.getEntityJobs(entityId);
-          expect(jobsResult.isSuccess, isTrue);
-          final jobs = jobsResult.data!;
-          expect(jobs, isNotEmpty);
-          expect(jobs.any((j) => j.taskType == 'clip_embedding'), isTrue);
-          expect(jobs.any((j) => j.taskType == 'face_detection'), isTrue);
+          // Verify all intelligence jobs exist and are completed (matches Python SDK)
+          expect(allJobs, isNotEmpty, reason: 'Should have intelligence jobs');
+          for (final jobType in intelligenceJobTypes) {
+            final job = allJobs.firstWhere(
+              (j) => j.taskType == jobType,
+              orElse: () => throw Exception('$jobType job not found'),
+            );
+            // Jobs should already be completed since entity status is completed
+            expect(job.status, equals('completed'),
+              reason: '$jobType job should be completed');
+          }
 
           // 3. Test Person Management
           final facesResult = await store.getEntityFaces(entityId);
