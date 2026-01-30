@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
@@ -18,7 +19,7 @@ void main() {
       await session.close();
     });
 
-    test('test_dino_embedding_flow', () async {
+    test('test_dino_embedding_http_polling', () async {
       final image = await IntegrationHelper.getTestImage();
 
       final job = await client.dinoEmbedding.embedImage(
@@ -32,6 +33,23 @@ void main() {
       // DINOv2 dimension is usually 384 or 768 or 1024 or 1536 depending on model
       expect(job.taskOutput!['embedding_dim'], isNotNull);
 
+      await client.deleteJob(job.jobId);
+    });
+
+    test('test_dino_embedding_mqtt_callbacks', () async {
+      final image = await IntegrationHelper.getTestImage();
+
+      final completionCompleter = Completer<JobResponse>();
+      final job = await client.dinoEmbedding.embedImage(
+        image,
+        onComplete: (j) => completionCompleter.complete(j),
+      );
+
+      final finalJob = await completionCompleter.future.timeout(
+        const Duration(seconds: 30),
+      );
+
+      expect(finalJob.status, equals('completed'));
       await client.deleteJob(job.jobId);
     });
 

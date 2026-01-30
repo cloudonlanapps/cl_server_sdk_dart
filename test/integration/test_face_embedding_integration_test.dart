@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 import 'integration_test_utils.dart';
@@ -17,7 +18,7 @@ void main() {
       await session.close();
     });
 
-    test('test_face_embedding_flow', () async {
+    test('test_face_embedding_http_polling', () async {
       final image = await IntegrationHelper.getTestImage(
         'test_face_single.jpg',
       );
@@ -47,6 +48,25 @@ void main() {
         );
       }
 
+      await client.deleteJob(job.jobId);
+    });
+
+    test('test_face_embedding_mqtt_callbacks', () async {
+      final image = await IntegrationHelper.getTestImage(
+        'test_face_single.jpg',
+      );
+
+      final completionCompleter = Completer<JobResponse>();
+      final job = await client.faceEmbedding.embedFaces(
+        image,
+        onComplete: (j) => completionCompleter.complete(j),
+      );
+
+      final finalJob = await completionCompleter.future.timeout(
+        const Duration(seconds: 45),
+      );
+
+      expect(finalJob.status, equals('completed'));
       await client.deleteJob(job.jobId);
     });
   });

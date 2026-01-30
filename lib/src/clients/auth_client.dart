@@ -30,10 +30,14 @@ class AuthClient {
         return json.decode(response.body);
       }
       return null;
+    } else if (response.statusCode == 400) {
+      throw ValidationError(response.body);
     } else if (response.statusCode == 401) {
       throw AuthenticationError();
     } else if (response.statusCode == 403) {
       throw PermissionError();
+    } else if (response.statusCode == 404) {
+      throw NotFoundError(response.body);
     } else {
       throw ComputeClientError('HTTP ${response.statusCode}: ${response.body}');
     }

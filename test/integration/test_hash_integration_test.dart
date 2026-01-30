@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 import 'integration_test_utils.dart';
@@ -17,7 +18,7 @@ void main() {
       await session.close();
     });
 
-    test('test_hash_flow', () async {
+    test('test_hash_http_polling', () async {
       final image = await IntegrationHelper.getTestImage();
 
       final job = await client.hash.compute(
@@ -38,6 +39,23 @@ void main() {
         print('Warning: server did not return p_hash');
       }
 
+      await client.deleteJob(job.jobId);
+    });
+
+    test('test_hash_mqtt_callbacks', () async {
+      final image = await IntegrationHelper.getTestImage();
+
+      final completionCompleter = Completer<JobResponse>();
+      final job = await client.hash.compute(
+        image,
+        onComplete: (j) => completionCompleter.complete(j),
+      );
+
+      final finalJob = await completionCompleter.future.timeout(
+        const Duration(seconds: 25),
+      );
+
+      expect(finalJob.status, equals('completed'));
       await client.deleteJob(job.jobId);
     });
   });

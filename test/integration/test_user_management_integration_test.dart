@@ -14,83 +14,201 @@ void main() {
       await adminSession.close();
     });
 
-    test('test_user_crud_flow', () async {
+    test('test_create_user_success', () async {
       final authClient = adminSession.authClient;
       final token = adminSession.getToken();
-      final testUsername = 'test_crud_user_dart';
-      final testPassword = 'password123';
+      final testUsername = 'test_new_user_dart';
 
-      // 1. Create User
+      // Check if test user already exists and delete
+      final users = await authClient.listUsers(token);
+      final existing = users
+          .where((u) => u.username == testUsername)
+          .firstOrNull;
+      if (existing != null) {
+        await authClient.deleteUser(token, existing.id);
+      }
+
+      // Create user
       final userCreate = UserCreateRequest(
         username: testUsername,
-        password: testPassword,
+        password: 'password123',
         isAdmin: false,
         isActive: true,
         permissions: ['read:jobs'],
       );
 
       final createdUser = await authClient.createUser(token, userCreate);
+
+      // Verify user created
       expect(createdUser.username, equals(testUsername));
       expect(createdUser.isAdmin, isFalse);
+      expect(createdUser.isActive, isTrue);
+      expect(createdUser.permissions, equals(['read:jobs']));
+      expect(createdUser.id, isNotNull);
+
+      // Cleanup
+      await authClient.deleteUser(token, createdUser.id);
+    });
+
+    test('test_list_users_success', () async {
+      final authClient = adminSession.authClient;
+      final token = adminSession.getToken();
+
+      // List users
+      final users = await authClient.listUsers(token);
+
+      // Verify results
+      expect(users, isA<List<UserResponse>>());
+      expect(users.length, greaterThan(0)); // At least admin user exists
+
+      // Find admin user
+      final adminUser = users.where((u) => u.username == 'admin').firstOrNull;
+      expect(adminUser, isNotNull);
+      expect(adminUser!.isAdmin, isTrue);
+    });
+
+    test('test_get_user_success', () async {
+      final authClient = adminSession.authClient;
+      final token = adminSession.getToken();
+
+      // First create a user to get
+      final userCreate = UserCreateRequest(
+        username: 'test_get_user_dart',
+        password: 'password123',
+        isAdmin: false,
+        isActive: true,
+        permissions: ['read:jobs', 'write:jobs'],
+      );
+
+      final createdUser = await authClient.createUser(token, userCreate);
 
       try {
-        // 2. Get User
+        // Get the user
         final fetchedUser = await authClient.getUser(token, createdUser.id);
-        expect(fetchedUser.id, equals(createdUser.id));
-        expect(fetchedUser.username, equals(testUsername));
 
-        // 3. Update User
+        // Verify
+        expect(fetchedUser.id, equals(createdUser.id));
+        expect(fetchedUser.username, equals('test_get_user_dart'));
+        expect(fetchedUser.isAdmin, isFalse);
+        expect(fetchedUser.isActive, isTrue);
+        expect(fetchedUser.permissions, isA<List<String>>());
+        expect(fetchedUser.permissions.length, greaterThan(0));
+      } finally {
+        // Cleanup
+        await authClient.deleteUser(token, createdUser.id);
+      }
+    });
+
+    test('test_update_user_permissions', () async {
+      final authClient = adminSession.authClient;
+      final token = adminSession.getToken();
+
+      // Create user
+      final userCreate = UserCreateRequest(
+        username: 'test_update_perms_dart',
+        password: 'password123',
+        isAdmin: false,
+        isActive: true,
+        permissions: ['read:jobs'],
+      );
+
+      final createdUser = await authClient.createUser(token, userCreate);
+
+      try {
+        // Update permissions
         final userUpdate = UserUpdateRequest(
-          permissions: ['read:jobs', 'write:jobs'],
-          isActive: true,
+          permissions: ['read:jobs', 'write:jobs', 'admin'],
         );
+
         final updatedUser = await authClient.updateUser(
           token,
           createdUser.id,
           userUpdate,
         );
-        expect(updatedUser.permissions, contains('write:jobs'));
 
-        // 4. List Users
-        final users = await authClient.listUsers(token);
-        expect(users.any((u) => u.id == createdUser.id), isTrue);
+        // Verify update
+        expect(updatedUser.id, equals(createdUser.id));
+        expect(
+          updatedUser.permissions.toSet(),
+          equals({'read:jobs', 'write:jobs', 'admin'}),
+        );
       } finally {
-        // 5. Delete User
+        // Cleanup
         await authClient.deleteUser(token, createdUser.id);
-
-        // Verify deletion
-        final usersAfter = await authClient.listUsers(token);
-        expect(usersAfter.any((u) => u.id == createdUser.id), isFalse);
       }
     });
 
-    test('test_user_pagination', () async {
+    test('test_delete_user_success', () async {
       final authClient = adminSession.authClient;
       final token = adminSession.getToken();
-      final prefix = 'test_pag_';
+
+      // Check if test user already exists
+      final users = await authClient.listUsers(token);
+      var existingUser = users
+          .where((u) => u.username == 'test_delete_user_dart')
+          .firstOrNull;
+
+      int userId;
+      if (existingUser != null) {
+        // User exists - verify/update permissions if needed
+        final expectedPermissions = ['read:jobs'];
+        if (existingUser.permissions != expectedPermissions) {
+          final update = UserUpdateRequest(permissions: expectedPermissions);
+          await authClient.updateUser(token, existingUser.id, update);
+        }
+        userId = existingUser.id;
+      } else {
+        // User doesn't exist - create it
+        final userCreate = UserCreateRequest(
+          username: 'test_delete_user_dart',
+          password: 'password123',
+          isAdmin: false,
+          isActive: true,
+          permissions: ['read:jobs'],
+        );
+
+        final createdUser = await authClient.createUser(token, userCreate);
+        userId = createdUser.id;
+      }
+
+      // Delete user
+      await authClient.deleteUser(token, userId);
+
+      // Verify user no longer exists
+      final usersAfter = await authClient.listUsers(token);
+      final deletedUser = usersAfter.where((u) => u.id == userId).firstOrNull;
+      expect(deletedUser, isNull, reason: 'User should be deleted');
+    });
+
+    test('test_list_users_with_pagination', () async {
+      final authClient = adminSession.authClient;
+      final token = adminSession.getToken();
       final createdIds = <int>[];
 
       try {
+        // Create multiple users
         for (var i = 0; i < 5; i++) {
-          final user = await authClient.createUser(
-            token,
-            UserCreateRequest(
-              username: '$prefix$i',
-              password: 'pass',
-              isAdmin: false,
-              isActive: true,
-              permissions: [],
-            ),
+          final userCreate = UserCreateRequest(
+            username: 'test_pagination_dart_$i',
+            password: 'password123',
+            isAdmin: false,
+            isActive: true,
+            permissions: ['read:jobs'],
           );
+
+          final user = await authClient.createUser(token, userCreate);
           createdIds.add(user.id);
         }
 
+        // Test pagination
         final page1 = await authClient.listUsers(token, skip: 0, limit: 3);
-        expect(page1.length, equals(3));
-
         final page2 = await authClient.listUsers(token, skip: 3, limit: 3);
-        expect(page2.length, greaterThanOrEqualTo(2));
+
+        // Verify pagination works
+        expect(page1.length, equals(3));
+        expect(page2.length, greaterThanOrEqualTo(2)); // At least 2 more users
       } finally {
+        // Cleanup
         for (final id in createdIds) {
           await authClient.deleteUser(token, id);
         }
@@ -100,7 +218,7 @@ void main() {
     test('test_update_user_password', () async {
       final authClient = adminSession.authClient;
       final token = adminSession.getToken();
-      final username = 'test_pwd_user';
+      final username = 'test_pwd_user_dart';
 
       // Create user
       final user = await authClient.createUser(
@@ -152,7 +270,7 @@ void main() {
       final user = await authClient.createUser(
         token,
         UserCreateRequest(
-          username: 'test_active_user',
+          username: 'test_active_user_dart',
           password: 'password',
           isActive: true,
         ),

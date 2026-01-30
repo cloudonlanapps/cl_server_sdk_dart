@@ -56,3 +56,19 @@ class WorkerUnavailableError extends ComputeClientError {
   @override
   String toString() => 'WorkerUnavailableError: $message';
 }
+
+/// Thrown when validation fails (400 Bad Request).
+class ValidationError extends ComputeClientError {
+  ValidationError(super.message);
+
+  @override
+  String toString() => 'ValidationError: $message';
+}
+
+/// Thrown when resource is not found (404 Not Found).
+class NotFoundError extends ComputeClientError {
+  NotFoundError(super.message);
+
+  @override
+  String toString() => 'NotFoundError: $message';
+}

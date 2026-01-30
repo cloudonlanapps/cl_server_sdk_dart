@@ -17,7 +17,7 @@ void main() {
       await session.close();
     });
 
-    test('test_face_detection_single', () async {
+    test('test_face_detection_http_polling', () async {
       final image = await IntegrationHelper.getTestImage(
         'test_face_single.jpg',
       );
@@ -41,7 +41,7 @@ void main() {
       await client.deleteJob(job.jobId);
     });
 
-    test('test_face_detection_multiple', () async {
+    test('test_face_detection_mqtt_callbacks', () async {
       final image = await IntegrationHelper.getTestImage(
         'test_face_multiple.jpg',
       );

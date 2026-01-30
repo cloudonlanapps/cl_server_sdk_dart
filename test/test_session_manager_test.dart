@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:cl_server_dart_client/src/clients/auth_client.dart';
-import 'package:cl_server_dart_client/src/clients/compute_client.dart';
 import 'package:cl_server_dart_client/src/models/auth_models.dart';
 import 'package:cl_server_dart_client/src/mqtt_monitor.dart';
 import 'package:cl_server_dart_client/src/server_config.dart';
@@ -28,11 +27,9 @@ String _createJwtToken(Map<String, dynamic> payload) {
 void main() {
   group('SessionManager', () {
     late MockAuthClient mockAuthClient;
-    late ServerConfig testConfig;
 
     setUp(() {
       mockAuthClient = MockAuthClient();
-      testConfig = const ServerConfig();
 
       // Default stubbing for close
       when(() => mockAuthClient.close()).thenAnswer((_) async {});

@@ -14,7 +14,7 @@ void main() {
       await IntegrationHelper.cleanupStoreEntities();
     });
 
-    test('test_store_crud_flow', () async {
+    test('test_list_entities', () async {
       if (!IntegrationTestConfig.isAuthEnabled) {
         if (!IntegrationTestConfig.storeGuestMode) {
           // ignore: avoid_print
@@ -25,46 +25,112 @@ void main() {
 
       final store = await IntegrationHelper.createStoreManager();
 
-      // 1. Create Entity
+      // Test listing entities with pagination
+      final result = await store.listEntities(page: 1, pageSize: 20);
+      expect(result.isSuccess, isTrue, reason: result.error);
+      expect(result.data, isNotNull);
+      expect(result.data!.pagination.page, equals(1));
+      expect(result.data!.pagination.pageSize, equals(20));
+      expect(result.data!.items, isA<List<Entity>>());
+
+      await store.close();
+    });
+
+    test('test_create_entity_collection', () async {
+      if (!IntegrationTestConfig.isAuthEnabled) {
+        if (!IntegrationTestConfig.storeGuestMode) {
+          print('Skipping store test: auth disabled and no guest mode');
+          return;
+        }
+      }
+
+      final store = await IntegrationHelper.createStoreManager();
+
+      // Create a collection (folder) entity
       final createResult = await store.createEntity(
-        label: 'Dart Integration Test Entity',
-        description: 'Created by Dart SDK integration test',
+        label: 'Test Collection',
+        description: 'A test collection',
         isCollection: true,
       );
       expect(createResult.isSuccess, isTrue, reason: createResult.error);
-      final entityId = createResult.data!.id;
-      expect(createResult.data!.label, equals('Dart Integration Test Entity'));
+      expect(createResult.data, isNotNull);
+      expect(createResult.data!.label, equals('Test Collection'));
+      expect(createResult.data!.isCollection, isTrue);
+      expect(createResult.data!.id, isNotNull);
 
-      // 2. Read Entity
+      // Cleanup
+      final entityId = createResult.data!.id;
+      final deleteResult = await store.deleteEntity(entityId);
+      expect(deleteResult.isSuccess, isTrue);
+
+      await store.close();
+    });
+
+    test('test_read_entity', () async {
+      if (!IntegrationTestConfig.isAuthEnabled) {
+        if (!IntegrationTestConfig.storeGuestMode) {
+          print('Skipping store test: auth disabled and no guest mode');
+          return;
+        }
+      }
+
+      final store = await IntegrationHelper.createStoreManager();
+      final imagePath = await IntegrationHelper.getTestImage();
+
+      // Create entity first
+      final createResult = await store.createEntity(
+        label: 'Entity to Read',
+        isCollection: false,
+        imagePath: imagePath.path,
+      );
+      expect(createResult.isSuccess, isTrue);
+      final entityId = createResult.data!.id;
+
+      // Read the entity
       final readResult = await store.readEntity(entityId);
       expect(readResult.isSuccess, isTrue);
       expect(readResult.data!.id, equals(entityId));
+      expect(readResult.data!.label, equals('Entity to Read'));
 
-      // 3. Update Entity
+      // Cleanup
+      await store.deleteEntity(entityId);
+      await store.close();
+    });
+
+    test('test_update_entity', () async {
+      if (!IntegrationTestConfig.isAuthEnabled) {
+        if (!IntegrationTestConfig.storeGuestMode) {
+          print('Skipping store test: auth disabled and no guest mode');
+          return;
+        }
+      }
+
+      final store = await IntegrationHelper.createStoreManager();
+      final imagePath = await IntegrationHelper.getTestImage();
+
+      // Create entity first
+      final createResult = await store.createEntity(
+        label: 'Original Label',
+        description: 'Original description',
+        isCollection: false,
+        imagePath: imagePath.path,
+      );
+      expect(createResult.isSuccess, isTrue);
+      final entityId = createResult.data!.id;
+
+      // Update entity
       final updateResult = await store.updateEntity(
         entityId,
         label: 'Updated Label',
         description: 'Updated description',
-        isCollection: true,
+        isCollection: false,
       );
       expect(updateResult.isSuccess, isTrue, reason: updateResult.error);
       expect(updateResult.data!.label, equals('Updated Label'));
+      expect(updateResult.data!.description, equals('Updated description'));
 
-      // 4. List Entities
-      final listResult = await store.listEntities(pageSize: 100);
-      expect(listResult.isSuccess, isTrue);
-      final found = listResult.data!.items.any((e) => e.id == entityId);
-      expect(found, isTrue);
-
-      // 5. Delete Entity
-      final deleteResult = await store.deleteEntity(entityId);
-      expect(deleteResult.isSuccess, isTrue, reason: deleteResult.error);
-
-      // Verify deletion (should fail or return 404 wrapped)
-      final readAfterDelete = await store.readEntity(entityId);
-      // Depending on API, it might return 404 error
-      expect(readAfterDelete.isError, isTrue);
-
+      // Cleanup
+      await store.deleteEntity(entityId);
       await store.close();
     });
 
@@ -362,6 +428,28 @@ void main() {
       );
       expect(restoreResult.isSuccess, isTrue);
       expect(restoreResult.data!.guestMode, equals(originalGuestMode));
+
+      await store.close();
+    });
+
+    test('test_delete_entity', () async {
+      final store = await IntegrationHelper.createStoreManager();
+      final image = await IntegrationHelper.getTestImage();
+
+      final createResult = await store.createEntity(
+        label: 'Entity to Delete',
+        isCollection: false,
+        imagePath: image.path,
+      );
+      expect(createResult.isSuccess, isTrue);
+      final entityId = createResult.data!.id;
+
+      final deleteResult = await store.deleteEntity(entityId);
+      expect(deleteResult.isSuccess, isTrue);
+
+      final readResult = await store.readEntity(entityId);
+      expect(readResult.isError, isTrue);
+      expect(readResult.error, anyOf(contains('Not Found'), contains('404')));
 
       await store.close();
     });

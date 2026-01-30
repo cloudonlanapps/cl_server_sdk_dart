@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
@@ -18,7 +19,7 @@ void main() {
       await session.close();
     });
 
-    test('test_image_conversion_jpeg_to_png', () async {
+    test('test_image_conversion_http_polling', () async {
       final image = await IntegrationHelper.getTestImage(
         'test_image_1920x1080.jpg',
       );
@@ -64,7 +65,7 @@ void main() {
       }
     });
 
-    test('test_image_conversion_with_quality', () async {
+    test('test_image_conversion_multiple_formats', () async {
       final image = await IntegrationHelper.getTestImage(
         'test_image_1920x1080.jpg',
       );
@@ -77,6 +78,26 @@ void main() {
       );
 
       expect(job.status, equals('completed'));
+      await client.deleteJob(job.jobId);
+    });
+
+    test('test_image_conversion_mqtt_callbacks', () async {
+      final image = await IntegrationHelper.getTestImage(
+        'test_image_1920x1080.jpg',
+      );
+
+      final completionCompleter = Completer<JobResponse>();
+      final job = await client.imageConversion.convert(
+        image,
+        outputFormat: 'png',
+        onComplete: (j) => completionCompleter.complete(j),
+      );
+
+      final finalJob = await completionCompleter.future.timeout(
+        const Duration(seconds: 30),
+      );
+
+      expect(finalJob.status, equals('completed'));
       await client.deleteJob(job.jobId);
     });
   });

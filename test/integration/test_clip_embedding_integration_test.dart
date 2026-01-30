@@ -66,6 +66,28 @@ void main() {
       await client.deleteJob(job.jobId);
     });
 
+    test('test_clip_embedding_both_callbacks', () async {
+      final image = await IntegrationHelper.getTestImage();
+
+      bool progressCalled = false;
+      bool completeCalled = false;
+      final completionCompleter = Completer<void>();
+
+      await client.clipEmbedding.embedImage(
+        image,
+        onProgress: (j) => progressCalled = true,
+        onComplete: (j) {
+          completeCalled = true;
+          completionCompleter.complete();
+        },
+      );
+
+      await completionCompleter.future.timeout(const Duration(seconds: 30));
+
+      expect(progressCalled, isTrue, reason: 'onProgress was not called');
+      expect(completeCalled, isTrue, reason: 'onComplete was not called');
+    });
+
     test('test_clip_embedding_file_download', () async {
       final image = await IntegrationHelper.getTestImage();
 

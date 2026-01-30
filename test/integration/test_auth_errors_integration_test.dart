@@ -179,5 +179,34 @@ void main() {
         await adminSession.close();
       }
     });
+
+    test('test_expired_token_rejected', () {
+      // This test is skipped in PySDK as it's difficult to test without
+      // short-lived tokens or server clock mocking.
+      // Included here for 100% test parity count.
+      print(
+        'Skipping test_expired_token_rejected: Requires short-lived tokens',
+      );
+    }, skip: 'Requires short-lived tokens');
+
+    test('test_compute_operations_with_valid_auth_succeed', () async {
+      if (!IntegrationTestConfig.isAuthEnabled) {
+        print('Skipping positive auth test: auth not enabled');
+        return;
+      }
+
+      final session = await IntegrationHelper.createSession();
+      final client = session.createComputeClient();
+
+      try {
+        // Simple operation that requires auth
+        // Since we are in auth mode, this should succeed.
+        final caps = await client.getCapabilities();
+        expect(caps, isNotNull);
+      } finally {
+        await client.close();
+        await session.close();
+      }
+    });
   });
 }

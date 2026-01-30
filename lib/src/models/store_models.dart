@@ -1,6 +1,194 @@
 import 'dart:convert';
 import 'intelligence_models.dart';
 
+/// Information about an orphaned file.
+class OrphanedFileInfo {
+  OrphanedFileInfo({
+    required this.filePath,
+    this.fileSize,
+    this.lastModified,
+  });
+
+  factory OrphanedFileInfo.fromMap(Map<String, dynamic> map) {
+    return OrphanedFileInfo(
+      filePath: map['file_path'] as String,
+      fileSize: map['file_size'] as int?,
+      lastModified: map['last_modified'] as int?,
+    );
+  }
+
+  final String filePath;
+  final int? fileSize;
+  final int? lastModified;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'file_path': filePath,
+      'file_size': fileSize,
+      'last_modified': lastModified,
+    };
+  }
+}
+
+/// Information about an orphaned face record.
+class OrphanedFaceInfo {
+  OrphanedFaceInfo({
+    required this.faceId,
+    required this.entityId,
+  });
+
+  factory OrphanedFaceInfo.fromMap(Map<String, dynamic> map) {
+    return OrphanedFaceInfo(
+      faceId: map['face_id'] as int,
+      entityId: map['entity_id'] as int,
+    );
+  }
+
+  final int faceId;
+  final int entityId;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'face_id': faceId,
+      'entity_id': entityId,
+    };
+  }
+}
+
+/// Information about an orphaned vector in Qdrant.
+class OrphanedVectorInfo {
+  OrphanedVectorInfo({
+    required this.vectorId,
+    required this.collectionName,
+  });
+
+  factory OrphanedVectorInfo.fromMap(Map<String, dynamic> map) {
+    return OrphanedVectorInfo(
+      vectorId: map['vector_id'] as String,
+      collectionName: map['collection_name'] as String,
+    );
+  }
+
+  final String vectorId;
+  final String collectionName;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'vector_id': vectorId,
+      'collection_name': collectionName,
+    };
+  }
+}
+
+/// Information about an orphaned MQTT retained message.
+class OrphanedMqttInfo {
+  OrphanedMqttInfo({
+    required this.entityId,
+    required this.topic,
+  });
+
+  factory OrphanedMqttInfo.fromMap(Map<String, dynamic> map) {
+    return OrphanedMqttInfo(
+      entityId: map['entity_id'] as int,
+      topic: map['topic'] as String,
+    );
+  }
+
+  final int entityId;
+  final String topic;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'entity_id': entityId,
+      'topic': topic,
+    };
+  }
+}
+
+/// Comprehensive audit report of data integrity issues.
+class AuditReport {
+  AuditReport({
+    required this.orphanedFiles,
+    required this.orphanedFaces,
+    required this.orphanedVectors,
+    required this.orphanedMqtt,
+    required this.timestamp,
+  });
+
+  factory AuditReport.fromMap(Map<String, dynamic> map) {
+    return AuditReport(
+      orphanedFiles: (map['orphaned_files'] as List)
+          .map((e) => OrphanedFileInfo.fromMap(e as Map<String, dynamic>))
+          .toList(),
+      orphanedFaces: (map['orphaned_faces'] as List)
+          .map((e) => OrphanedFaceInfo.fromMap(e as Map<String, dynamic>))
+          .toList(),
+      orphanedVectors: (map['orphaned_vectors'] as List)
+          .map((e) => OrphanedVectorInfo.fromMap(e as Map<String, dynamic>))
+          .toList(),
+      orphanedMqtt: (map['orphaned_mqtt'] as List)
+          .map((e) => OrphanedMqttInfo.fromMap(e as Map<String, dynamic>))
+          .toList(),
+      timestamp:
+          map['timestamp'] as int? ?? DateTime.now().millisecondsSinceEpoch,
+    );
+  }
+
+  final List<OrphanedFileInfo> orphanedFiles;
+  final List<OrphanedFaceInfo> orphanedFaces;
+  final List<OrphanedVectorInfo> orphanedVectors;
+  final List<OrphanedMqttInfo> orphanedMqtt;
+  final int timestamp;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'orphaned_files': orphanedFiles.map((e) => e.toMap()).toList(),
+      'orphaned_faces': orphanedFaces.map((e) => e.toMap()).toList(),
+      'orphaned_vectors': orphanedVectors.map((e) => e.toMap()).toList(),
+      'orphaned_mqtt': orphanedMqtt.map((e) => e.toMap()).toList(),
+      'timestamp': timestamp,
+    };
+  }
+}
+
+/// Summary of cleaned up orphaned resources.
+class CleanupReport {
+  CleanupReport({
+    required this.filesDeleted,
+    required this.facesDeleted,
+    required this.vectorsDeleted,
+    required this.mqttCleared,
+    required this.timestamp,
+  });
+
+  factory CleanupReport.fromMap(Map<String, dynamic> map) {
+    return CleanupReport(
+      filesDeleted: map['files_deleted'] as int,
+      facesDeleted: map['faces_deleted'] as int,
+      vectorsDeleted: map['vectors_deleted'] as int,
+      mqttCleared: map['mqtt_cleared'] as int,
+      timestamp:
+          map['timestamp'] as int? ?? DateTime.now().millisecondsSinceEpoch,
+    );
+  }
+
+  final int filesDeleted;
+  final int facesDeleted;
+  final int vectorsDeleted;
+  final int mqttCleared;
+  final int timestamp;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'files_deleted': filesDeleted,
+      'faces_deleted': facesDeleted,
+      'vectors_deleted': vectorsDeleted,
+      'mqtt_cleared': mqttCleared,
+      'timestamp': timestamp,
+    };
+  }
+}
+
 /// Media entity with metadata and file properties.
 class Entity {
   Entity({

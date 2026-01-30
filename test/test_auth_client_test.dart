@@ -320,7 +320,7 @@ void main() {
         );
         expect(
           () => authClient.createUser('admin_token', userCreate),
-          throwsA(isA<ComputeClientError>()),
+          throwsA(isA<ValidationError>()),
         );
       });
 
@@ -429,8 +429,8 @@ void main() {
         ).thenAnswer((_) async => http.Response('Not Found', 404));
 
         expect(
-          () => authClient.getUser('admin_token', 999),
-          throwsA(isA<ComputeClientError>()),
+          () => authClient.getUser('admin_token', 2),
+          throwsA(isA<NotFoundError>()),
         );
       });
 
@@ -528,7 +528,7 @@ void main() {
         final userUpdate = UserUpdateRequest(isActive: false);
         expect(
           () => authClient.updateUser('admin_token', 999, userUpdate),
-          throwsA(isA<ComputeClientError>()),
+          throwsA(isA<NotFoundError>()),
         );
       });
 
@@ -554,7 +554,7 @@ void main() {
 
         expect(
           () => authClient.deleteUser('admin_token', 999),
-          throwsA(isA<ComputeClientError>()),
+          throwsA(isA<NotFoundError>()),
         );
       });
 

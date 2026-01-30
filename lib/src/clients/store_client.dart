@@ -52,6 +52,8 @@ class StoreClient {
         }
       }
       return null;
+    } else if (response.statusCode == 400) {
+      throw ValidationError(response.body);
     } else if (response.statusCode == 401) {
       throw AuthenticationError();
     } else if (response.statusCode == 403) {
@@ -60,9 +62,9 @@ class StoreClient {
       // Extract detail if possible
       try {
         final body = json.decode(response.body) as Map<String, dynamic>;
-        throw JobNotFoundError((body['detail'] as String?) ?? 'Not Found');
+        throw NotFoundError((body['detail'] as String?) ?? 'Not Found');
       } on Object catch (_) {
-        throw JobNotFoundError('Not Found');
+        throw NotFoundError('Not Found');
       }
     } else {
       throw ComputeClientError('HTTP ${response.statusCode}: ${response.body}');
@@ -221,19 +223,11 @@ class StoreClient {
     Object? isCollection = const Unset(),
     Object? parentId = const Unset(),
   }) async {
-    // Note: Use http.MultipartRequest for patching as server expects form data for some logic,
-    // though usually PATCH can be json. Python SDK uses form data implicitly?
-    // Python StoreClient docstring: "All write operations (create, update, patch, update_read_auth) use multipart/form-data, NOT JSON."
-    // So we use MultipartRequest or just x-www-form-url-encoded if no file.
-    // http.MultipartRequest works for both.
-
     final request = http.MultipartRequest(
       'PATCH',
       Uri.parse('$baseUrl/entities/$entityId'),
     );
     request.headers.addAll(await _getHeaders());
-
-    // We don't send file in patch usually.
 
     if (label is! Unset) {
       request.fields['label'] = label == null ? '' : label.toString();
@@ -243,15 +237,11 @@ class StoreClient {
           ? ''
           : description.toString();
     }
-    if (isDeleted is! Unset) {
-      if (isDeleted != null) {
-        request.fields['is_deleted'] = isDeleted.toString().toLowerCase();
-      }
+    if (isDeleted is! Unset && isDeleted != null) {
+      request.fields['is_deleted'] = isDeleted.toString().toLowerCase();
     }
-    if (isCollection is! Unset) {
-      if (isCollection != null) {
-        request.fields['is_collection'] = isCollection.toString().toLowerCase();
-      }
+    if (isCollection is! Unset && isCollection != null) {
+      request.fields['is_collection'] = isCollection.toString().toLowerCase();
     }
     if (parentId is! Unset) {
       request.fields['parent_id'] = parentId == null ? '' : parentId.toString();
@@ -274,6 +264,17 @@ class StoreClient {
     await _handleResponse(response);
   }
 
+  Future<void> deleteFace(int faceId) async {
+    final response = await _client
+        .delete(
+          Uri.parse('$baseUrl/faces/$faceId'),
+          headers: await _getHeaders(),
+        )
+        .timeout(timeout);
+
+    await _handleResponse(response);
+  }
+
   Future<void> deleteAllEntities() async {
     final response = await _client
         .delete(
@@ -283,6 +284,32 @@ class StoreClient {
         .timeout(timeout);
 
     await _handleResponse(response);
+  }
+
+  // System/Audit operations
+
+  Future<AuditReport> getAuditReport() async {
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/system/audit'),
+          headers: await _getHeaders(),
+        )
+        .timeout(timeout);
+
+    final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
+    return AuditReport.fromMap(jsonMap);
+  }
+
+  Future<CleanupReport> clearOrphans() async {
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/system/clear-orphans'),
+          headers: await _getHeaders(),
+        )
+        .timeout(timeout);
+
+    final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
+    return CleanupReport.fromMap(jsonMap);
   }
 
   // Admin operations
@@ -330,6 +357,19 @@ class StoreClient {
   }
 
   // Intelligence operations
+
+  Future<EntityIntelligenceData?> getEntityIntelligence(int entityId) async {
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/intelligence/entities/$entityId'),
+          headers: await _getHeaders(),
+        )
+        .timeout(timeout);
+
+    final data = await _handleResponse(response);
+    if (data == null) return null;
+    return EntityIntelligenceData.fromMap(data as Map<String, dynamic>);
+  }
 
   Future<List<FaceResponse>> getEntityFaces(int entityId) async {
     final response = await _client

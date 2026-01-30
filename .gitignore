@@ -9,3 +9,4 @@ docs/services/**
 **/.DS_Store
 coverage/**
 **/*.log
+docs/**

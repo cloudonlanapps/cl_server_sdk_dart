@@ -1,111 +1,119 @@
-import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 import 'integration_test_utils.dart';
 
 void main() {
-  group('M-Insight Batch Integration Tests', () {
+  group('MInsight Batch Integration Tests', () {
     late SessionManager session;
     late StoreManager store;
 
     setUpAll(() async {
       session = await IntegrationHelper.createSession();
       store = await IntegrationHelper.createStoreManager(session);
-      await IntegrationHelper.cleanupStoreEntities();
     });
 
     tearDownAll(() async {
-      await IntegrationHelper.cleanupStoreEntities();
       await session.close();
     });
 
     test(
       'test_m_insight_batch_upload_and_queue',
       () async {
-        // 1. Verify M-Insight worker is online
+        // 1. Verify MInsight worker is online
         final statusResult = await store.getMInsightStatus();
-        expect(statusResult.isSuccess, isTrue, reason: statusResult.error);
+        expect(
+          statusResult.isSuccess,
+          isTrue,
+          reason: 'Failed to get MInsight status: ${statusResult.error}',
+        );
 
         final status = statusResult.data;
         expect(status, isNotNull);
-        expect(['running', 'idle'], contains(status!['status']));
+        final workerStatus = status!['status'];
+        expect(
+          ['running', 'idle'],
+          contains(workerStatus),
+          reason: 'MInsight worker not online. Status: $workerStatus',
+        );
 
-        // 2. Upload images in parallel
-        const numImages = 10; // Reduced from 30 for faster test performance
+        // 2. Upload batch of unique images
+        const numImages = 10; // Reduced from 30 for CI/test efficiency
         print('Uploading $numImages unique images...');
 
-        final testImage = await IntegrationHelper.getTestImage();
-        final tempDir = await Directory.systemTemp.createTemp('batch_test');
+        final sourceImage = await IntegrationHelper.getTestImage();
+        final entityIds = <int>[];
 
-        try {
-          final uploadTasks = <Future<StoreOperationResult<Entity>>>[];
+        for (var i = 0; i < numImages; i++) {
+          final tempDir = await Directory.systemTemp.createTemp('batch_upload');
+          final uniquePath = File('${tempDir.path}/batch_$i.jpg');
+          await IntegrationHelper.createUniqueCopy(
+            sourceImage,
+            uniquePath,
+            offset: i,
+          );
 
-          for (var i = 0; i < numImages; i++) {
-            final uniqueFile = File('${tempDir.path}/batch_$i.jpg');
-            await IntegrationHelper.createUniqueCopy(
-              testImage,
-              uniqueFile,
-              offset: i,
-            );
-
-            uploadTasks.add(
-              store.createEntity(
-                label: 'Batch_Test_$i',
-                isCollection: false,
-                imagePath: uniqueFile.path,
-              ),
-            );
-          }
-
-          final results = await Future.wait(uploadTasks);
-          final entityIds = <int>[];
-
-          for (final r in results) {
-            expect(r.isSuccess, isTrue, reason: 'Upload failed: ${r.error}');
-            entityIds.add(r.data!.id);
-          }
-
-          print('Successfully uploaded ${entityIds.length} images.');
-
-          // 3. Poll for intelligenceStatus
-          const timeout = Duration(seconds: 120);
-          final startTime = DateTime.now();
-          final pendingIds = entityIds.toSet();
-
-          print('Waiting for M-Insight to queue images...');
-
-          while (pendingIds.isNotEmpty &&
-              DateTime.now().difference(startTime) < timeout) {
-            final listResult = await store.listEntities(pageSize: 100);
-            expect(listResult.isSuccess, isTrue);
-
-            for (final item in listResult.data!.items) {
-              if (pendingIds.contains(item.id)) {
-                final status = item.intelligenceStatus;
-                if (['queued', 'processing', 'completed'].contains(status)) {
-                  pendingIds.remove(item.id);
-                }
-              }
-            }
-
-            if (pendingIds.isNotEmpty) {
-              print(
-                '  ${pendingIds.length} images still not picked up by M-Insight...',
-              );
-              await Future<void>.delayed(const Duration(seconds: 2));
-            }
-          }
+          final res = await store.createEntity(
+            label: 'Batch_Test_$i',
+            isCollection: false,
+            imagePath: uniquePath.path,
+          );
 
           expect(
-            pendingIds,
-            isEmpty,
-            reason:
-                'Timed out waiting for images to be queued by M-Insight. Pending: $pendingIds',
+            res.isSuccess,
+            isTrue,
+            reason: 'Upload failed for index $i: ${res.error}',
           );
-          print('All images successfully queued by M-Insight!');
-        } finally {
-          await tempDir.delete(recursive: true);
+          entityIds.add(res.data!.id);
+        }
+
+        print(
+          'Successfully uploaded ${entityIds.length} images. Waiting for queuing...',
+        );
+
+        // 3. Poll for intelligence status
+        final timeout = Duration(seconds: max(60, numImages * 5));
+        final startTime = DateTime.now();
+        final pendingIds = Set<int>.from(entityIds);
+
+        while (pendingIds.isNotEmpty &&
+            DateTime.now().difference(startTime) < timeout) {
+          for (final id in List<int>.from(pendingIds)) {
+            final res = await store.getEntityIntelligence(id);
+            if (res.isSuccess && res.data != null) {
+              final overallStatus = res.data!.overallStatus;
+              if ([
+                'queued',
+                'processing',
+                'completed',
+              ].contains(overallStatus)) {
+                pendingIds.remove(id);
+              }
+            }
+          }
+
+          if (pendingIds.isNotEmpty) {
+            print(
+              '  ${pendingIds.length} images still not picked up by MInsight...',
+            );
+            await Future<void>.delayed(const Duration(seconds: 2));
+          }
+        }
+
+        // Final check
+        if (pendingIds.isNotEmpty) {
+          fail(
+            'Timed out waiting for ${pendingIds.length} images to be queued by MInsight.',
+          );
+        }
+
+        print('All images successfully queued by MInsight!');
+
+        // 4. Cleanup
+        print('Cleaning up batch entities...');
+        for (final id in entityIds) {
+          await store.deleteEntity(id);
         }
       },
       timeout: const Timeout(Duration(minutes: 5)),

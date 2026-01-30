@@ -93,6 +93,10 @@ class StoreManager {
       return StoreOperationResult<T>(
         error: 'Forbidden: Insufficient permissions',
       );
+    } else if (error is ValidationError) {
+      return StoreOperationResult<T>(error: 'Bad Request: ${error.message}');
+    } else if (error is NotFoundError) {
+      return StoreOperationResult<T>(error: 'Not Found: ${error.message}');
     } else if (error is JobNotFoundError) {
       return StoreOperationResult<T>(error: error.message);
     } else if (error is ComputeClientError) {
@@ -351,18 +355,41 @@ class StoreManager {
     }
   }
 
-  Future<StoreOperationResult<void>> deleteEntity(int entityId) async {
+  Future<StoreOperationResult<void>> deleteEntity(
+    int entityId, {
+    bool force = true,
+  }) async {
     try {
-      // Soft delete first
-      await storeClient.patchEntity(entityId, isDeleted: true);
-    } on Object catch (_) {
-      // Ignore if fail? Python code checks error.
-    }
+      if (force) {
+        // Step 1: Ensure it's soft-deleted
+        final patchRes = await patchEntity(entityId, isDeleted: true);
+        if (!patchRes.isSuccess) {
+          // If entity doesn't exist, patch will fail with 404
+          if (patchRes.error != null &&
+              (patchRes.error!.contains('Not Found') ||
+                  patchRes.error!.contains('404'))) {
+            return patchRes;
+          }
+          // For other errors, we can't proceed
+          return patchRes;
+        }
+      }
 
-    try {
+      // Step 2: Hard delete
       await storeClient.deleteEntity(entityId);
       return StoreOperationResult(
         success: 'Entity deleted successfully',
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<void>> deleteFace(int faceId) async {
+    try {
+      await storeClient.deleteFace(faceId);
+      return StoreOperationResult(
+        success: 'Face deleted successfully',
       );
     } on Object catch (e) {
       return _handleError(e);
@@ -397,6 +424,32 @@ class StoreManager {
     }
   }
 
+  // System/Audit
+
+  Future<StoreOperationResult<AuditReport>> getAuditReport() async {
+    try {
+      final result = await storeClient.getAuditReport();
+      return StoreOperationResult(
+        success: 'Audit report generated successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<CleanupReport>> clearOrphans() async {
+    try {
+      final result = await storeClient.clearOrphans();
+      return StoreOperationResult(
+        success: 'Orphaned resources cleared successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
   Future<StoreOperationResult<Map<String, dynamic>>> getMInsightStatus() async {
     try {
       final result = await storeClient.getMInsightStatus();
@@ -410,6 +463,20 @@ class StoreManager {
   }
 
   // Intelligence
+
+  Future<StoreOperationResult<EntityIntelligenceData?>> getEntityIntelligence(
+    int entityId,
+  ) async {
+    try {
+      final result = await storeClient.getEntityIntelligence(entityId);
+      return StoreOperationResult(
+        success: 'Intelligence data retrieved successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
 
   Future<StoreOperationResult<List<FaceResponse>>> getEntityFaces(
     int entityId,

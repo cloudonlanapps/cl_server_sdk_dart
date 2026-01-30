@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
@@ -18,7 +19,7 @@ void main() {
       await session.close();
     });
 
-    test('test_hls_manifest_generation', () async {
+    test('test_hls_streaming_http_polling', () async {
       final video = await IntegrationHelper.getTestVideo();
 
       final job = await client.hlsStreaming.generateManifest(
@@ -49,6 +50,23 @@ void main() {
         await tempDir.delete(recursive: true);
         await client.deleteJob(job.jobId);
       }
+    });
+
+    test('test_hls_streaming_mqtt_callbacks', () async {
+      final video = await IntegrationHelper.getTestVideo();
+
+      final completionCompleter = Completer<JobResponse>();
+      final job = await client.hlsStreaming.generateManifest(
+        video,
+        onComplete: (j) => completionCompleter.complete(j),
+      );
+
+      final finalJob = await completionCompleter.future.timeout(
+        const Duration(seconds: 125),
+      );
+
+      expect(finalJob.status, equals('completed'));
+      await client.deleteJob(job.jobId);
     });
   });
 }

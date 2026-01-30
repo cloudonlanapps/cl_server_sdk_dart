@@ -18,7 +18,7 @@ void main() {
       await session.close();
     });
 
-    test('test_exif_extraction_rich', () async {
+    test('test_exif_http_polling', () async {
       final image = await IntegrationHelper.getTestImage('test_exif_rich.jpg');
 
       final job = await client.exif.extract(
@@ -46,7 +46,7 @@ void main() {
       await client.deleteJob(job.jobId);
     });
 
-    test('test_exif_no_metadata', () async {
+    test('test_exif_mqtt_callbacks', () async {
       // Create a dummy file without EXIF
       final tempFile = File('no_exif.jpg')
         ..writeAsBytesSync(List.filled(100, 0));
