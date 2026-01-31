@@ -198,7 +198,6 @@ class MQTTJobMonitor {
         _handleEntityStatus(topic, pt);
       }
     } on Object catch (e) {
-      // ignore: avoid_print
       print('Error handling MQTT message on $topic: $e');
     }
   }
@@ -358,8 +357,8 @@ class MQTTJobMonitor {
 
     // Subscribe to topic if connected
     final topic = 'mInsight/$storePort/entity_item_status/$entityId';
-    // ignore: avoid_print
-    print('Subscribing to MQTT topic: $topic (connected: $_connected)');
+
+    //print('Subscribing to MQTT topic: $topic (connected: $_connected)');
     if (_connected) {
       _client!.subscribe(topic, MqttQos.atLeastOnce);
     }

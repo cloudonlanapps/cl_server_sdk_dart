@@ -17,7 +17,6 @@ void main() {
     test('test_list_entities', () async {
       if (!IntegrationTestConfig.isAuthEnabled) {
         if (!IntegrationTestConfig.storeGuestMode) {
-          // ignore: avoid_print
           print('Skipping store test: auth disabled and no guest mode');
           return;
         }
@@ -157,7 +156,6 @@ void main() {
       // We'll just verify we can subscribe without error.
       // Creating a dummy subscription
       final subId = await store.monitorEntity(entityId, (payload) {
-        // ignore: avoid_print
         print('Received update: ${payload.status}');
       });
       expect(subId, isNotNull);

@@ -27,7 +27,6 @@ void main() {
         expect(job.status, anyOf('completed', 'failed', 'error'));
       } catch (e) {
         if (e is SocketException) {
-          // ignore: avoid_print
           print('Skipping compute test: server unreachable');
           return;
         }

@@ -40,7 +40,7 @@ void main() {
 
           await IntegrationHelper.createUniqueCopy(sourceFile, uniqueFile);
 
-          print('Uploading $imageName (unique copy)...');
+          //print('Uploading $imageName (unique copy)...');
           uploadTasks.add(
             store.createEntity(
               label: 'Test Timeout Fix $imageName',
@@ -65,12 +65,12 @@ void main() {
           expect(result.data, isNotNull);
 
           createdEntities.add(result.data!);
-          print('Created entity ${result.data!.id} for $imageName');
+          //print('Created entity ${result.data!.id} for $imageName');
         }
 
-        print(
+        /*print(
           'Successfully uploaded ${createdEntities.length} images concurrently.',
-        );
+        );*/
       } finally {
         await tempDir.delete(recursive: true);
 

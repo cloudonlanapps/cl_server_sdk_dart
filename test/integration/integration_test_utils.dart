@@ -183,10 +183,9 @@ class IntegrationHelper {
         }
         result = await store.listEntities(pageSize: 100);
       }
-      if (deletedCount > 0) print('Cleaned up $deletedCount entities.');
+      //if (deletedCount > 0) print('Cleaned up $deletedCount entities.');
     } on Object catch (e) {
-      // ignore: avoid_print
-      print('Cleanup warning: $e');
+      //print('Cleanup warning: $e');
     } finally {
       await session.close();
     }
@@ -216,17 +215,14 @@ class IntegrationHelper {
       if (result.exitCode == 0 && dest.existsSync()) {
         return dest;
       } else {
-        // ignore: avoid_print
         print(
           'Python make_unique failed or dest missing. Exit code: ${result.exitCode}',
         );
         if (result.stderr.toString().isNotEmpty) {
-          // ignore: avoid_print
           print('Error: ${result.stderr}');
         }
       }
     } catch (e) {
-      // ignore: avoid_print
       print('Error calling python make_unique: $e');
     }
 
@@ -243,14 +239,13 @@ class IntegrationHelper {
 }
 
 void printConfig() {
-  // ignore: avoid_print
   print('Integration Test Config:');
-  // ignore: avoid_print
+
   print('Auth URL: ${IntegrationTestConfig.authUrl}');
-  // ignore: avoid_print
+
   print('Compute URL: ${IntegrationTestConfig.computeUrl}');
-  // ignore: avoid_print
+
   print('Store URL: ${IntegrationTestConfig.storeUrl}');
-  // ignore: avoid_print
+
   print('User: ${IntegrationTestConfig.username}');
 }

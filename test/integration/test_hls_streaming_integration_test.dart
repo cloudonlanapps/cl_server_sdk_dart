@@ -29,7 +29,7 @@ void main() {
       );
 
       expect(job.status, equals('completed'));
-      print('HLS Output: ${job.taskOutput}');
+      //print('HLS Output: ${job.taskOutput}');
 
       final tempDir = await Directory.systemTemp.createTemp('hls_test');
       final outputFile = File('${tempDir.path}/master.m3u8');

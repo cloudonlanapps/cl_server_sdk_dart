@@ -46,7 +46,7 @@ void main() {
           final uniqueImage = File('${tempDir.path}/unique_$filename');
           await IntegrationHelper.createUniqueCopy(sourceFile, uniqueImage);
 
-          print('Uploading $filename...');
+          //print('Uploading $filename...');
           final createResult = await store.createEntity(
             isCollection: false,
             label: 'Test Integration $filename',
@@ -73,9 +73,9 @@ void main() {
           final expectedFaces = data['expectedFaces'] as int;
           final filename = data['filename'] as String;
 
-          print(
+          /*print(
             'Waiting for entity ${entity.id} ($filename) to complete processing...',
-          );
+          );*/
 
           final statusResult = await store.waitForEntityStatus(
             entity.id,
@@ -86,7 +86,7 @@ void main() {
           expect(statusResult.status, equals('completed'));
 
           // Verify artifacts
-          print('Verifying artifacts for entity ${entity.id}...');
+          //print('Verifying artifacts for entity ${entity.id}...');
 
           // Face Count
           final facesResult = await store.getEntityFaces(entity.id);

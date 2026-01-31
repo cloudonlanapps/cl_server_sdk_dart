@@ -13,4 +13,5 @@ echo "  Compute: $CL_COMPUTE_URL"
 echo "  Store:   $CL_STORE_URL"
 echo "  User:    $CL_USERNAME"
 
-dart test -j 1 test
+dart test -j 1 test -r expanded
+

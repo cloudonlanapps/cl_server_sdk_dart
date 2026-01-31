@@ -6,7 +6,6 @@ void main() {
   group('Auth Integration Tests', () {
     test('test_login_success', () async {
       if (!IntegrationTestConfig.isAuthEnabled) {
-        // ignore: avoid_print
         print('Skipping auth test: credentials not provided');
         return;
       }
