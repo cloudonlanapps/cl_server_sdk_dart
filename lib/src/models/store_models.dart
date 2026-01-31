@@ -571,18 +571,21 @@ class StoreOperationResult<T> {
     this.error,
     this.data,
     this.isDuplicate = false,
+    this.statusCode,
   });
 
   factory StoreOperationResult.fromMap(
     Map<String, dynamic> map,
     T Function(dynamic data) dataFromJson, {
     bool isDuplicate = false,
+    int? statusCode,
   }) {
     return StoreOperationResult<T>(
       success: map['success'] as String?,
       error: map['error'] as String?,
       data: map['data'] != null ? dataFromJson(map['data']) : null,
       isDuplicate: isDuplicate,
+      statusCode: statusCode,
     );
   }
 
@@ -597,6 +600,9 @@ class StoreOperationResult<T> {
 
   /// Whether the operation resulted in a duplicate (e.g. for create)
   final bool isDuplicate;
+
+  /// HTTP status code from the server
+  final int? statusCode;
 
   bool get isSuccess => error == null && (success != null || isDuplicate);
   bool get isError => error != null;

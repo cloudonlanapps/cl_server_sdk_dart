@@ -47,7 +47,11 @@ void main() {
           final jobsListResult = await store.getEntityJobs(entityId);
           expect(jobsListResult.isSuccess, isTrue);
           final allJobs = jobsListResult.data!;
-          final intelligenceJobTypes = ['clip_embedding', 'face_detection', 'dino_embedding'];
+          final intelligenceJobTypes = [
+            'clip_embedding',
+            'face_detection',
+            'dino_embedding',
+          ];
 
           // Verify all intelligence jobs exist and are completed (matches Python SDK)
           expect(allJobs, isNotEmpty, reason: 'Should have intelligence jobs');
@@ -57,8 +61,11 @@ void main() {
               orElse: () => throw Exception('$jobType job not found'),
             );
             // Jobs should already be completed since entity status is completed
-            expect(job.status, equals('completed'),
-              reason: '$jobType job should be completed');
+            expect(
+              job.status,
+              equals('completed'),
+              reason: '$jobType job should be completed',
+            );
           }
 
           // 3. Test Person Management
@@ -95,51 +102,83 @@ void main() {
       // It should be a Map or similar depending on the exact implementation in StoreManager
     });
 
-    test('test_delete_face', () async {
-      final image = await IntegrationHelper.getTestImage(
-        'test_face_single.jpg',
-      );
-
-      final createResult = await store.createEntity(
-        label: 'Face Delete Test',
-        isCollection: false,
-        imagePath: image.path,
-      );
-      expect(createResult.isSuccess, isTrue);
-      final entityId = createResult.data!.id;
-
-      try {
-        // Wait for processing to get faces
-        await store.waitForEntityStatus(
-          entityId,
-          targetStatus: 'completed',
-          timeout: const Duration(seconds: 120),
+    test(
+      'test_consolidated_deletion_flow',
+      timeout: const Timeout(Duration(minutes: 5)),
+      () async {
+        final image = await IntegrationHelper.getTestImage(
+          'test_face_single.jpg',
         );
 
-        final facesResult = await store.getEntityFaces(entityId);
-        expect(facesResult.isSuccess, isTrue);
-        final faces = facesResult.data!;
-        expect(faces, isNotEmpty);
-        final faceId = faces[0].id;
+        // 1. Create Entity and Wait for Processing
+        final createResult = await store.createEntity(
+          label: 'Consolidated Delete Test',
+          isCollection: false,
+          imagePath: image.path,
+        );
+        expect(createResult.isSuccess, isTrue);
+        final entityId = createResult.data!.id;
 
-        // Delete face
-        final deleteRes = await store.deleteFace(faceId);
-        if (!deleteRes.isSuccess &&
-            deleteRes.error!.contains('Face service not available')) {
-          print(
-            'Skipping face deletion verification: Face service not available',
+        try {
+          // Wait for processing to get faces
+          await store.waitForEntityStatus(
+            entityId,
+            targetStatus: 'completed',
+            timeout: const Duration(seconds: 120),
           );
-          return;
-        }
-        expect(deleteRes.isSuccess, isTrue, reason: deleteRes.error);
 
-        // Verify face is gone
-        final afterDeleteFaces = await store.getEntityFaces(entityId);
-        expect(afterDeleteFaces.isSuccess, isTrue);
-        expect(afterDeleteFaces.data!.any((f) => f.id == faceId), isFalse);
-      } finally {
-        await store.deleteEntity(entityId);
-      }
-    });
+          // 2. Verify initial state (Faces exist)
+          final intelResult = await store.getEntityIntelligence(entityId);
+          expect(intelResult.isSuccess, isTrue);
+          final initialFaceCount = intelResult.data?.faceCount ?? 0;
+          expect(
+            initialFaceCount,
+            greaterThan(0),
+            reason: 'Should have at least one face',
+          );
+
+          final facesResult = await store.getEntityFaces(entityId);
+          expect(facesResult.isSuccess, isTrue);
+          final faces = facesResult.data!;
+          expect(faces.length, equals(initialFaceCount));
+
+          final faceIdToDelete = faces[0].id;
+
+          // 3. Delete one face
+          final deleteRes = await store.deleteFace(faceIdToDelete);
+          expect(deleteRes.isSuccess, isTrue, reason: deleteRes.error);
+
+          // 4. Verify cleanup (Face gone, count decremented)
+          final afterDeleteFacesResult = await store.getEntityFaces(entityId);
+          expect(afterDeleteFacesResult.isSuccess, isTrue);
+          expect(
+            afterDeleteFacesResult.data!.any((f) => f.id == faceIdToDelete),
+            isFalse,
+            reason: 'Face should be removed from face list',
+          );
+
+          final afterDeleteIntelResult = await store.getEntityIntelligence(
+            entityId,
+          );
+          expect(afterDeleteIntelResult.isSuccess, isTrue);
+          expect(
+            afterDeleteIntelResult.data?.faceCount,
+            equals(initialFaceCount - 1),
+            reason: 'Face count should be decremented',
+          );
+
+          // 5. Delete Entity (Full Cleanup)
+          final entityDeleteRes = await store.deleteEntity(entityId);
+          expect(entityDeleteRes.isSuccess, isTrue);
+
+          // Verify entity gone
+          final readRes = await store.readEntity(entityId);
+          expect(readRes.error, contains('Not Found'));
+        } finally {
+          // Final cleanup
+          await store.deleteEntity(entityId);
+        }
+      },
+    );
   });
 }

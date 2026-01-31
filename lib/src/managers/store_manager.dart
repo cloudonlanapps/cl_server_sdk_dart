@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:uuid/uuid.dart';
 
@@ -85,24 +86,60 @@ class StoreManager {
   }
 
   StoreOperationResult<T> _handleError<T>(dynamic error) {
-    if (error is AuthenticationError) {
+    String? detail;
+    int? statusCode;
+
+    if (error is HttpStatusError) {
+      statusCode = error.statusCode;
+      if (error.responseBody != null) {
+        try {
+          final data = jsonDecode(error.responseBody!) as Map<String, dynamic>;
+          detail = data['detail']?.toString();
+        } on Object catch (_) {
+          // Fallback to error message
+        }
+      }
+      detail ??= error.message;
+    }
+
+    if (error is AuthenticationError || statusCode == 401) {
       return StoreOperationResult<T>(
         error: 'Unauthorized: Invalid or missing token',
+        statusCode: statusCode ?? 401,
       );
-    } else if (error is PermissionError) {
+    } else if (error is PermissionError || statusCode == 403) {
       return StoreOperationResult<T>(
         error: 'Forbidden: Insufficient permissions',
+        statusCode: statusCode ?? 403,
       );
-    } else if (error is ValidationError) {
-      return StoreOperationResult<T>(error: 'Bad Request: ${error.message}');
-    } else if (error is NotFoundError) {
-      return StoreOperationResult<T>(error: 'Not Found: ${error.message}');
+    } else if (error is ValidationError ||
+        statusCode == 422 ||
+        statusCode == 400) {
+      final prefix = statusCode == 400 ? 'Bad Request' : 'Validation Error';
+      return StoreOperationResult<T>(
+        error: '$prefix: ${detail ?? error.toString()}',
+        statusCode: statusCode ?? (error is ValidationError ? 422 : 400),
+      );
+    } else if (error is NotFoundError || statusCode == 404) {
+      return StoreOperationResult<T>(
+        error: 'Not Found: ${detail ?? error.toString()}',
+        statusCode: statusCode ?? 404,
+      );
     } else if (error is JobNotFoundError) {
-      return StoreOperationResult<T>(error: error.message);
+      return StoreOperationResult<T>(
+        error: detail ?? error.message,
+        statusCode: statusCode ?? 404, // Job not found is typically 404
+      );
     } else if (error is ComputeClientError) {
-      return StoreOperationResult<T>(error: error.message);
+      return StoreOperationResult<T>(
+        error: detail ?? error.message,
+        statusCode: statusCode,
+      );
     } else {
-      return StoreOperationResult<T>(error: 'Unexpected error: $error');
+      return StoreOperationResult<T>(
+        error: 'Unexpected error: $error',
+        statusCode: statusCode,
+      );
     }
   }
 
