@@ -58,10 +58,9 @@ class StoreManager {
   Future<MQTTJobMonitor> _getMqttMonitor() async {
     if (_mqttMonitor != null) return _mqttMonitor!;
 
-    final broker = _config?.mqttBroker ?? 'localhost';
-    final port = _config?.mqttPort ?? 1883;
+    final mqttUrl = _config?.mqttUrl;
 
-    _mqttMonitor = getMqttMonitor(broker: broker, port: port);
+    _mqttMonitor = getMqttMonitor(mqttUrl: mqttUrl);
     // Note: Python connects in init, but here we might want to connect lazily or explicit await?
     // MqttMonitor connect is async.
     // We should probably rely on user to connect monitor or implicitly connect?

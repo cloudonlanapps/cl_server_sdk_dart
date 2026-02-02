@@ -11,8 +11,7 @@ class ServerConfig {
     this.authUrl = 'http://localhost:8010',
     this.computeUrl = 'http://localhost:8012',
     this.storeUrl = 'http://localhost:8011',
-    this.mqttBroker = 'localhost',
-    this.mqttPort = 1883,
+    this.mqttUrl,
   });
 
   /// Create ServerConfig from environment variables.
@@ -24,8 +23,8 @@ class ServerConfig {
       authUrl: env['AUTH_URL'] ?? defaultConf.authUrl,
       computeUrl: env['COMPUTE_URL'] ?? defaultConf.computeUrl,
       storeUrl: env['STORE_URL'] ?? defaultConf.storeUrl,
-      mqttBroker: env['MQTT_BROKER'] ?? defaultConf.mqttBroker,
-      mqttPort: int.tryParse(env['MQTT_PORT'] ?? '') ?? defaultConf.mqttPort,
+      // Note: MQTT_URL is read from environment in Dart, unlike Python
+      mqttUrl: env['MQTT_URL'] ?? defaultConf.mqttUrl,
     );
   }
 
@@ -38,11 +37,9 @@ class ServerConfig {
   /// Store service URL (default: http://localhost:8011)
   final String storeUrl;
 
-  /// MQTT broker host (default: localhost)
-  final String mqttBroker;
-
-  /// MQTT broker port (default: 1883)
-  final int mqttPort;
+  /// MQTT broker URL (e.g., mqtt://localhost:1883)
+  /// null means MQTT is disabled
+  final String? mqttUrl;
 
   @override
   bool operator ==(Object other) =>
@@ -52,19 +49,17 @@ class ServerConfig {
           authUrl == other.authUrl &&
           computeUrl == other.computeUrl &&
           storeUrl == other.storeUrl &&
-          mqttBroker == other.mqttBroker &&
-          mqttPort == other.mqttPort;
+          mqttUrl == other.mqttUrl;
 
   @override
   int get hashCode =>
       authUrl.hashCode ^
       computeUrl.hashCode ^
       storeUrl.hashCode ^
-      mqttBroker.hashCode ^
-      mqttPort.hashCode;
+      (mqttUrl?.hashCode ?? 0);
 
   @override
   String toString() {
-    return 'ServerConfig(authUrl: $authUrl, computeUrl: $computeUrl, storeUrl: $storeUrl, mqttBroker: $mqttBroker, mqttPort: $mqttPort)';
+    return 'ServerConfig(authUrl: $authUrl, computeUrl: $computeUrl, storeUrl: $storeUrl, mqttUrl: $mqttUrl)';
   }
 }

@@ -6,9 +6,8 @@ class ComputeClientConfig {
   static const String defaultBaseUrl = 'http://$defaultHost:$defaultPort';
   static const Duration defaultTimeout = Duration(seconds: 30);
 
-  // MQTT Configuration
-  static const String mqttBrokerHost = 'localhost';
-  static const int mqttBrokerPort = 1883;
+  // MQTT Configuration (unified URL format)
+  static const String defaultMqttUrl = 'mqtt://localhost:1883';
   static const String mqttCapabilityTopicPrefix = 'inference/workers';
   static const String mqttJobEventsTopic = 'inference/events';
 

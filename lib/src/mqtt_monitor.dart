@@ -71,13 +71,31 @@ class EntityStatusPayload {
 /// MQTT monitor for job status and worker capabilities.
 class MQTTJobMonitor {
   MQTTJobMonitor({
-    this.broker = 'localhost',
-    this.port = 1883,
+    String? mqttUrl,
     this.keepAlive = 60,
     MqttServerClient Function(String, String)? clientFactory,
-  }) : _clientFactory = clientFactory;
-  final String broker;
-  final int port;
+  }) : _clientFactory = clientFactory {
+    // Parse mqttUrl or use defaults
+    if (mqttUrl != null) {
+      final parsed = _parseMqttUrl(mqttUrl);
+      broker = parsed.$1;
+      port = parsed.$2;
+    } else {
+      broker = 'localhost';
+      port = 1883;
+    }
+  }
+
+  static (String, int) _parseMqttUrl(String url) {
+    // Parse mqtt://host:port or mqtt://host format
+    final uri = Uri.parse(url);
+    final host = uri.host.isNotEmpty ? uri.host : 'localhost';
+    final port = uri.hasPort ? uri.port : 1883;
+    return (host, port);
+  }
+
+  late final String broker;
+  late final int port;
   final int keepAlive;
 
   MqttServerClient? _client;
@@ -396,15 +414,15 @@ class _MonitorRef {
   int refCount;
 }
 
-MQTTJobMonitor getMqttMonitor({String broker = 'localhost', int port = 1883}) {
-  final key = '$broker:$port';
+MQTTJobMonitor getMqttMonitor({String? mqttUrl}) {
+  final key = mqttUrl ?? 'default';
   if (_registry.containsKey(key)) {
     final ref = _registry[key]!;
     ref.refCount++;
     return ref.monitor;
   }
 
-  final monitor = MQTTJobMonitor(broker: broker, port: port);
+  final monitor = MQTTJobMonitor(mqttUrl: mqttUrl);
   // We assume caller will await connect()
   _registry[key] = _MonitorRef(monitor, 1);
   return monitor;

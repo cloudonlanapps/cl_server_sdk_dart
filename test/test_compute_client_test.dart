@@ -66,10 +66,9 @@ void main() {
     });
 
     test('test_init_with_server_config', () async {
-      final config = ServerConfig(
+      const config = ServerConfig(
         computeUrl: 'https://compute.example.com',
-        mqttBroker: 'mqtt.example.com',
-        mqttPort: 8883,
+        mqttUrl: 'mqtt://mqtt.example.com:8883',
       );
       final c = ComputeClient(
         serverConfig: config,
@@ -80,10 +79,9 @@ void main() {
     });
 
     test('test_init_with_server_config_and_overrides', () async {
-      final config = ServerConfig(
+      const config = ServerConfig(
         computeUrl: 'https://config.example.com',
-        mqttBroker: 'config-broker',
-        mqttPort: 1883,
+        mqttUrl: 'mqtt://config-broker:1883',
       );
       final c = ComputeClient(
         baseUrl: 'https://override.example.com',

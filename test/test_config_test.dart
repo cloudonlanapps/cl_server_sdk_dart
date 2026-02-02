@@ -14,8 +14,10 @@ void main() {
     });
 
     test('test_mqtt_config', () {
-      expect(ComputeClientConfig.mqttBrokerHost, equals('localhost'));
-      expect(ComputeClientConfig.mqttBrokerPort, equals(1883));
+      expect(
+        ComputeClientConfig.defaultMqttUrl,
+        equals('mqtt://localhost:1883'),
+      );
       expect(
         ComputeClientConfig.mqttCapabilityTopicPrefix,
         equals('inference/workers'),

@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:cl_server_dart_client/src/exceptions.dart';
 import 'package:cl_server_dart_client/src/models/models.dart';
 import 'package:cl_server_dart_client/src/mqtt_monitor.dart';
-import 'package:cl_server_dart_client/src/config.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
@@ -61,10 +60,9 @@ void main() {
       await updatesController.close();
     });
 
-    MQTTJobMonitor createMonitor({String? broker, int? port}) {
+    MQTTJobMonitor createMonitor({String? mqttUrl}) {
       return MQTTJobMonitor(
-        broker: broker ?? 'localhost',
-        port: port ?? 1883,
+        mqttUrl: mqttUrl ?? 'mqtt://localhost:1883',
         clientFactory: (b, cid) => mockClient,
       );
     }
@@ -82,8 +80,8 @@ void main() {
       ).called(1);
     });
 
-    test('test_init_with_custom_broker', () async {
-      final monitor = createMonitor(broker: 'custom-broker', port: 1234);
+    test('test_init_with_custom_mqtt_url', () async {
+      final monitor = createMonitor(mqttUrl: 'mqtt://custom-broker:1234');
       expect(monitor.broker, equals('custom-broker'));
       expect(monitor.port, equals(1234));
 

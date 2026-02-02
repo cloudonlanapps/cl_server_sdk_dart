@@ -27,8 +27,7 @@ class ComputeClient implements ClientProtocol {
   ComputeClient({
     String? baseUrl,
     Duration? timeout,
-    String? mqttBroker,
-    int? mqttPort,
+    String? mqttUrl,
     AuthProvider? authProvider,
     ServerConfig? serverConfig,
     http.Client? client,
@@ -39,10 +38,9 @@ class ComputeClient implements ClientProtocol {
     _session = client ?? http.Client();
 
     final config = serverConfig ?? ServerConfig.fromEnv();
-    final broker = mqttBroker ?? config.mqttBroker;
-    final port = mqttPort ?? config.mqttPort;
+    final effectiveMqttUrl = mqttUrl ?? config.mqttUrl;
 
-    _mqtt = mqttMonitor ?? getMqttMonitor(broker: broker, port: port);
+    _mqtt = mqttMonitor ?? getMqttMonitor(mqttUrl: effectiveMqttUrl);
     // Auto-connect if not connected.
     // Note: Python client connects in init strictly.
     if (!_mqtt.isConnected) {

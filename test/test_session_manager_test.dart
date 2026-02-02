@@ -314,8 +314,7 @@ void main() {
         test('test_create_compute_client_uses_config', () {
           const config = ServerConfig(
             computeUrl: 'https://custom-compute.example.com',
-            mqttBroker: 'custom-broker',
-            mqttPort: 8883,
+            mqttUrl: 'mqtt://custom-broker:8883',
           );
           final session = SessionManager(
             serverConfig: config,

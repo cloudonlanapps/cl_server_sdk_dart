@@ -9,8 +9,7 @@ void main() {
       expect(config.authUrl, equals('http://localhost:8010'));
       expect(config.computeUrl, equals('http://localhost:8012'));
       expect(config.storeUrl, equals('http://localhost:8011'));
-      expect(config.mqttBroker, equals('localhost'));
-      expect(config.mqttPort, equals(1883));
+      expect(config.mqttUrl, isNull);
     });
 
     test('test_server_config_custom_values', () {
@@ -18,15 +17,13 @@ void main() {
         authUrl: 'https://auth.example.com',
         computeUrl: 'https://compute.example.com',
         storeUrl: 'https://store.example.com',
-        mqttBroker: 'mqtt.example.com',
-        mqttPort: 8883,
+        mqttUrl: 'mqtt://mqtt.example.com:8883',
       );
 
       expect(config.authUrl, equals('https://auth.example.com'));
       expect(config.computeUrl, equals('https://compute.example.com'));
       expect(config.storeUrl, equals('https://store.example.com'));
-      expect(config.mqttBroker, equals('mqtt.example.com'));
-      expect(config.mqttPort, equals(8883));
+      expect(config.mqttUrl, equals('mqtt://mqtt.example.com:8883'));
     });
 
     test('test_server_config_partial_custom', () {
@@ -41,8 +38,7 @@ void main() {
 
       // Default values
       expect(config.storeUrl, equals('http://localhost:8011'));
-      expect(config.mqttBroker, equals('localhost'));
-      expect(config.mqttPort, equals(1883));
+      expect(config.mqttUrl, isNull);
     });
 
     test('test_server_config_from_env_all_vars', () {
@@ -50,8 +46,7 @@ void main() {
         'AUTH_URL': 'https://auth.prod.example.com',
         'COMPUTE_URL': 'https://compute.prod.example.com',
         'STORE_URL': 'https://store.prod.example.com',
-        'MQTT_BROKER': 'mqtt.prod.example.com',
-        'MQTT_PORT': '8883',
+        'MQTT_URL': 'mqtt://mqtt.prod.example.com:8883',
       };
 
       final config = ServerConfig.fromEnv(env);
@@ -59,26 +54,24 @@ void main() {
       expect(config.authUrl, equals('https://auth.prod.example.com'));
       expect(config.computeUrl, equals('https://compute.prod.example.com'));
       expect(config.storeUrl, equals('https://store.prod.example.com'));
-      expect(config.mqttBroker, equals('mqtt.prod.example.com'));
-      expect(config.mqttPort, equals(8883));
+      expect(config.mqttUrl, equals('mqtt://mqtt.prod.example.com:8883'));
     });
 
     test('test_server_config_from_env_partial_vars', () {
       final env = {
         'AUTH_URL': 'https://auth.example.com',
-        'MQTT_PORT': '9883',
+        'MQTT_URL': 'mqtt://custom-broker:9883',
       };
 
       final config = ServerConfig.fromEnv(env);
 
       // From environment
       expect(config.authUrl, equals('https://auth.example.com'));
-      expect(config.mqttPort, equals(9883));
+      expect(config.mqttUrl, equals('mqtt://custom-broker:9883'));
 
       // From defaults
       expect(config.computeUrl, equals('http://localhost:8012'));
       expect(config.storeUrl, equals('http://localhost:8011'));
-      expect(config.mqttBroker, equals('localhost'));
     });
 
     test('test_server_config_from_env_no_vars', () {
@@ -88,17 +81,7 @@ void main() {
       expect(config.authUrl, equals('http://localhost:8010'));
       expect(config.computeUrl, equals('http://localhost:8012'));
       expect(config.storeUrl, equals('http://localhost:8011'));
-      expect(config.mqttBroker, equals('localhost'));
-      expect(config.mqttPort, equals(1883));
-    });
-
-    test('test_server_config_mqtt_port_string_conversion', () {
-      final env = {'MQTT_PORT': '8883'};
-
-      final config = ServerConfig.fromEnv(env);
-
-      expect(config.mqttPort, equals(8883));
-      expect(config.mqttPort, isA<int>());
+      expect(config.mqttUrl, isNull);
     });
 
     test('test_server_config_equality', () {
