@@ -122,7 +122,10 @@ class IntegrationHelper {
     if (Platform.environment.containsKey('TEST_VECTORS_DIR')) {
       return Platform.environment['TEST_VECTORS_DIR']!;
     }
-    return '/Users/anandasarangaram/Work/cl_server_test_media';
+    final home = Platform.environment['HOME'] ?? '';
+    return home.isNotEmpty
+        ? '$home/cl_server_test_media'
+        : '/tmp/cl_server_test_media';
   }
 
   static Future<File> getTestImage([
@@ -170,13 +173,13 @@ class IntegrationHelper {
     }
 
     try {
-      var deletedCount = 0;
+      // var deletedCount = 0;
       var result = await store.listEntities(pageSize: 100);
       while (result.isSuccess && result.data!.items.isNotEmpty) {
         for (final item in result.data!.items) {
           try {
             await store.deleteEntity(item.id);
-            deletedCount++;
+            // deletedCount++;
           } catch (e) {
             print('Cleanup error deleting ${item.id}: $e');
           }
@@ -184,7 +187,7 @@ class IntegrationHelper {
         result = await store.listEntities(pageSize: 100);
       }
       //if (deletedCount > 0) print('Cleaned up $deletedCount entities.');
-    } on Object catch (e) {
+    } on Object catch (_) {
       //print('Cleanup warning: $e');
     } finally {
       await session.close();
