@@ -13,14 +13,11 @@ import '../types.dart';
 /// Low-level HTTP client for store service operations.
 class StoreClient {
   StoreClient({
-    String baseUrl = 'http://localhost:8011',
+    required this.baseUrl,
     this.authProvider,
     this.timeout = const Duration(seconds: 30),
     http.Client? client,
-  }) : baseUrl = baseUrl.endsWith('/')
-           ? baseUrl.substring(0, baseUrl.length - 1)
-           : baseUrl,
-       _client = client ?? http.Client();
+  }) : _client = client ?? http.Client();
   final String baseUrl;
   final AuthProvider? authProvider;
   final http.Client _client;
@@ -306,22 +303,22 @@ class StoreClient {
 
   // Admin operations
 
-  Future<StoreConfig> getConfig() async {
+  Future<StorePref> getPref() async {
     final response = await _client
         .get(
-          Uri.parse('$baseUrl/admin/config'),
+          Uri.parse('$baseUrl/admin/pref'),
           headers: await _getHeaders(),
         )
         .timeout(timeout);
 
     final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
-    return StoreConfig.fromMap(jsonMap);
+    return StorePref.fromMap(jsonMap);
   }
 
-  Future<StoreConfig> updateGuestMode({required bool guestMode}) async {
+  Future<StorePref> updateGuestMode({required bool guestMode}) async {
     final response = await _client
         .put(
-          Uri.parse('$baseUrl/admin/config/guest-mode'),
+          Uri.parse('$baseUrl/admin/pref/guest-mode'),
           body: {'guest_mode': guestMode.toString().toLowerCase()},
           headers: {
             ...(await _getHeaders()),
@@ -334,7 +331,7 @@ class StoreClient {
     // Python code calls `get_config()` at the end.
 
     await _handleResponse(response);
-    return getConfig();
+    return getPref();
   }
 
   Future<Map<String, dynamic>> getMInsightStatus() async {

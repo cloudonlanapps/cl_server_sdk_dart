@@ -22,6 +22,7 @@ void main() {
     setUp(() {
       mockHttpClient = MockHttpClient();
       client = StoreClient(
+        baseUrl: 'http://localhost:8011',
         client: mockHttpClient,
       );
     });
@@ -32,7 +33,7 @@ void main() {
 
     group('Init', () {
       test('test_init_default', () {
-        final c = StoreClient();
+        final c = StoreClient(baseUrl: 'http://localhost:8011');
         expect(c.baseUrl, equals('http://localhost:8011'));
         c.close();
       });
@@ -364,7 +365,7 @@ void main() {
     });
 
     group('AdminOperations', () {
-      test('test_get_config', () async {
+      test('test_get_pref', () async {
         final responseBody = jsonEncode({
           'guest_mode': false,
           'updated_at': 1704067200000,
@@ -375,7 +376,7 @@ void main() {
           () => mockHttpClient.get(any(), headers: any(named: 'headers')),
         ).thenAnswer((_) async => http.Response(responseBody, 200));
 
-        final result = await client.getConfig();
+        final result = await client.getPref();
 
         expect(result.guestMode, isFalse);
         expect(result.updatedBy, equals('admin'));
@@ -388,7 +389,7 @@ void main() {
           'updated_by': 'admin',
         });
 
-        // Mock PUT then GET (as updateGuestMode calls getConfig)
+        // Mock PUT then GET (as updateGuestMode calls getPref)
         when(
           () => mockHttpClient.put(
             any(),
@@ -406,7 +407,7 @@ void main() {
         expect(result.guestMode, isTrue);
         verify(
           () => mockHttpClient.put(
-            Uri.parse('http://localhost:8011/admin/config/guest-mode'),
+            Uri.parse('http://localhost:8011/admin/pref/guest-mode'),
             body: {'guest_mode': 'true'},
             headers: any(named: 'headers'),
           ),
@@ -427,7 +428,11 @@ void main() {
     group('AuthIntegration', () {
       test('test_auth_headers_applied', () async {
         final auth = JWTAuthProvider(token: 'test-token');
-        final c = StoreClient(client: mockHttpClient, authProvider: auth);
+        final c = StoreClient(
+          baseUrl: 'http://localhost:8011',
+          client: mockHttpClient,
+          authProvider: auth,
+        );
 
         when(
           () => mockHttpClient.get(any(), headers: any(named: 'headers')),

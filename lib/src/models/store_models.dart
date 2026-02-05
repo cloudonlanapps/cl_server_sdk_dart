@@ -64,12 +64,12 @@ class OrphanedVectorInfo {
 
   factory OrphanedVectorInfo.fromMap(Map<String, dynamic> map) {
     return OrphanedVectorInfo(
-      vectorId: map['vector_id'] as String,
+      vectorId: map['vector_id'] as int,
       collectionName: map['collection_name'] as String,
     );
   }
 
-  final String vectorId;
+  final int vectorId;
   final String collectionName;
 
   Map<String, dynamic> toMap() {
@@ -521,23 +521,23 @@ class EntityVersion {
 }
 
 /// Store configuration settings.
-class StoreConfig {
-  StoreConfig({
+class StorePref {
+  StorePref({
     required this.guestMode,
     this.updatedAt,
     this.updatedBy,
   });
 
-  factory StoreConfig.fromMap(Map<String, dynamic> map) {
-    return StoreConfig(
+  factory StorePref.fromMap(Map<String, dynamic> map) {
+    return StorePref(
       guestMode: map['guest_mode'] as bool,
       updatedAt: map['updated_at'] as int?,
       updatedBy: map['updated_by'] as String?,
     );
   }
 
-  factory StoreConfig.fromJson(String source) =>
-      StoreConfig.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory StorePref.fromJson(String source) =>
+      StorePref.fromMap(json.decode(source) as Map<String, dynamic>);
 
   /// Whether guest mode is enabled
   final bool guestMode;

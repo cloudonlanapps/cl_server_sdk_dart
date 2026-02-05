@@ -9,12 +9,10 @@ import '../server_config.dart';
 /// Low-level client for auth service REST API.
 class AuthClient {
   AuthClient({
-    String? baseUrl,
-    ServerConfig? serverConfig,
+    required this.baseUrl,
     this.timeout = const Duration(seconds: 60),
     http.Client? client,
-  }) : baseUrl = baseUrl ?? (serverConfig ?? ServerConfig.fromEnv()).authUrl,
-       _client = client ?? http.Client();
+  }) : _client = client ?? http.Client();
   final String baseUrl;
   final http.Client _client;
   final Duration timeout;

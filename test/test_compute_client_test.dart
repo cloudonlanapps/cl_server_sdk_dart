@@ -44,7 +44,12 @@ void main() {
     });
 
     test('test_init_with_defaults', () async {
-      final c = ComputeClient(mqttMonitor: mockMqttMonitor);
+      final c = ComputeClient(
+        baseUrl: 'http://localhost:8012',
+        mqttBroker: 'localhost',
+        mqttPort: 1883,
+        mqttMonitor: mockMqttMonitor,
+      );
       expect(c.baseUrl, equals('http://localhost:8012'));
       expect(c.timeout.inSeconds, equals(30));
       expect(c.auth, isA<NoAuthProvider>());
@@ -55,6 +60,8 @@ void main() {
       final auth = JWTAuthProvider(token: 'test-token');
       final c = ComputeClient(
         baseUrl: 'http://custom:9000',
+        mqttBroker: 'custom-broker',
+        mqttPort: 1883,
         timeout: const Duration(seconds: 60),
         authProvider: auth,
         mqttMonitor: mockMqttMonitor,
@@ -95,7 +102,12 @@ void main() {
     });
 
     test('test_init_backward_compatibility', () async {
-      final c = ComputeClient(mqttMonitor: mockMqttMonitor);
+      final c = ComputeClient(
+        baseUrl: 'http://localhost:8012',
+        mqttBroker: 'localhost',
+        mqttPort: 1883,
+        mqttMonitor: mockMqttMonitor,
+      );
       expect(c.baseUrl, isNotNull);
       expect(c.timeout.inSeconds, equals(30));
       expect(c.auth, isA<NoAuthProvider>());
@@ -347,6 +359,9 @@ void main() {
     test('test_async_context_manager', () async {
       // Dart doesn't have 'with', but we can verify cleanup after usage
       final c = ComputeClient(
+        baseUrl: 'http://localhost:8012',
+        mqttBroker: 'localhost',
+        mqttPort: 1883,
         client: mockHttpClient,
         mqttMonitor: mockMqttMonitor,
       );

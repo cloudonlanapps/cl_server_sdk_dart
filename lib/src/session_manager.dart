@@ -11,15 +11,13 @@ import 'server_config.dart';
 /// High-level session management for authentication.
 class SessionManager {
   SessionManager({
-    String? baseUrl,
-    ServerConfig? serverConfig,
+    required ServerConfig serverConfig,
     AuthClient? authClient,
-  }) : _config = serverConfig ?? ServerConfig.fromEnv(),
+  }) : _config = serverConfig,
        _authClient =
            authClient ??
            AuthClient(
-             baseUrl: baseUrl,
-             serverConfig: serverConfig ?? ServerConfig.fromEnv(),
+             baseUrl: serverConfig.authUrl,
            );
   final ServerConfig _config;
   final AuthClient _authClient;
@@ -106,7 +104,6 @@ class SessionManager {
       mqttBroker: _config.mqttBroker,
       mqttPort: _config.mqttPort,
       authProvider: authProvider,
-      serverConfig: _config,
       mqttMonitor: mqttMonitor,
     );
   }

@@ -22,6 +22,8 @@ void main() {
       // Create client without authentication
       final client = ComputeClient(
         baseUrl: IntegrationTestConfig.computeUrl,
+        mqttBroker: IntegrationTestConfig.mqttBroker,
+        mqttPort: IntegrationTestConfig.mqttPort,
       );
 
       bool shouldFail =
@@ -55,6 +57,8 @@ void main() {
       final invalidAuth = JWTAuthProvider(token: 'invalid.token.here');
       final client = ComputeClient(
         baseUrl: IntegrationTestConfig.computeUrl,
+        mqttBroker: IntegrationTestConfig.mqttBroker,
+        mqttPort: IntegrationTestConfig.mqttPort,
         authProvider: invalidAuth,
       );
 
@@ -84,6 +88,8 @@ void main() {
       final malformedAuth = JWTAuthProvider(token: 'not-a-jwt');
       final client = ComputeClient(
         baseUrl: IntegrationTestConfig.computeUrl,
+        mqttBroker: IntegrationTestConfig.mqttBroker,
+        mqttPort: IntegrationTestConfig.mqttPort,
         authProvider: malformedAuth,
       );
 

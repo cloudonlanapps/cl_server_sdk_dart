@@ -8,24 +8,45 @@ import 'package:meta/meta.dart';
 @immutable
 class ServerConfig {
   const ServerConfig({
-    this.authUrl = 'http://localhost:8010',
-    this.computeUrl = 'http://localhost:8012',
-    this.storeUrl = 'http://localhost:8011',
-    this.mqttBroker = 'localhost',
-    this.mqttPort = 1883,
+    required this.authUrl,
+    required this.computeUrl,
+    required this.storeUrl,
+    required this.mqttBroker,
+    required this.mqttPort,
   });
 
   /// Create ServerConfig from environment variables.
   factory ServerConfig.fromEnv([Map<String, String>? environment]) {
     final env = environment ?? Platform.environment;
-    const defaultConf = ServerConfig();
+
+    final authUrl = env['AUTH_URL'];
+    final computeUrl = env['COMPUTE_URL'];
+    final storeUrl = env['STORE_URL'];
+    final mqttBroker = env['MQTT_BROKER'];
+    final mqttPortStr = env['MQTT_PORT'];
+
+    if (authUrl == null ||
+        computeUrl == null ||
+        storeUrl == null ||
+        mqttBroker == null ||
+        mqttPortStr == null) {
+      throw StateError(
+        'Missing required environment variables for ServerConfig. '
+        'REQUIRED: AUTH_URL, COMPUTE_URL, STORE_URL, MQTT_BROKER, MQTT_PORT',
+      );
+    }
+
+    final mqttPort = int.tryParse(mqttPortStr);
+    if (mqttPort == null) {
+      throw StateError('Invalid MQTT_PORT: $mqttPortStr');
+    }
 
     return ServerConfig(
-      authUrl: env['AUTH_URL'] ?? defaultConf.authUrl,
-      computeUrl: env['COMPUTE_URL'] ?? defaultConf.computeUrl,
-      storeUrl: env['STORE_URL'] ?? defaultConf.storeUrl,
-      mqttBroker: env['MQTT_BROKER'] ?? defaultConf.mqttBroker,
-      mqttPort: int.tryParse(env['MQTT_PORT'] ?? '') ?? defaultConf.mqttPort,
+      authUrl: authUrl,
+      computeUrl: computeUrl,
+      storeUrl: storeUrl,
+      mqttBroker: mqttBroker,
+      mqttPort: mqttPort,
     );
   }
 

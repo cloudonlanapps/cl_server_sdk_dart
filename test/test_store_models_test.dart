@@ -133,9 +133,9 @@ void main() {
     });
   });
 
-  group('TestStoreConfig', () {
+  group('TestStorePref', () {
     test('test_store_config_creation', () {
-      final config = StoreConfig(
+      final config = StorePref(
         guestMode: false,
         updatedAt: 1704067200000,
         updatedBy: 'admin',
@@ -147,7 +147,7 @@ void main() {
     });
 
     test('test_store_config_datetime', () {
-      final config = StoreConfig(
+      final config = StorePref(
         guestMode: true,
         updatedAt: 1704067200000,
       );

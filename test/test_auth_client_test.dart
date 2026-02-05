@@ -30,7 +30,7 @@ void main() {
 
     group('TestAuthClientInit', () {
       test('test_auth_client_default_config', () {
-        final client = AuthClient();
+        final client = AuthClient(baseUrl: 'http://localhost:8010');
         expect(client.baseUrl, equals('http://localhost:8010'));
         expect(client.timeout, equals(const Duration(seconds: 60)));
         client.close();
@@ -60,7 +60,10 @@ void main() {
       });
 
       test('test_auth_client_custom_timeout', () {
-        final client = AuthClient(timeout: const Duration(seconds: 60));
+        final client = AuthClient(
+          baseUrl: 'http://localhost:8010',
+          timeout: const Duration(seconds: 60),
+        );
         expect(client.timeout, equals(const Duration(seconds: 60)));
         client.close();
       });
@@ -572,12 +575,12 @@ void main() {
 
     group('TestAuthClientContextManager', () {
       test('test_context_manager_lifecycle', () async {
-        final client = AuthClient();
+        final client = AuthClient(baseUrl: 'http://localhost:8010');
         client.close();
       });
 
       test('test_manual_close', () async {
-        final client = AuthClient();
+        final client = AuthClient(baseUrl: 'http://localhost:8010');
         client.close();
       });
     });

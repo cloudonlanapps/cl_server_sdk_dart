@@ -20,11 +20,22 @@ class StoreManager {
   // Factory constructors
 
   factory StoreManager.guest({
-    String baseUrl = 'http://localhost:8011',
+    required String baseUrl,
+    required String mqttBroker,
+    required int mqttPort,
     Duration timeout = const Duration(seconds: 30),
   }) {
     // Guest mode
-    return StoreManager(StoreClient(baseUrl: baseUrl, timeout: timeout));
+    return StoreManager(
+      StoreClient(baseUrl: baseUrl, timeout: timeout),
+      ServerConfig(
+        authUrl: '', // Not used in guest mode
+        computeUrl: '', // Not used in guest mode
+        storeUrl: baseUrl,
+        mqttBroker: mqttBroker,
+        mqttPort: mqttPort,
+      ),
+    );
   }
 
   factory StoreManager.authenticated({
@@ -58,18 +69,14 @@ class StoreManager {
   Future<MQTTJobMonitor> _getMqttMonitor() async {
     if (_mqttMonitor != null) return _mqttMonitor!;
 
-    final broker = _config?.mqttBroker ?? 'localhost';
-    final port = _config?.mqttPort ?? 1883;
+    final broker = _config?.mqttBroker;
+    final port = _config?.mqttPort;
+
+    if (broker == null || port == null) {
+      throw StateError('MQTT configuration missing (broker/port).');
+    }
 
     _mqttMonitor = getMqttMonitor(broker: broker, port: port);
-    // Note: Python connects in init, but here we might want to connect lazily or explicit await?
-    // MqttMonitor connect is async.
-    // We should probably rely on user to connect monitor or implicitly connect?
-    // Python code _connect() is called in init.
-    // Dart MqttClient connect is async future.
-    // We can't await in sync getter.
-    // We'll rely on explicit connection or check later.
-
     if (!_mqttMonitor!.isConnected) {
       await _mqttMonitor!.connect();
     }
@@ -237,32 +244,6 @@ class StoreManager {
     Duration timeout = const Duration(seconds: 60),
     bool failOnError = true,
   }) async {
-    // Optimization: Check current status first.
-    // This allows us to return immediately for duplicates or fast jobs,
-    // and avoids issues with stale retained MQTT messages from ID reuse.
-    final entityResult = await readEntity(entityId);
-    if (entityResult.data != null) {
-      final intelligence = entityResult.data!.intelligenceData;
-      if (intelligence != null) {
-        if (intelligence.overallStatus == targetStatus) {
-          return EntityStatusPayload(
-            entityId: entityId,
-            status: intelligence.overallStatus,
-            timestamp: intelligence.lastUpdated,
-            faceDetection: intelligence.inferenceStatus.faceDetection,
-            faceCount: intelligence.faceCount,
-            clipEmbedding: intelligence.inferenceStatus.clipEmbedding,
-            dinoEmbedding: intelligence.inferenceStatus.dinoEmbedding,
-            faceEmbeddings: intelligence.inferenceStatus.faceEmbeddings,
-          );
-        } else if (failOnError && intelligence.overallStatus == 'failed') {
-          throw Exception(
-            'Entity processing failed: ${intelligence.overallStatus}',
-          );
-        }
-      }
-    }
-
     final completer = Completer<EntityStatusPayload>();
 
     void callback(EntityStatusPayload payload) {
@@ -276,7 +257,6 @@ class StoreManager {
             Exception('Entity processing failed: ${payload.status}'),
           );
         } else {
-          // If not failing on error, return the failed payload as a terminal state
           completer.complete(payload);
         }
       }
@@ -284,8 +264,39 @@ class StoreManager {
 
     String? subId;
     try {
-      // Use the provided timeout for the entire operation including setup
+      // Subscribe FIRST to avoid race conditions
       subId = await monitorEntity(entityId, callback).timeout(timeout);
+
+      // Brief delay to ensure subscription is active (consistent with Python SDK)
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Now check current status
+      final entityResult = await readEntity(entityId);
+      if (entityResult.isSuccess) {
+        final entity = entityResult.valueOrThrow();
+        final intelligence = entity.intelligenceData;
+        final currentStatus = entity.intelligenceStatus;
+
+        if (currentStatus != null) {
+          if (currentStatus == targetStatus ||
+              (failOnError && currentStatus == 'failed')) {
+            // Trigger callback manually for immediate completion
+            callback(
+              EntityStatusPayload(
+                entityId: entityId,
+                status: currentStatus,
+                timestamp: intelligence?.lastUpdated ?? 0,
+                faceDetection: intelligence?.inferenceStatus.faceDetection,
+                faceCount: intelligence?.faceCount,
+                clipEmbedding: intelligence?.inferenceStatus.clipEmbedding,
+                dinoEmbedding: intelligence?.inferenceStatus.dinoEmbedding,
+                faceEmbeddings: intelligence?.inferenceStatus.faceEmbeddings,
+              ),
+            );
+          }
+        }
+      }
+
       return await completer.future.timeout(
         timeout,
         onTimeout: () {
@@ -431,11 +442,13 @@ class StoreManager {
 
   // Admin
 
-  Future<StoreOperationResult<StoreConfig>> getConfig() async {
+  // Admin
+
+  Future<StoreOperationResult<StorePref>> getPref() async {
     try {
-      final result = await storeClient.getConfig();
+      final result = await storeClient.getPref();
       return StoreOperationResult(
-        success: 'Configuration retrieved successfully',
+        success: 'Preferences retrieved successfully',
         data: result,
       );
     } on Object catch (e) {
@@ -443,7 +456,7 @@ class StoreManager {
     }
   }
 
-  Future<StoreOperationResult<StoreConfig>> updateGuestMode({
+  Future<StoreOperationResult<StorePref>> updateGuestMode({
     required bool guestMode,
   }) async {
     try {

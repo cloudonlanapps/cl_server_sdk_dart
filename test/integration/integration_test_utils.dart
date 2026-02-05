@@ -82,7 +82,25 @@ class IntegrationTestConfig {
     authUrl: authUrl,
     computeUrl: computeUrl,
     storeUrl: storeUrl,
+    mqttBroker: mqttBroker,
+    mqttPort: mqttPort,
   );
+
+  static String get mqttBroker {
+    if (Platform.environment.containsKey('CL_MQTT_BROKER')) {
+      return Platform.environment['CL_MQTT_BROKER']!;
+    }
+    const fromEnv = String.fromEnvironment('CL_MQTT_BROKER');
+    return fromEnv.isNotEmpty ? fromEnv : 'localhost';
+  }
+
+  static int get mqttPort {
+    if (Platform.environment.containsKey('CL_MQTT_PORT')) {
+      return int.tryParse(Platform.environment['CL_MQTT_PORT']!) ?? 1883;
+    }
+    const fromEnv = String.fromEnvironment('CL_MQTT_PORT');
+    return int.tryParse(fromEnv) ?? 1883;
+  }
 }
 
 class IntegrationHelper {
@@ -114,7 +132,11 @@ class IntegrationHelper {
     if (IntegrationTestConfig.isAuthEnabled) {
       return session.createStoreManager();
     } else {
-      return StoreManager.guest(baseUrl: IntegrationTestConfig.storeUrl);
+      return StoreManager.guest(
+        baseUrl: IntegrationTestConfig.storeUrl,
+        mqttBroker: IntegrationTestConfig.mqttBroker,
+        mqttPort: IntegrationTestConfig.mqttPort,
+      );
     }
   }
 

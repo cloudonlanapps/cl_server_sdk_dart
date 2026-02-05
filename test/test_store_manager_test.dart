@@ -269,21 +269,21 @@ void main() {
     });
 
     test('test_get_config_success', () async {
-      final config = StoreConfig(
+      final config = StorePref(
         guestMode: false,
         updatedAt: 0,
         updatedBy: 'admin',
       );
-      when(() => mockStoreClient.getConfig()).thenAnswer((_) async => config);
+      when(() => mockStoreClient.getPref()).thenAnswer((_) async => config);
 
-      final result = await manager.getConfig();
+      final result = await manager.getPref();
 
       expect(result.isSuccess, isTrue);
       expect(result.data, equals(config));
     });
 
     test('test_update_guest_mode_success', () async {
-      final config = StoreConfig(
+      final config = StorePref(
         guestMode: true,
         updatedAt: 0,
         updatedBy: 'admin',

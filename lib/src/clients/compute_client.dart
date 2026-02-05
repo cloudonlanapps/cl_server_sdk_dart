@@ -25,24 +25,17 @@ import '../server_config.dart';
 
 class ComputeClient implements ClientProtocol {
   ComputeClient({
-    String? baseUrl,
-    Duration? timeout,
-    String? mqttBroker,
-    int? mqttPort,
+    required this.baseUrl,
+    required String mqttBroker,
+    required int mqttPort,
     AuthProvider? authProvider,
-    ServerConfig? serverConfig,
     http.Client? client,
     MQTTJobMonitor? mqttMonitor,
+    Duration? timeout,
   }) : auth = authProvider ?? NoAuthProvider(),
-       baseUrl = baseUrl ?? (serverConfig ?? ServerConfig.fromEnv()).computeUrl,
        timeout = timeout ?? ComputeClientConfig.defaultTimeout {
     _session = client ?? http.Client();
-
-    final config = serverConfig ?? ServerConfig.fromEnv();
-    final broker = mqttBroker ?? config.mqttBroker;
-    final port = mqttPort ?? config.mqttPort;
-
-    _mqtt = mqttMonitor ?? getMqttMonitor(broker: broker, port: port);
+    _mqtt = mqttMonitor ?? getMqttMonitor(broker: mqttBroker, port: mqttPort);
     // Auto-connect if not connected.
     // Note: Python client connects in init strictly.
     if (!_mqtt.isConnected) {
@@ -89,7 +82,7 @@ class ComputeClient implements ClientProtocol {
   Future<bool> updateGuestMode({required bool guestMode}) async {
     final response = await _session
         .put(
-          Uri.parse('$baseUrl/admin/config/guest-mode'),
+          Uri.parse('$baseUrl/admin/pref/guest-mode'),
           body: {'guest_mode': guestMode.toString().toLowerCase()},
           headers: {
             ...(await _getHeaders()),

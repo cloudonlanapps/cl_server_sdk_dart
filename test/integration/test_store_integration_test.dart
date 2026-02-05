@@ -397,7 +397,7 @@ void main() {
     test('test_admin_get_config', () async {
       final store = await IntegrationHelper.createStoreManager();
 
-      final result = await store.getConfig();
+      final result = await store.getPref();
       expect(result.isSuccess, isTrue);
       expect(result.data, isNotNull);
       expect(result.data!.guestMode, isA<bool>());
@@ -409,7 +409,7 @@ void main() {
       final store = await IntegrationHelper.createStoreManager();
 
       // Get current config
-      final getResult = await store.getConfig();
+      final getResult = await store.getPref();
       expect(getResult.isSuccess, isTrue);
       final originalGuestMode = getResult.data!.guestMode;
 

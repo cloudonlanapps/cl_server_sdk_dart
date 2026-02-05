@@ -32,7 +32,7 @@ void main() {
     });
 
     test('test_store_client_uninitialized_errors', () async {
-      final client = StoreClient();
+      final client = StoreClient(baseUrl: 'http://localhost:8011');
       client.close();
       expect(() => client.listEntities(), throwsA(isA<http.ClientException>()));
     });
@@ -50,7 +50,11 @@ void main() {
     });
 
     test('test_guest_mode', () {
-      final manager = StoreManager.guest(baseUrl: 'http://example.com:8001');
+      final manager = StoreManager.guest(
+        baseUrl: 'http://example.com:8001',
+        mqttBroker: 'localhost',
+        mqttPort: 1883,
+      );
       expect(manager.storeClient.baseUrl, equals('http://example.com:8001'));
       expect(manager.storeClient.authProvider, isNull);
     });
@@ -58,7 +62,10 @@ void main() {
     test('test_authenticated_mode', () async {
       final config = ServerConfig(
         authUrl: 'http://localhost:8000',
+        computeUrl: 'http://localhost:8002',
         storeUrl: 'http://localhost:8001',
+        mqttBroker: 'localhost',
+        mqttPort: 1883,
       );
 
       final manager = StoreManager.authenticated(

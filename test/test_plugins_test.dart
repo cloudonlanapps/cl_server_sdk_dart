@@ -338,14 +338,24 @@ void main() {
 
     group('ComputeClientLazyLoading', () {
       test('test_compute_client_lazy_load_clip_embedding', () {
-        final client = ComputeClient(mqttMonitor: MockMQTTJobMonitor());
+        final client = ComputeClient(
+          baseUrl: 'http://localhost:8012',
+          mqttBroker: 'localhost',
+          mqttPort: 1883,
+          mqttMonitor: MockMQTTJobMonitor(),
+        );
         final plugin = client.clipEmbedding;
         expect(plugin, isA<ClipEmbeddingClient>());
         expect(client.clipEmbedding, same(plugin));
       });
 
       test('test_compute_client_lazy_load_all_plugins', () {
-        final client = ComputeClient(mqttMonitor: MockMQTTJobMonitor());
+        final client = ComputeClient(
+          baseUrl: 'http://localhost:8012',
+          mqttBroker: 'localhost',
+          mqttPort: 1883,
+          mqttMonitor: MockMQTTJobMonitor(),
+        );
         expect(client.clipEmbedding, isA<ClipEmbeddingClient>());
         expect(client.dinoEmbedding, isA<DinoEmbeddingClient>());
         expect(client.exif, isA<ExifClient>());
