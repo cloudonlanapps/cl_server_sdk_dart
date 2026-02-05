@@ -173,7 +173,7 @@ class ComputeClient implements ClientProtocol {
         );
       }
 
-      await Future<void>.delayed(const Duration(milliseconds: 200));
+      await Future<void>.delayed(currentInterval);
 
       final nextMs =
           (currentInterval.inMilliseconds *

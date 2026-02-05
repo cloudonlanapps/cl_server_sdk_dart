@@ -1,7 +1,7 @@
 name: cl_server_dart_client
 description: Dart client library for CL Server microservices (Auth, Store, Compute).
 version: 0.1.0
-repository: git@github.com:cloudonlanapps/cl_server_dart_client.git
+repository: https://github.com/cloudonlanapps/cl_server_dart_client.git
 
 environment:
   sdk: ^3.10.1

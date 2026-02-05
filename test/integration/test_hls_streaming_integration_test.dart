@@ -25,7 +25,7 @@ void main() {
       final job = await client.hlsStreaming.generateManifest(
         video,
         wait: true,
-        timeout: const Duration(seconds: 120), // Video processing takes longer
+        timeout: const Duration(seconds: 300), // Video processing takes longer
       );
 
       expect(job.status, equals('completed'));
@@ -62,11 +62,11 @@ void main() {
       );
 
       final finalJob = await completionCompleter.future.timeout(
-        const Duration(seconds: 125),
+        const Duration(seconds: 300),
       );
 
       expect(finalJob.status, equals('completed'));
       await client.deleteJob(job.jobId);
     });
-  });
+  }, timeout: const Timeout(Duration(minutes: 6)));
 }

@@ -1,7 +1,7 @@
 /// Configuration for compute client.
 class ComputeClientConfig {
   // Server Connection
-  static const Duration defaultTimeout = Duration(seconds: 30);
+  static const Duration defaultTimeout = Duration(seconds: 60);
 
   // MQTT Configuration
   static const String mqttCapabilityTopicPrefix = 'inference/workers';
