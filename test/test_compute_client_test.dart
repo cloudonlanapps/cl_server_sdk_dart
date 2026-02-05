@@ -50,7 +50,7 @@ void main() {
         mqttMonitor: mockMqttMonitor,
       );
       expect(c.baseUrl, equals('http://compute.local:8012'));
-      expect(c.timeout.inSeconds, equals(30));
+      expect(c.timeout.inSeconds, equals(60));
       expect(c.auth, isA<NoAuthProvider>());
       await c.close();
     });
@@ -109,7 +109,7 @@ void main() {
         mqttMonitor: mockMqttMonitor,
       );
       expect(c.baseUrl, isNotNull);
-      expect(c.timeout.inSeconds, equals(30));
+      expect(c.timeout.inSeconds, equals(60));
       expect(c.auth, isA<NoAuthProvider>());
       await c.close();
     });
