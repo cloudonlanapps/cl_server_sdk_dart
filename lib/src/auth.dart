@@ -118,6 +118,6 @@ class JWTAuthProvider extends AuthProvider {
 }
 
 /// Get default auth provider (no-auth for Phase 1).
-AuthProvider get_default_auth() {
+AuthProvider getDefaultAuth() {
   return NoAuthProvider();
 }

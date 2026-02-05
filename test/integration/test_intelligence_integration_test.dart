@@ -37,7 +37,6 @@ void main() {
           // Wait for processing
           final finalStatus = await store.waitForEntityStatus(
             entityId,
-            targetStatus: 'completed',
             timeout: const Duration(seconds: 120),
           );
 
@@ -123,7 +122,6 @@ void main() {
           // Wait for processing to get faces
           await store.waitForEntityStatus(
             entityId,
-            targetStatus: 'completed',
             timeout: const Duration(seconds: 120),
           );
 

@@ -62,7 +62,7 @@ void main() {
       final id1 = res1.data!.id;
 
       // 2. Delete it (hard delete)
-      final delRes = await store.deleteEntity(id1, force: true);
+      final delRes = await store.deleteEntity(id1);
       expect(delRes.isSuccess, isTrue, reason: delRes.error);
 
       final temp2 = File('temp_2.jpg');
@@ -85,7 +85,7 @@ void main() {
       );
 
       // Cleanup
-      await store.deleteEntity(id2, force: true);
+      await store.deleteEntity(id2);
       if (temp1.existsSync()) await temp1.delete();
       if (temp2.existsSync()) await temp2.delete();
       await store.close();

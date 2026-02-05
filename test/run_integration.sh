@@ -26,15 +26,13 @@ export CL_STORE_URL=${CL_STORE_URL:-"http://${SERVER_IP}:8011"}
 export CL_USERNAME=${CL_USERNAME:-"admin"}
 export CL_PASSWORD=${CL_PASSWORD:-"admin"}
 # MQTT Configuration
-export CL_MQTT_BROKER=${CL_MQTT_BROKER:-"${SERVER_IP}"}
-export CL_MQTT_PORT=${CL_MQTT_PORT:-"1883"}
 export CL_MQTT_URL=${CL_MQTT_URL:-"mqtt://${SERVER_IP}:1883"}
 
 echo "Running Integration Tests with:"
 echo "  Auth:    $CL_AUTH_URL"
 echo "  Compute: $CL_COMPUTE_URL"
 echo "  Store:   $CL_STORE_URL"
-echo "  MQTT:    $CL_MQTT_BROKER:$CL_MQTT_PORT"
+echo "  MQTT:    $CL_MQTT_URL"
 echo "  User:    $CL_USERNAME"
 
 # Run tests

@@ -17,7 +17,7 @@ void main() {
     test('test_create_user_success', () async {
       final authClient = adminSession.authClient;
       final token = adminSession.getToken();
-      final testUsername = 'test_new_user_dart';
+      const testUsername = 'test_new_user_dart';
 
       // Check if test user already exists and delete
       final users = await authClient.listUsers(token);
@@ -32,8 +32,6 @@ void main() {
       final userCreate = UserCreateRequest(
         username: testUsername,
         password: 'password123',
-        isAdmin: false,
-        isActive: true,
         permissions: ['read:jobs'],
       );
 
@@ -75,8 +73,6 @@ void main() {
       final userCreate = UserCreateRequest(
         username: 'test_get_user_dart',
         password: 'password123',
-        isAdmin: false,
-        isActive: true,
         permissions: ['read:jobs', 'write:jobs'],
       );
 
@@ -107,8 +103,6 @@ void main() {
       final userCreate = UserCreateRequest(
         username: 'test_update_perms_dart',
         password: 'password123',
-        isAdmin: false,
-        isActive: true,
         permissions: ['read:jobs'],
       );
 
@@ -144,7 +138,7 @@ void main() {
 
       // Check if test user already exists
       final users = await authClient.listUsers(token);
-      var existingUser = users
+      final existingUser = users
           .where((u) => u.username == 'test_delete_user_dart')
           .firstOrNull;
 
@@ -162,8 +156,6 @@ void main() {
         final userCreate = UserCreateRequest(
           username: 'test_delete_user_dart',
           password: 'password123',
-          isAdmin: false,
-          isActive: true,
           permissions: ['read:jobs'],
         );
 
@@ -191,8 +183,6 @@ void main() {
           final userCreate = UserCreateRequest(
             username: 'test_pagination_dart_$i',
             password: 'password123',
-            isAdmin: false,
-            isActive: true,
             permissions: ['read:jobs'],
           );
 
@@ -201,7 +191,7 @@ void main() {
         }
 
         // Test pagination
-        final page1 = await authClient.listUsers(token, skip: 0, limit: 3);
+        final page1 = await authClient.listUsers(token, limit: 3);
         final page2 = await authClient.listUsers(token, skip: 3, limit: 3);
 
         // Verify pagination works
@@ -218,7 +208,7 @@ void main() {
     test('test_update_user_password', () async {
       final authClient = adminSession.authClient;
       final token = adminSession.getToken();
-      final username = 'test_pwd_user_dart';
+      const username = 'test_pwd_user_dart';
 
       // Create user
       final user = await authClient.createUser(
@@ -245,6 +235,7 @@ void main() {
           );
           await tempSession.login(username, 'oldpassword');
           await tempSession.close();
+        // ignore: avoid_catches_without_on_clauses
         } catch (e) {
           oldLoginFailed = true;
         }
@@ -272,7 +263,6 @@ void main() {
         UserCreateRequest(
           username: 'test_active_user_dart',
           password: 'password',
-          isActive: true,
         ),
       );
 

@@ -1,6 +1,4 @@
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
-import 'package:cl_server_dart_client/src/auth.dart';
-import 'package:cl_server_dart_client/src/exceptions.dart';
 import 'package:test/test.dart';
 import 'integration_test_utils.dart';
 
@@ -13,6 +11,7 @@ void main() {
         await client.updateGuestMode(guestMode: false);
         await client.close();
         await session.close();
+      // ignore: avoid_catches_without_on_clauses
       } catch (e) {
         print('Warning: Could not disable guest mode: $e');
       }
@@ -22,11 +21,10 @@ void main() {
       // Create client without authentication
       final client = ComputeClient(
         baseUrl: IntegrationTestConfig.computeUrl,
-        mqttBroker: IntegrationTestConfig.mqttBroker,
-        mqttPort: IntegrationTestConfig.mqttPort,
+        mqttUrl: IntegrationTestConfig.mqttUrl,
       );
 
-      bool shouldFail =
+      final shouldFail =
           IntegrationTestConfig.computeAuthRequired &&
           !IntegrationTestConfig.computeGuestMode;
 
@@ -41,6 +39,7 @@ void main() {
           await client.getJob('non-existent-id');
         } on JobNotFoundError {
           // 404 is fine, means we passed 401/403
+        // ignore: avoid_catches_without_on_clauses
         } catch (e) {
           expect(e, isNot(isA<AuthenticationError>()));
         }
@@ -49,7 +48,7 @@ void main() {
     });
 
     test('test_invalid_token_rejected', () async {
-      bool shouldFail =
+      final shouldFail =
           IntegrationTestConfig.computeAuthRequired &&
           !IntegrationTestConfig.computeGuestMode;
 
@@ -57,8 +56,7 @@ void main() {
       final invalidAuth = JWTAuthProvider(token: 'invalid.token.here');
       final client = ComputeClient(
         baseUrl: IntegrationTestConfig.computeUrl,
-        mqttBroker: IntegrationTestConfig.mqttBroker,
-        mqttPort: IntegrationTestConfig.mqttPort,
+        mqttUrl: IntegrationTestConfig.mqttUrl,
         authProvider: invalidAuth,
       );
 
@@ -72,6 +70,7 @@ void main() {
           await client.getJob('non-existent-id');
         } on JobNotFoundError {
           // Success
+        // ignore: avoid_catches_without_on_clauses
         } catch (e) {
           expect(e, isNot(isA<AuthenticationError>()));
         }
@@ -80,7 +79,7 @@ void main() {
     });
 
     test('test_malformed_token_rejected', () async {
-      bool shouldFail =
+      final shouldFail =
           IntegrationTestConfig.computeAuthRequired &&
           !IntegrationTestConfig.computeGuestMode;
 
@@ -88,8 +87,7 @@ void main() {
       final malformedAuth = JWTAuthProvider(token: 'not-a-jwt');
       final client = ComputeClient(
         baseUrl: IntegrationTestConfig.computeUrl,
-        mqttBroker: IntegrationTestConfig.mqttBroker,
-        mqttPort: IntegrationTestConfig.mqttPort,
+        mqttUrl: IntegrationTestConfig.mqttUrl,
         authProvider: malformedAuth,
       );
 
@@ -103,6 +101,7 @@ void main() {
           await client.getJob('non-existent-id');
         } on JobNotFoundError {
           // Success
+        // ignore: avoid_catches_without_on_clauses
         } catch (e) {
           expect(e, isNot(isA<AuthenticationError>()));
         }
@@ -118,16 +117,14 @@ void main() {
 
       // 1. Login as admin to create a regular user
       final adminSession = await IntegrationHelper.createSession();
-      final testUsername = 'testuser_nonadmin_dart';
-      final testPassword = 'testpass123';
+      const testUsername = 'testuser_nonadmin_dart';
+      const testPassword = 'testpass123';
 
       try {
         // Create a non-admin user
         final userCreate = UserCreateRequest(
           username: testUsername,
           password: testPassword,
-          isAdmin: false,
-          isActive: true,
           permissions: ['read:jobs'],
         );
 
@@ -147,8 +144,6 @@ void main() {
           final anotherUser = UserCreateRequest(
             username: 'another_user',
             password: 'pass',
-            isAdmin: false,
-            isActive: true,
             permissions: [],
           );
 
@@ -172,7 +167,7 @@ void main() {
         }
 
         // Cleanup: Delete the test user
-        final List<UserResponse> users = await adminSession.authClient
+        final users = await adminSession.authClient
             .listUsers(
               adminSession.getToken(),
             );

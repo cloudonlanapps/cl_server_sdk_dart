@@ -8,7 +8,8 @@ class IntegrationTestConfig {
       return Platform.environment['CL_AUTH_URL']!;
     }
     const fromEnv = String.fromEnvironment('CL_AUTH_URL');
-    return fromEnv.isNotEmpty ? fromEnv : 'http://localhost:8010';
+    if (fromEnv.isNotEmpty) return fromEnv;
+    throw StateError('CL_AUTH_URL environment variable is required for integration tests');
   }
 
   static String get computeUrl {
@@ -16,7 +17,8 @@ class IntegrationTestConfig {
       return Platform.environment['CL_COMPUTE_URL']!;
     }
     const fromEnv = String.fromEnvironment('CL_COMPUTE_URL');
-    return fromEnv.isNotEmpty ? fromEnv : 'http://localhost:8012';
+    if (fromEnv.isNotEmpty) return fromEnv;
+    throw StateError('CL_COMPUTE_URL environment variable is required for integration tests');
   }
 
   static String get storeUrl {
@@ -24,7 +26,8 @@ class IntegrationTestConfig {
       return Platform.environment['CL_STORE_URL']!;
     }
     const fromEnv = String.fromEnvironment('CL_STORE_URL');
-    return fromEnv.isNotEmpty ? fromEnv : 'http://localhost:8011';
+    if (fromEnv.isNotEmpty) return fromEnv;
+    throw StateError('CL_STORE_URL environment variable is required for integration tests');
   }
 
   static bool get computeAuthRequired {
@@ -78,29 +81,21 @@ class IntegrationTestConfig {
 
   static bool get isAuthEnabled => username != null && password != null;
 
+  static String get mqttUrl {
+    if (Platform.environment.containsKey('CL_MQTT_URL')) {
+      return Platform.environment['CL_MQTT_URL']!;
+    }
+    const fromEnv = String.fromEnvironment('CL_MQTT_URL');
+    if (fromEnv.isNotEmpty) return fromEnv;
+    throw StateError('CL_MQTT_URL environment variable is required for integration tests');
+  }
+
   static ServerConfig get serverConfig => ServerConfig(
     authUrl: authUrl,
     computeUrl: computeUrl,
     storeUrl: storeUrl,
-    mqttBroker: mqttBroker,
-    mqttPort: mqttPort,
+    mqttUrl: mqttUrl,
   );
-
-  static String get mqttBroker {
-    if (Platform.environment.containsKey('CL_MQTT_BROKER')) {
-      return Platform.environment['CL_MQTT_BROKER']!;
-    }
-    const fromEnv = String.fromEnvironment('CL_MQTT_BROKER');
-    return fromEnv.isNotEmpty ? fromEnv : 'localhost';
-  }
-
-  static int get mqttPort {
-    if (Platform.environment.containsKey('CL_MQTT_PORT')) {
-      return int.tryParse(Platform.environment['CL_MQTT_PORT']!) ?? 1883;
-    }
-    const fromEnv = String.fromEnvironment('CL_MQTT_PORT');
-    return int.tryParse(fromEnv) ?? 1883;
-  }
 }
 
 class IntegrationHelper {
@@ -134,8 +129,7 @@ class IntegrationHelper {
     } else {
       return StoreManager.guest(
         baseUrl: IntegrationTestConfig.storeUrl,
-        mqttBroker: IntegrationTestConfig.mqttBroker,
-        mqttPort: IntegrationTestConfig.mqttPort,
+        mqttUrl: IntegrationTestConfig.mqttUrl,
       );
     }
   }
@@ -190,6 +184,7 @@ class IntegrationHelper {
       // Try minimal bulk delete first (exposed via client)
       await store.storeClient.deleteAllEntities();
       print('Called deleteAllEntities()');
+      // ignore: avoid_catches_without_on_clauses
     } catch (_) {
       // Fallback to individual
     }
@@ -202,6 +197,7 @@ class IntegrationHelper {
           try {
             await store.deleteEntity(item.id);
             // deletedCount++;
+            // ignore: avoid_catches_without_on_clauses
           } catch (e) {
             print('Cleanup error deleting ${item.id}: $e');
           }
@@ -247,6 +243,7 @@ class IntegrationHelper {
           print('Error: ${result.stderr}');
         }
       }
+      // ignore: avoid_catches_without_on_clauses
     } catch (e) {
       print('Error calling python make_unique: $e');
     }

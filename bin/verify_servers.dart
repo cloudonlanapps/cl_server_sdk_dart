@@ -1,20 +1,24 @@
+import 'dart:io';
+
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:http/http.dart' as http;
 
 void main() async {
   final urls = {
-    'Auth': 'http://localhost:8010',
-    'Store': 'http://localhost:8011',
-    'Compute': 'http://localhost:8012',
+    'Auth': Platform.environment['CL_AUTH_URL'] ?? 'http://localhost:8010',
+    'Store': Platform.environment['CL_STORE_URL'] ?? 'http://localhost:8011',
+    'Compute': Platform.environment['CL_COMPUTE_URL'] ?? 'http://localhost:8012',
   };
+  final mqttUrl = Platform.environment['CL_MQTT_URL'] ?? 'mqtt://localhost:1883';
 
   print('--- Health Check ---');
-  for (var entry in urls.entries) {
+  for (final entry in urls.entries) {
     try {
       final response = await http
           .get(Uri.parse(entry.value))
-          .timeout(Duration(seconds: 5));
+          .timeout(const Duration(seconds: 5));
       print('${entry.key}: SUCCESS (${response.statusCode})');
+      // ignore: avoid_catches_without_on_clauses
     } catch (e) {
       print('${entry.key}: FAILED ($e)');
     }
@@ -26,6 +30,7 @@ void main() async {
       authUrl: urls['Auth']!,
       storeUrl: urls['Store']!,
       computeUrl: urls['Compute']!,
+      mqttUrl: mqttUrl,
     ),
   );
 
@@ -44,6 +49,7 @@ void main() async {
     } else {
       print('List failed: ${listRes.error}');
     }
+    // ignore: avoid_catches_without_on_clauses
   } catch (e) {
     print('Caught exception: $e');
   } finally {

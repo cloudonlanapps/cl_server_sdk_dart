@@ -48,7 +48,7 @@ void main() {
       final completionCompleter = Completer<JobResponse>();
       final job = await client.hash.compute(
         image,
-        onComplete: (j) => completionCompleter.complete(j),
+        onComplete: completionCompleter.complete,
       );
 
       final finalJob = await completionCompleter.future.timeout(

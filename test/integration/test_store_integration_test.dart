@@ -25,7 +25,7 @@ void main() {
       final store = await IntegrationHelper.createStoreManager();
 
       // Test listing entities with pagination
-      final result = await store.listEntities(page: 1, pageSize: 20);
+      final result = await store.listEntities();
       expect(result.isSuccess, isTrue, reason: result.error);
       expect(result.data, isNotNull);
       expect(result.data!.pagination.page, equals(1));
@@ -122,7 +122,6 @@ void main() {
         entityId,
         label: 'Updated Label',
         description: 'Updated description',
-        isCollection: false,
       );
       expect(updateResult.isSuccess, isTrue, reason: updateResult.error);
       expect(updateResult.data!.label, equals('Updated Label'));
@@ -170,7 +169,6 @@ void main() {
       final store = await IntegrationHelper.createStoreManager();
 
       final result = await store.listEntities(
-        page: 1,
         pageSize: 10,
         searchQuery: 'test',
       );
@@ -204,7 +202,6 @@ void main() {
 
       // 1. List without exclude_deleted (default False) -> Should include deleted
       final listAll = await store.listEntities(
-        excludeDeleted: false,
         searchQuery: 'Entity to Soft Delete',
       );
       expect(listAll.isSuccess, isTrue);
@@ -251,7 +248,7 @@ void main() {
       expect(result.data!.label, equals('Test Image'));
       expect(result.data!.filePath, isNotNull);
       expect(result.data!.fileSize, isNotNull);
-      expect(result.data!.fileSize!, greaterThan(0));
+      expect(result.data!.fileSize, greaterThan(0));
 
       // Cleanup
       await store.deleteEntity(result.data!.id);
@@ -350,7 +347,6 @@ void main() {
       final patchResult2 = await store.patchEntity(
         entityId,
         label: 'New Label',
-        description: const Unset(),
       );
       expect(patchResult2.isSuccess, isTrue);
       expect(patchResult2.data!.label, equals('New Label'));

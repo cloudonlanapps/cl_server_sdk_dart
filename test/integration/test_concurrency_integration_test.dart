@@ -112,7 +112,7 @@ void main() {
           managers.asMap().entries.map((entry) {
             final idx = entry.key;
             final manager = entry.value;
-            if (idx % 2 == 0) {
+            if (idx.isEven) {
               final label = 'MixedConcTest_${idx}_${uuid.v4().substring(0, 6)}';
               return manager.createEntity(label: label, isCollection: true);
             } else {

@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 
 import '../exceptions.dart';
 import '../models/auth_models.dart';
-import '../server_config.dart';
 
 /// Low-level client for auth service REST API.
 class AuthClient {

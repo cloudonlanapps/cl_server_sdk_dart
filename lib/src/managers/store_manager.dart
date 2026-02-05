@@ -21,8 +21,7 @@ class StoreManager {
 
   factory StoreManager.guest({
     required String baseUrl,
-    required String mqttBroker,
-    required int mqttPort,
+    required String mqttUrl,
     Duration timeout = const Duration(seconds: 30),
   }) {
     // Guest mode
@@ -32,8 +31,7 @@ class StoreManager {
         authUrl: '', // Not used in guest mode
         computeUrl: '', // Not used in guest mode
         storeUrl: baseUrl,
-        mqttBroker: mqttBroker,
-        mqttPort: mqttPort,
+        mqttUrl: mqttUrl,
       ),
     );
   }
@@ -69,14 +67,13 @@ class StoreManager {
   Future<MQTTJobMonitor> _getMqttMonitor() async {
     if (_mqttMonitor != null) return _mqttMonitor!;
 
-    final broker = _config?.mqttBroker;
-    final port = _config?.mqttPort;
+    final mqttUrl = _config?.mqttUrl;
 
-    if (broker == null || port == null) {
-      throw StateError('MQTT configuration missing (broker/port).');
+    if (mqttUrl == null) {
+      throw StateError('MQTT configuration missing (mqttUrl).');
     }
 
-    _mqttMonitor = getMqttMonitor(broker: broker, port: port);
+    _mqttMonitor = getMqttMonitor(url: mqttUrl);
     if (!_mqttMonitor!.isConnected) {
       await _mqttMonitor!.connect();
     }
@@ -268,7 +265,7 @@ class StoreManager {
       subId = await monitorEntity(entityId, callback).timeout(timeout);
 
       // Brief delay to ensure subscription is active (consistent with Python SDK)
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
 
       // Now check current status
       final entityResult = await readEntity(entityId);

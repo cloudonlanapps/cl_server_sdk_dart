@@ -1,14 +1,9 @@
 /// Configuration for compute client.
 class ComputeClientConfig {
   // Server Connection
-  static const String defaultHost = 'localhost';
-  static const int defaultPort = 8012;
-  static const String defaultBaseUrl = 'http://$defaultHost:$defaultPort';
   static const Duration defaultTimeout = Duration(seconds: 30);
 
   // MQTT Configuration
-  static const String mqttBrokerHost = 'localhost';
-  static const int mqttBrokerPort = 1883;
   static const String mqttCapabilityTopicPrefix = 'inference/workers';
   static const String mqttJobEventsTopic = 'inference/events';
 

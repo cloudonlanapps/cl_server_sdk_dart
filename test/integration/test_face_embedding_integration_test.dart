@@ -59,7 +59,7 @@ void main() {
       final completionCompleter = Completer<JobResponse>();
       final job = await client.faceEmbedding.embedFaces(
         image,
-        onComplete: (j) => completionCompleter.complete(j),
+        onComplete: completionCompleter.complete,
       );
 
       final finalJob = await completionCompleter.future.timeout(

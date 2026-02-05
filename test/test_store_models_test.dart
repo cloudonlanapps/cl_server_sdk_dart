@@ -48,9 +48,6 @@ void main() {
     test('test_entity_none_datetime', () {
       final entity = Entity(
         id: 1,
-        addedDate: null,
-        updatedDate: null,
-        createDate: null,
       );
 
       expect(entity.addedDateDatetime, isNull);
@@ -203,7 +200,7 @@ void main() {
       );
 
       expect(
-        () => result.valueOrThrow(),
+        result.valueOrThrow,
         throwsA(predicate((e) => e.toString().contains('Operation failed'))),
       );
     });
@@ -211,11 +208,10 @@ void main() {
     test('test_value_or_throw_no_data', () {
       final result = StoreOperationResult<Entity>(
         success: 'Success',
-        data: null,
       );
 
       expect(
-        () => result.valueOrThrow(),
+        result.valueOrThrow,
         throwsA(
           predicate((e) => e.toString().contains('succeeded but data is None')),
         ),
@@ -247,7 +243,7 @@ void main() {
       // Should be able to convert to dict
       final resultDict = result.toMap((e) => e.toMap());
       expect(resultDict['success'], equals('Success'));
-      expect(resultDict['data']['id'], equals(1));
+      expect((resultDict['data'] as Map<String, dynamic>)['id'], equals(1));
       expect(resultDict['error'], isNull);
     });
   });

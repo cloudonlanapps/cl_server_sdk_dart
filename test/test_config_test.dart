@@ -3,19 +3,11 @@ import 'package:test/test.dart';
 
 void main() {
   group('ComputeClientConfig', () {
-    test('test_default_values', () {
-      expect(ComputeClientConfig.defaultHost, equals('localhost'));
-      expect(ComputeClientConfig.defaultPort, equals(8012));
-      expect(
-        ComputeClientConfig.defaultBaseUrl,
-        equals('http://localhost:8012'),
-      );
+    test('test_default_timeout', () {
       expect(ComputeClientConfig.defaultTimeout.inSeconds, equals(30));
     });
 
     test('test_mqtt_config', () {
-      expect(ComputeClientConfig.mqttBrokerHost, equals('localhost'));
-      expect(ComputeClientConfig.mqttBrokerPort, equals(1883));
       expect(
         ComputeClientConfig.mqttCapabilityTopicPrefix,
         equals('inference/workers'),

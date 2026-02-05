@@ -4,7 +4,6 @@ import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
-
 class MockHttpClient extends Mock implements http.Client {}
 
 void main() {
@@ -20,7 +19,7 @@ void main() {
       mockHttpClient = MockHttpClient();
       authClient = AuthClient(
         client: mockHttpClient,
-        baseUrl: 'http://localhost:8010',
+        baseUrl: 'http://auth.local:8010',
       );
     });
 
@@ -30,8 +29,8 @@ void main() {
 
     group('TestAuthClientInit', () {
       test('test_auth_client_default_config', () {
-        final client = AuthClient(baseUrl: 'http://localhost:8010');
-        expect(client.baseUrl, equals('http://localhost:8010'));
+        final client = AuthClient(baseUrl: 'http://auth.local:8010');
+        expect(client.baseUrl, equals('http://auth.local:8010'));
         expect(client.timeout, equals(const Duration(seconds: 60)));
         client.close();
       });
@@ -43,17 +42,20 @@ void main() {
       });
 
       test('test_auth_client_custom_server_config', () {
-        final config = ServerConfig(authUrl: 'https://custom-auth.example.com');
-        final client = AuthClient(serverConfig: config);
+        const config = ServerConfig(
+          authUrl: 'https://custom-auth.example.com',
+          computeUrl: 'http://compute.local:8012',
+          storeUrl: 'http://store.local:8011',
+          mqttUrl: 'mqtt://mqtt.local:1883',
+        );
+        final client = AuthClient(baseUrl: config.authUrl);
         expect(client.baseUrl, equals('https://custom-auth.example.com'));
         client.close();
       });
 
       test('test_auth_client_base_url_overrides_config', () {
-        final config = ServerConfig(authUrl: 'https://config-auth.example.com');
         final client = AuthClient(
           baseUrl: 'https://override-auth.example.com',
-          serverConfig: config,
         );
         expect(client.baseUrl, equals('https://override-auth.example.com'));
         client.close();
@@ -61,8 +63,7 @@ void main() {
 
       test('test_auth_client_custom_timeout', () {
         final client = AuthClient(
-          baseUrl: 'http://localhost:8010',
-          timeout: const Duration(seconds: 60),
+          baseUrl: 'http://auth.local:8010',
         );
         expect(client.timeout, equals(const Duration(seconds: 60)));
         client.close();
@@ -88,7 +89,7 @@ void main() {
 
         verify(
           () => mockHttpClient.post(
-            Uri.parse('http://localhost:8010/auth/token'),
+            Uri.parse('http://auth.local:8010/auth/token'),
             headers: any(named: 'headers'),
             body: {'username': 'testuser', 'password': 'testpass'},
           ),
@@ -148,7 +149,7 @@ void main() {
 
         verify(
           () => mockHttpClient.post(
-            Uri.parse('http://localhost:8010/auth/token/refresh'),
+            Uri.parse('http://auth.local:8010/auth/token/refresh'),
             headers: {'Authorization': 'Bearer old_token'},
           ),
         ).called(1);
@@ -187,7 +188,7 @@ void main() {
 
         verify(
           () => mockHttpClient.get(
-            Uri.parse('http://localhost:8010/auth/public-key'),
+            Uri.parse('http://auth.local:8010/auth/public-key'),
           ),
         ).called(1);
 
@@ -216,7 +217,7 @@ void main() {
 
         verify(
           () => mockHttpClient.get(
-            Uri.parse('http://localhost:8010/users/me'),
+            Uri.parse('http://auth.local:8010/users/me'),
             headers: {'Authorization': 'Bearer valid_token'},
           ),
         ).called(1);
@@ -276,7 +277,7 @@ void main() {
 
         verify(
           () => mockHttpClient.post(
-            Uri.parse('http://localhost:8010/users/'),
+            Uri.parse('http://auth.local:8010/users/'),
             headers: {
               'Authorization': 'Bearer admin_token',
               'Content-Type': 'application/x-www-form-urlencoded',
@@ -357,8 +358,8 @@ void main() {
         verify(
           () => mockHttpClient.get(
             any(
-              that: predicate(
-                (Uri uri) =>
+              that: predicate<Uri>(
+                (uri) =>
                     uri.path == '/users/' &&
                     uri.queryParameters['skip'] == '0' &&
                     uri.queryParameters['limit'] == '10',
@@ -417,7 +418,7 @@ void main() {
 
         verify(
           () => mockHttpClient.get(
-            Uri.parse('http://localhost:8010/users/2'),
+            Uri.parse('http://auth.local:8010/users/2'),
             headers: {'Authorization': 'Bearer admin_token'},
           ),
         ).called(1);
@@ -468,7 +469,7 @@ void main() {
 
         verify(
           () => mockHttpClient.put(
-            Uri.parse('http://localhost:8010/users/2'),
+            Uri.parse('http://auth.local:8010/users/2'),
             headers: {
               'Authorization': 'Bearer admin_token',
               'Content-Type': 'application/x-www-form-urlencoded',
@@ -544,7 +545,7 @@ void main() {
 
         verify(
           () => mockHttpClient.delete(
-            Uri.parse('http://localhost:8010/users/2'),
+            Uri.parse('http://auth.local:8010/users/2'),
             headers: {'Authorization': 'Bearer admin_token'},
           ),
         ).called(1);
@@ -575,13 +576,11 @@ void main() {
 
     group('TestAuthClientContextManager', () {
       test('test_context_manager_lifecycle', () async {
-        final client = AuthClient(baseUrl: 'http://localhost:8010');
-        client.close();
+        AuthClient(baseUrl: 'http://auth.local:8010').close();
       });
 
       test('test_manual_close', () async {
-        final client = AuthClient(baseUrl: 'http://localhost:8010');
-        client.close();
+        AuthClient(baseUrl: 'http://auth.local:8010').close();
       });
     });
   });

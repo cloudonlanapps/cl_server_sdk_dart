@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
-import 'package:cl_server_dart_client/src/auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
@@ -32,6 +31,7 @@ void main() {
 
       client = ComputeClient(
         baseUrl: 'http://test.local',
+        mqttUrl: 'mqtt://mqtt.local:1883',
         authProvider: mockAuth,
         client: mockHttpClient,
       );

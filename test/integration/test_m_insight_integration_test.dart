@@ -1,4 +1,3 @@
-import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 import 'integration_test_utils.dart';
 

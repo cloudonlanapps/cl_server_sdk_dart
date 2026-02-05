@@ -28,14 +28,14 @@ void main() {
       // Default stubbing for close/cleanup
       when(() => mockMqttMonitor.connect()).thenAnswer((_) async {});
       when(() => mockMqttMonitor.isConnected).thenReturn(true);
-      when(() => mockMqttMonitor.broker).thenReturn('localhost');
-      when(() => mockMqttMonitor.port).thenReturn(1883);
+      when(() => mockMqttMonitor.url).thenReturn('mqtt://mqtt.local:1883');
       when(() => mockMqttMonitor.close()).thenReturn(null);
 
       client = ComputeClient(
         client: mockHttpClient,
         mqttMonitor: mockMqttMonitor,
-        baseUrl: 'http://localhost:8012',
+        baseUrl: 'http://compute.local:8012',
+        mqttUrl: 'mqtt://mqtt.local:1883',
       );
     });
 
@@ -45,12 +45,11 @@ void main() {
 
     test('test_init_with_defaults', () async {
       final c = ComputeClient(
-        baseUrl: 'http://localhost:8012',
-        mqttBroker: 'localhost',
-        mqttPort: 1883,
+        baseUrl: 'http://compute.local:8012',
+        mqttUrl: 'mqtt://mqtt.local:1883',
         mqttMonitor: mockMqttMonitor,
       );
-      expect(c.baseUrl, equals('http://localhost:8012'));
+      expect(c.baseUrl, equals('http://compute.local:8012'));
       expect(c.timeout.inSeconds, equals(30));
       expect(c.auth, isA<NoAuthProvider>());
       await c.close();
@@ -60,8 +59,7 @@ void main() {
       final auth = JWTAuthProvider(token: 'test-token');
       final c = ComputeClient(
         baseUrl: 'http://custom:9000',
-        mqttBroker: 'custom-broker',
-        mqttPort: 1883,
+        mqttUrl: 'mqtt://custom-broker:1883',
         timeout: const Duration(seconds: 60),
         authProvider: auth,
         mqttMonitor: mockMqttMonitor,
@@ -73,13 +71,15 @@ void main() {
     });
 
     test('test_init_with_server_config', () async {
-      final config = ServerConfig(
+      const config = ServerConfig(
+        authUrl: 'https://auth.example.com',
         computeUrl: 'https://compute.example.com',
-        mqttBroker: 'mqtt.example.com',
-        mqttPort: 8883,
+        storeUrl: 'https://store.example.com',
+        mqttUrl: 'mqtt://mqtt.example.com:8883',
       );
       final c = ComputeClient(
-        serverConfig: config,
+        baseUrl: config.computeUrl,
+        mqttUrl: config.mqttUrl,
         mqttMonitor: mockMqttMonitor,
       );
       expect(c.baseUrl, equals('https://compute.example.com'));
@@ -87,14 +87,15 @@ void main() {
     });
 
     test('test_init_with_server_config_and_overrides', () async {
-      final config = ServerConfig(
+      const config = ServerConfig(
+        authUrl: 'https://auth.example.com',
         computeUrl: 'https://config.example.com',
-        mqttBroker: 'config-broker',
-        mqttPort: 1883,
+        storeUrl: 'https://store.example.com',
+        mqttUrl: 'mqtt://config-broker:1883',
       );
       final c = ComputeClient(
         baseUrl: 'https://override.example.com',
-        serverConfig: config,
+        mqttUrl: config.mqttUrl,
         mqttMonitor: mockMqttMonitor,
       );
       expect(c.baseUrl, equals('https://override.example.com'));
@@ -103,9 +104,8 @@ void main() {
 
     test('test_init_backward_compatibility', () async {
       final c = ComputeClient(
-        baseUrl: 'http://localhost:8012',
-        mqttBroker: 'localhost',
-        mqttPort: 1883,
+        baseUrl: 'http://compute.local:8012',
+        mqttUrl: 'mqtt://mqtt.local:1883',
         mqttMonitor: mockMqttMonitor,
       );
       expect(c.baseUrl, isNotNull);
@@ -136,7 +136,7 @@ void main() {
 
       verify(
         () => mockHttpClient.get(
-          Uri.parse('http://localhost:8012/jobs/test-123'),
+          Uri.parse('http://compute.local:8012/jobs/test-123'),
           headers: any(named: 'headers'),
         ),
       ).called(1);
@@ -163,7 +163,7 @@ void main() {
 
       verify(
         () => mockHttpClient.delete(
-          Uri.parse('http://localhost:8012/jobs/test-123'),
+          Uri.parse('http://compute.local:8012/jobs/test-123'),
           headers: any(named: 'headers'),
         ),
       ).called(1);
@@ -187,7 +187,7 @@ void main() {
       verify(
         () => mockHttpClient.get(
           Uri.parse(
-            'http://localhost:8012/jobs/test-123/files/output/result.txt',
+            'http://compute.local:8012/jobs/test-123/files/output/result.txt',
           ),
           headers: any(named: 'headers'),
         ),
@@ -213,7 +213,7 @@ void main() {
 
       verify(
         () => mockHttpClient.get(
-          Uri.parse('http://localhost:8012/capabilities'),
+          Uri.parse('http://compute.local:8012/capabilities'),
           headers: any(named: 'headers'),
         ),
       ).called(1);
@@ -359,9 +359,8 @@ void main() {
     test('test_async_context_manager', () async {
       // Dart doesn't have 'with', but we can verify cleanup after usage
       final c = ComputeClient(
-        baseUrl: 'http://localhost:8012',
-        mqttBroker: 'localhost',
-        mqttPort: 1883,
+        baseUrl: 'http://compute.local:8012',
+        mqttUrl: 'mqtt://mqtt.local:1883',
         client: mockHttpClient,
         mqttMonitor: mockMqttMonitor,
       );

@@ -58,7 +58,7 @@ void main() {
       final completionCompleter = Completer<JobResponse>();
       final job = await client.hlsStreaming.generateManifest(
         video,
-        onComplete: (j) => completionCompleter.complete(j),
+        onComplete: completionCompleter.complete,
       );
 
       final finalJob = await completionCompleter.future.timeout(

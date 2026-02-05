@@ -1,15 +1,5 @@
 import 'dart:io';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
-import 'package:cl_server_dart_client/src/plugins/base.dart';
-import 'package:cl_server_dart_client/src/plugins/clip_embedding.dart';
-import 'package:cl_server_dart_client/src/plugins/dino_embedding.dart';
-import 'package:cl_server_dart_client/src/plugins/exif.dart';
-import 'package:cl_server_dart_client/src/plugins/face_detection.dart';
-import 'package:cl_server_dart_client/src/plugins/face_embedding.dart';
-import 'package:cl_server_dart_client/src/plugins/hash.dart';
-import 'package:cl_server_dart_client/src/plugins/hls_streaming.dart';
-import 'package:cl_server_dart_client/src/plugins/image_conversion.dart';
-import 'package:cl_server_dart_client/src/plugins/media_thumbnail.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
@@ -49,7 +39,7 @@ void main() {
 
       test('test_base_plugin_submit_job_not_implemented', () async {
         final plugin = BasePluginClient(mockComputeClient, 'clip_embedding');
-        expect(() => plugin.submitJob(), throwsA(isA<UnimplementedError>()));
+        expect(plugin.submitJob, throwsA(isA<UnimplementedError>()));
       });
 
       test('test_base_plugin_submit_with_files', () async {
@@ -339,9 +329,8 @@ void main() {
     group('ComputeClientLazyLoading', () {
       test('test_compute_client_lazy_load_clip_embedding', () {
         final client = ComputeClient(
-          baseUrl: 'http://localhost:8012',
-          mqttBroker: 'localhost',
-          mqttPort: 1883,
+          baseUrl: 'http://compute.local:8012',
+          mqttUrl: 'mqtt://mqtt.local:1883',
           mqttMonitor: MockMQTTJobMonitor(),
         );
         final plugin = client.clipEmbedding;
@@ -351,9 +340,8 @@ void main() {
 
       test('test_compute_client_lazy_load_all_plugins', () {
         final client = ComputeClient(
-          baseUrl: 'http://localhost:8012',
-          mqttBroker: 'localhost',
-          mqttPort: 1883,
+          baseUrl: 'http://compute.local:8012',
+          mqttUrl: 'mqtt://mqtt.local:1883',
           mqttMonitor: MockMQTTJobMonitor(),
         );
         expect(client.clipEmbedding, isA<ClipEmbeddingClient>());

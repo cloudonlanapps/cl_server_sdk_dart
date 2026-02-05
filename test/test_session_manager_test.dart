@@ -1,10 +1,11 @@
 import 'dart:convert';
+
+import 'package:cl_server_dart_client/src/auth.dart';
 import 'package:cl_server_dart_client/src/clients/auth_client.dart';
 import 'package:cl_server_dart_client/src/models/auth_models.dart';
 import 'package:cl_server_dart_client/src/mqtt_monitor.dart';
 import 'package:cl_server_dart_client/src/server_config.dart';
 import 'package:cl_server_dart_client/src/session_manager.dart';
-import 'package:cl_server_dart_client/src/auth.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
@@ -24,6 +25,15 @@ String _createJwtToken(Map<String, dynamic> payload) {
   return '$headerB64.$payloadB64.$signatureB64';
 }
 
+ServerConfig _createTestServerConfig() {
+  return const ServerConfig(
+    authUrl: 'http://auth.local:8010',
+    computeUrl: 'http://compute.local:8012',
+    storeUrl: 'http://store.local:8011',
+    mqttUrl: 'mqtt://mqtt.local:1883',
+  );
+}
+
 void main() {
   group('SessionManager', () {
     late MockAuthClient mockAuthClient;
@@ -37,19 +47,25 @@ void main() {
 
     group('TestSessionManagerInitialization', () {
       test('test_session_manager_default_config', () {
-        final session = SessionManager(authClient: mockAuthClient);
+        final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
         expect(session.serverConfig, isNotNull);
         expect(session.authClient, equals(mockAuthClient));
         expect(session.isAuthenticated, isFalse);
       });
 
       test('test_session_manager_custom_base_url', () {
-        // Since we can't easily check internal AuthClient's baseUrl if it's private,
-        // we verify passing baseUrl to SessionManager (which passes it to AuthClient) works.
-        // But we are passing a mockAuthClient anyway.
-        // Let's test the default AuthClient creation if we didn't pass one.
+        // Test that serverConfig is used to create the AuthClient with correct baseUrl
+        const config = ServerConfig(
+          authUrl: 'https://custom-auth.example.com',
+          computeUrl: 'http://compute.local:8012',
+          storeUrl: 'http://store.local:8011',
+          mqttUrl: 'mqtt://mqtt.local:1883',
+        );
         final session = SessionManager(
-          baseUrl: 'https://custom-auth.example.com',
+          serverConfig: config,
         );
         expect(
           session.authClient.baseUrl,
@@ -60,7 +76,10 @@ void main() {
 
     group('TestSessionManagerLoginLogout', () {
       test('test_login_success', () async {
-        final session = SessionManager(authClient: mockAuthClient);
+        final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
         final now = DateTime.now().toUtc();
         final tokenResponse = TokenResponse(
           accessToken: 'test_token_123',
@@ -91,7 +110,10 @@ void main() {
       });
 
       test('test_login_invalid_credentials', () async {
-        final session = SessionManager(authClient: mockAuthClient);
+        final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
         when(
           () => mockAuthClient.login('invalid', 'invalid'),
         ).thenThrow(Exception('401 Unauthorized'));
@@ -101,7 +123,10 @@ void main() {
       });
 
       test('test_logout', () async {
-        final session = SessionManager(authClient: mockAuthClient);
+        final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
 
         // Setup authenticated state via login
         when(() => mockAuthClient.login(any(), any())).thenAnswer(
@@ -121,11 +146,14 @@ void main() {
 
         await session.logout();
         expect(session.isAuthenticated, isFalse);
-        expect(() => session.getToken(), throwsStateError);
+        expect(session.getToken, throwsStateError);
       });
 
       test('test_is_authenticated', () async {
-        final session = SessionManager(authClient: mockAuthClient);
+        final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
         expect(session.isAuthenticated, isFalse);
 
         when(() => mockAuthClient.login(any(), any())).thenAnswer(
@@ -150,7 +178,10 @@ void main() {
 
     group('TestSessionManagerUserInfo', () {
       test('test_get_current_user_cached', () async {
-        final session = SessionManager(authClient: mockAuthClient);
+        final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
         final userResponse = UserResponse(
           id: 1,
           username: 'testuser',
@@ -174,7 +205,10 @@ void main() {
       });
 
       test('test_get_current_user_fetch_from_server', () async {
-        final session = SessionManager(authClient: mockAuthClient);
+        final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
         final userResponse = UserResponse(
           id: 1,
           username: 'testuser',
@@ -203,14 +237,20 @@ void main() {
       });
 
       test('test_get_current_user_guest_mode', () async {
-        final session = SessionManager(authClient: mockAuthClient);
+        final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
         expect(await session.getCurrentUser(), isNull);
       });
     });
 
     group('TestSessionManagerTokenManagement', () {
       test('test_get_token_authenticated', () async {
-        final session = SessionManager(authClient: mockAuthClient);
+        final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
         when(() => mockAuthClient.login(any(), any())).thenAnswer(
           (_) async =>
               TokenResponse(accessToken: 'test_token_123', tokenType: 'b'),
@@ -220,8 +260,11 @@ void main() {
       });
 
       test('test_get_token_not_authenticated', () {
-        final session = SessionManager(authClient: mockAuthClient);
-        expect(() => session.getToken(), throwsStateError);
+        final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
+        expect(session.getToken, throwsStateError);
       });
 
       test('test_get_valid_token_fresh_token', () async {
@@ -231,7 +274,10 @@ void main() {
           'exp': expiry.millisecondsSinceEpoch ~/ 1000,
         });
 
-        final session = SessionManager(authClient: mockAuthClient);
+        final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
         when(() => mockAuthClient.login(any(), any())).thenAnswer(
           (_) async => TokenResponse(accessToken: token, tokenType: 'b'),
         );
@@ -257,7 +303,10 @@ void main() {
           'exp': newExpiry.millisecondsSinceEpoch ~/ 1000,
         });
 
-        final session = SessionManager(authClient: mockAuthClient);
+        final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
         when(() => mockAuthClient.login(any(), any())).thenAnswer(
           (_) async => TokenResponse(accessToken: oldToken, tokenType: 'b'),
         );
@@ -274,8 +323,11 @@ void main() {
       });
 
       test('test_get_valid_token_not_authenticated', () {
-        final session = SessionManager(authClient: mockAuthClient);
-        expect(() => session.getValidToken(), throwsStateError);
+        final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
+        expect(session.getValidToken, throwsStateError);
       });
       group('TestSessionManagerComputeClient', () {
         test('test_create_compute_client_authenticated', () async {
@@ -285,7 +337,10 @@ void main() {
             'exp': expiry.millisecondsSinceEpoch ~/ 1000,
           });
 
-          final session = SessionManager(authClient: mockAuthClient);
+          final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
           when(() => mockAuthClient.login(any(), any())).thenAnswer(
             (_) async => TokenResponse(accessToken: token, tokenType: 'b'),
           );
@@ -301,7 +356,10 @@ void main() {
         });
 
         test('test_create_compute_client_guest_mode', () {
-          final session = SessionManager(authClient: mockAuthClient);
+          final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
           final mockMqtt = MockMQTTJobMonitor();
           when(() => mockMqtt.isConnected).thenReturn(true);
 
@@ -313,9 +371,10 @@ void main() {
 
         test('test_create_compute_client_uses_config', () {
           const config = ServerConfig(
+            authUrl: 'http://auth.local:8010',
             computeUrl: 'https://custom-compute.example.com',
-            mqttBroker: 'custom-broker',
-            mqttPort: 8883,
+            storeUrl: 'http://store.local:8011',
+            mqttUrl: 'mqtt://custom-broker:8883',
           );
           final session = SessionManager(
             serverConfig: config,
@@ -332,7 +391,10 @@ void main() {
 
       group('TestSessionManagerContextManager', () {
         test('test_manual_close', () async {
-          final session = SessionManager(authClient: mockAuthClient);
+          final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
           await session.close();
           verify(() => mockAuthClient.close()).called(1);
         });
@@ -340,7 +402,10 @@ void main() {
 
       group('TestSessionManagerIntegration', () {
         test('test_full_login_workflow', () async {
-          final session = SessionManager(authClient: mockAuthClient);
+          final session = SessionManager(
+          serverConfig: _createTestServerConfig(),
+          authClient: mockAuthClient,
+        );
           final now = DateTime.now().toUtc();
 
           final soonExpiry = now.add(const Duration(seconds: 30));

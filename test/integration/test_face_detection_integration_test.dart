@@ -63,7 +63,7 @@ void main() {
     test('test_face_detection_no_faces', () async {
       // Use a landscape image or similar
       final image = await IntegrationHelper.getTestImage(
-        'test_image_1920x1080.jpg',
+        
       );
 
       final job = await client.faceDetection.detect(

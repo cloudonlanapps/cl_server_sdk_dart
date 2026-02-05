@@ -21,7 +21,7 @@ void main() {
 
     test('test_image_conversion_http_polling', () async {
       final image = await IntegrationHelper.getTestImage(
-        'test_image_1920x1080.jpg',
+        
       );
 
       final job = await client.imageConversion.convert(
@@ -67,7 +67,7 @@ void main() {
 
     test('test_image_conversion_multiple_formats', () async {
       final image = await IntegrationHelper.getTestImage(
-        'test_image_1920x1080.jpg',
+        
       );
 
       final job = await client.imageConversion.convert(
@@ -83,14 +83,14 @@ void main() {
 
     test('test_image_conversion_mqtt_callbacks', () async {
       final image = await IntegrationHelper.getTestImage(
-        'test_image_1920x1080.jpg',
+        
       );
 
       final completionCompleter = Completer<JobResponse>();
       final job = await client.imageConversion.convert(
         image,
         outputFormat: 'png',
-        onComplete: (j) => completionCompleter.complete(j),
+        onComplete: completionCompleter.complete,
       );
 
       final finalJob = await completionCompleter.future.timeout(

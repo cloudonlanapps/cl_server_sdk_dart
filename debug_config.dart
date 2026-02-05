@@ -23,6 +23,7 @@ Future<void> checkUrl(String name, String url) async {
   try {
     final response = await http.get(Uri.parse(url));
     print('  Status: ${response.statusCode}');
+    // ignore: avoid_catches_without_on_clauses
   } catch (e) {
     print('  Error: $e');
   }

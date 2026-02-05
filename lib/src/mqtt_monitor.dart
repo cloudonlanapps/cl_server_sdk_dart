@@ -71,14 +71,22 @@ class EntityStatusPayload {
 /// MQTT monitor for job status and worker capabilities.
 class MQTTJobMonitor {
   MQTTJobMonitor({
-    this.broker = 'localhost',
-    this.port = 1883,
+    required String url,
     this.keepAlive = 60,
     MqttServerClient Function(String, String)? clientFactory,
-  }) : _clientFactory = clientFactory;
-  final String broker;
-  final int port;
+  }) : _url = url,
+       _clientFactory = clientFactory {
+    final uri = Uri.parse(url);
+    _broker = uri.host;
+    _port = uri.port != 0 ? uri.port : 1883;
+  }
+
+  final String _url;
+  late final String _broker;
+  late final int _port;
   final int keepAlive;
+
+  String get url => _url;
 
   MqttServerClient? _client;
   bool _connected = false;
@@ -116,9 +124,9 @@ class MQTTJobMonitor {
   Future<void> _doConnect() async {
     final clientIdentifier = 'dart_client_${_uuid.v4()}';
     _client = _clientFactory != null
-        ? _clientFactory(broker, clientIdentifier)
-        : MqttServerClient(broker, clientIdentifier);
-    _client!.port = port;
+        ? _clientFactory(_broker, clientIdentifier)
+        : MqttServerClient(_broker, clientIdentifier);
+    _client!.port = _port;
     _client!.keepAlivePeriod = keepAlive;
     _client!.autoReconnect = true;
     _client!.logging(on: false);
@@ -197,8 +205,8 @@ class MQTTJobMonitor {
       } else if (topic.contains('entity_item_status')) {
         _handleEntityStatus(topic, pt);
       }
-    } on Object catch (e) {
-      print('Error handling MQTT message on $topic: $e');
+    } on Object catch (_) {
+      // Silently ignore malformed MQTT messages
     }
   }
 
@@ -396,28 +404,30 @@ class _MonitorRef {
   int refCount;
 }
 
-MQTTJobMonitor getMqttMonitor({String broker = 'localhost', int port = 1883}) {
-  final key = '$broker:$port';
-  if (_registry.containsKey(key)) {
-    final ref = _registry[key]!;
+MQTTJobMonitor getMqttMonitor({String? url}) {
+  if (url == null) {
+    throw ArgumentError('MQTT url parameter is required');
+  }
+
+  if (_registry.containsKey(url)) {
+    final ref = _registry[url]!;
     ref.refCount++;
     return ref.monitor;
   }
 
-  final monitor = MQTTJobMonitor(broker: broker, port: port);
+  final monitor = MQTTJobMonitor(url: url);
   // We assume caller will await connect()
-  _registry[key] = _MonitorRef(monitor, 1);
+  _registry[url] = _MonitorRef(monitor, 1);
   return monitor;
 }
 
 void releaseMqttMonitor(MQTTJobMonitor monitor) {
-  final key = '${monitor.broker}:${monitor.port}';
-  if (_registry.containsKey(key)) {
-    final ref = _registry[key]!;
+  if (_registry.containsKey(monitor.url)) {
+    final ref = _registry[monitor.url]!;
     ref.refCount--;
     if (ref.refCount <= 0) {
       monitor.close();
-      _registry.remove(key);
+      _registry.remove(monitor.url);
     }
   } else {
     monitor.close();

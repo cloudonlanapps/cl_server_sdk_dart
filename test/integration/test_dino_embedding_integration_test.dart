@@ -42,7 +42,7 @@ void main() {
       final completionCompleter = Completer<JobResponse>();
       final job = await client.dinoEmbedding.embedImage(
         image,
-        onComplete: (j) => completionCompleter.complete(j),
+        onComplete: completionCompleter.complete,
       );
 
       final finalJob = await completionCompleter.future.timeout(

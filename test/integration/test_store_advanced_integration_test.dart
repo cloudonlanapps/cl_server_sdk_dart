@@ -60,7 +60,6 @@ void main() {
       final update1 = await store.updateEntity(
         childId,
         label: 'Child Media V2',
-        isCollection: false,
         parentId: parentId,
       );
       expect(update1.isSuccess, isTrue, reason: update1.error);

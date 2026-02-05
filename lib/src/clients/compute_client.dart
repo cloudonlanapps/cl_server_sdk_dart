@@ -21,13 +21,11 @@ import '../plugins/hash.dart';
 import '../plugins/hls_streaming.dart';
 import '../plugins/image_conversion.dart';
 import '../plugins/media_thumbnail.dart';
-import '../server_config.dart';
 
 class ComputeClient implements ClientProtocol {
   ComputeClient({
     required this.baseUrl,
-    required String mqttBroker,
-    required int mqttPort,
+    required String mqttUrl,
     AuthProvider? authProvider,
     http.Client? client,
     MQTTJobMonitor? mqttMonitor,
@@ -35,7 +33,7 @@ class ComputeClient implements ClientProtocol {
   }) : auth = authProvider ?? NoAuthProvider(),
        timeout = timeout ?? ComputeClientConfig.defaultTimeout {
     _session = client ?? http.Client();
-    _mqtt = mqttMonitor ?? getMqttMonitor(broker: mqttBroker, port: mqttPort);
+    _mqtt = mqttMonitor ?? getMqttMonitor(url: mqttUrl);
     // Auto-connect if not connected.
     // Note: Python client connects in init strictly.
     if (!_mqtt.isConnected) {

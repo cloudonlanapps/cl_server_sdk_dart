@@ -24,7 +24,7 @@ void main() {
     ];
 
     test('test_full_embedding_flow', () async {
-      final timeout = const Duration(minutes: 5);
+      const timeout = Duration(minutes: 5);
       final createdEntities = <Map<String, dynamic>>[];
 
       try {
@@ -79,7 +79,6 @@ void main() {
 
           final statusResult = await store.waitForEntityStatus(
             entity.id,
-            targetStatus: 'completed',
             timeout: timeout,
           );
 

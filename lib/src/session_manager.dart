@@ -101,8 +101,7 @@ class SessionManager {
 
     return ComputeClient(
       baseUrl: _config.computeUrl,
-      mqttBroker: _config.mqttBroker,
-      mqttPort: _config.mqttPort,
+      mqttUrl: _config.mqttUrl,
       authProvider: authProvider,
       mqttMonitor: mqttMonitor,
     );

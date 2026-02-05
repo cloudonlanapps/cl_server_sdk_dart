@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:cl_server_dart_client/src/clients/store_client.dart';
+import 'package:cl_server_dart_client/src/exceptions.dart';
 import 'package:cl_server_dart_client/src/managers/store_manager.dart';
 import 'package:cl_server_dart_client/src/models/store_models.dart';
-import 'package:cl_server_dart_client/src/exceptions.dart';
 import 'package:cl_server_dart_client/src/mqtt_monitor.dart';
 import 'package:cl_server_dart_client/src/server_config.dart';
 import 'package:mocktail/mocktail.dart';
@@ -75,14 +75,12 @@ void main() {
 
       when(
         () => mockStoreClient.listEntities(
-          page: 1,
           pageSize: 10,
           searchQuery: 'test query',
         ),
       ).thenAnswer((_) async => response);
 
       final result = await manager.listEntities(
-        page: 1,
         pageSize: 10,
         searchQuery: 'test query',
       );
@@ -90,7 +88,6 @@ void main() {
       expect(result.isSuccess, isTrue);
       verify(
         () => mockStoreClient.listEntities(
-          page: 1,
           pageSize: 10,
           searchQuery: 'test query',
         ),
@@ -372,7 +369,12 @@ void main() {
 
     test('test_monitor_entity', () async {
       final monitor = MockMQTTJobMonitor();
-      manager = StoreManager(mockStoreClient, const ServerConfig(), monitor);
+      manager = StoreManager(mockStoreClient, const ServerConfig(
+        authUrl: 'http://auth.local:8010',
+        computeUrl: 'http://compute.local:8012',
+        storeUrl: 'http://store.local:8011',
+        mqttUrl: 'mqtt://mqtt.local:1883',
+      ), monitor);
 
       when(
         () => monitor.subscribeEntityStatus(any(), any(), any()),
@@ -389,7 +391,12 @@ void main() {
 
     test('test_wait_for_entity_status_success', () async {
       final monitor = MockMQTTJobMonitor();
-      manager = StoreManager(mockStoreClient, const ServerConfig(), monitor);
+      manager = StoreManager(mockStoreClient, const ServerConfig(
+        authUrl: 'http://auth.local:8010',
+        computeUrl: 'http://compute.local:8012',
+        storeUrl: 'http://store.local:8011',
+        mqttUrl: 'mqtt://mqtt.local:1883',
+      ), monitor);
       // completer removed
 
       when(() => monitor.isConnected).thenReturn(true);
@@ -422,7 +429,12 @@ void main() {
 
     test('test_wait_for_entity_status_timeout', () async {
       final monitor = MockMQTTJobMonitor();
-      const config = ServerConfig();
+      const config = ServerConfig(
+        authUrl: 'http://auth.local:8010',
+        computeUrl: 'http://compute.local:8012',
+        storeUrl: 'http://store.local:8011',
+        mqttUrl: 'mqtt://mqtt.local:1883',
+      );
       manager = StoreManager(mockStoreClient, config, monitor);
 
       when(() => monitor.isConnected).thenReturn(true);

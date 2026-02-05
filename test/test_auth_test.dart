@@ -35,8 +35,8 @@ void main() {
     expect(provider, isA<AuthProvider>());
   });
 
-  test('test_get_default_auth', () {
-    final provider = get_default_auth();
+  test('test_getDefaultAuth', () {
+    final provider = getDefaultAuth();
     expect(provider, isA<NoAuthProvider>());
     expect(provider.getHeaders(), isEmpty);
   });

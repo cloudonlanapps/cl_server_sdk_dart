@@ -21,7 +21,7 @@ void main() {
 
     test('test_media_thumbnail_http_polling', () async {
       final image = await IntegrationHelper.getTestImage(
-        'test_image_1920x1080.jpg',
+        
       );
 
       final job = await client.mediaThumbnail.generate(
@@ -55,7 +55,7 @@ void main() {
     test('test_media_thumbnail_file_download', () async {
       // Use image instead of video to match Python SDK
       final testImage = await IntegrationHelper.getTestImage(
-        'test_image_1920x1080.jpg',
+        
       );
 
       // No unique copy needed - match Python SDK
@@ -90,14 +90,14 @@ void main() {
 
     test('test_media_thumbnail_mqtt_callbacks', () async {
       final image = await IntegrationHelper.getTestImage(
-        'test_image_1920x1080.jpg',
+        
       );
 
       final completionCompleter = Completer<JobResponse>();
       final job = await client.mediaThumbnail.generate(
         image,
         width: 64,
-        onComplete: (j) => completionCompleter.complete(j),
+        onComplete: completionCompleter.complete,
       );
 
       final finalJob = await completionCompleter.future.timeout(
@@ -110,11 +110,11 @@ void main() {
 
     test('test_media_thumbnail_both_callbacks', () async {
       final image = await IntegrationHelper.getTestImage(
-        'test_image_1920x1080.jpg',
+        
       );
 
-      bool progressCalled = false;
-      bool completeCalled = false;
+      var progressCalled = false;
+      var completeCalled = false;
       final completionCompleter = Completer<void>();
 
       await client.mediaThumbnail.generate(

@@ -22,7 +22,7 @@ void main() {
     setUp(() {
       mockHttpClient = MockHttpClient();
       client = StoreClient(
-        baseUrl: 'http://localhost:8011',
+        baseUrl: 'http://store.local:8011',
         client: mockHttpClient,
       );
     });
@@ -33,8 +33,8 @@ void main() {
 
     group('Init', () {
       test('test_init_default', () {
-        final c = StoreClient(baseUrl: 'http://localhost:8011');
-        expect(c.baseUrl, equals('http://localhost:8011'));
+        final c = StoreClient(baseUrl: 'http://store.local:8011');
+        expect(c.baseUrl, equals('http://store.local:8011'));
         c.close();
       });
 
@@ -72,13 +72,13 @@ void main() {
           ),
         ).thenAnswer((_) async => http.Response(responseBody, 200));
 
-        await client.listEntities(page: 1, pageSize: 10, searchQuery: 'test');
+        await client.listEntities(pageSize: 10, searchQuery: 'test');
 
         verify(
           () => mockHttpClient.get(
             any(
-              that: predicate(
-                (Uri uri) => uri.queryParameters['search_query'] == 'test',
+              that: predicate<Uri>(
+                (uri) => uri.queryParameters['search_query'] == 'test',
               ),
             ),
             headers: any(named: 'headers'),
@@ -101,8 +101,8 @@ void main() {
         verify(
           () => mockHttpClient.get(
             any(
-              that: predicate(
-                (Uri uri) => uri.queryParameters['version'] == '2',
+              that: predicate<Uri>(
+                (uri) => uri.queryParameters['version'] == '2',
               ),
             ),
             headers: any(named: 'headers'),
@@ -196,7 +196,7 @@ void main() {
             () => mockHttpClient.send(
               any(
                 that: predicate(
-                  (http.BaseRequest req) =>
+                  (req) =>
                       req is http.MultipartRequest && req.files.isNotEmpty,
                 ),
               ),
@@ -234,13 +234,14 @@ void main() {
         verify(
           () => mockHttpClient.send(
             any(
-              that: predicate(
-                (http.BaseRequest req) =>
-                    req.method == 'PUT' &&
-                    req.url.path == '/entities/123' &&
-                    (req as http.MultipartRequest).fields['label'] ==
-                        'Updated Label' &&
-                    req.fields['is_collection'] == 'false',
+              that: predicate<http.BaseRequest>(
+                (req) {
+                  final multipart = req as http.MultipartRequest;
+                  return req.method == 'PUT' &&
+                      req.url.path == '/entities/123' &&
+                      multipart.fields['label'] == 'Updated Label' &&
+                      multipart.fields['is_collection'] == 'false';
+                },
               ),
             ),
           ),
@@ -273,12 +274,13 @@ void main() {
         verify(
           () => mockHttpClient.send(
             any(
-              that: predicate(
-                (http.BaseRequest req) =>
-                    req.method == 'PATCH' &&
-                    req.url.path == '/entities/123' &&
-                    (req as http.MultipartRequest).fields['label'] ==
-                        'Patched Label',
+              that: predicate<http.BaseRequest>(
+                (req) {
+                  final multipart = req as http.MultipartRequest;
+                  return req.method == 'PATCH' &&
+                      req.url.path == '/entities/123' &&
+                      multipart.fields['label'] == 'Patched Label';
+                },
               ),
             ),
           ),
@@ -301,8 +303,8 @@ void main() {
           () => mockHttpClient.send(
             any(
               that: predicate(
-                (http.BaseRequest req) =>
-                    (req as http.MultipartRequest).fields.isEmpty,
+                (req) =>
+                    (req! as http.MultipartRequest).fields.isEmpty,
               ),
             ),
           ),
@@ -314,8 +316,8 @@ void main() {
           () => mockHttpClient.send(
             any(
               that: predicate(
-                (http.BaseRequest req) =>
-                    (req as http.MultipartRequest).fields['label'] == '',
+                (req) =>
+                    (req! as http.MultipartRequest).fields['label'] == '',
               ),
             ),
           ),
@@ -339,8 +341,8 @@ void main() {
           () => mockHttpClient.send(
             any(
               that: predicate(
-                (http.BaseRequest req) =>
-                    (req as http.MultipartRequest).fields['is_deleted'] ==
+                (req) =>
+                    (req! as http.MultipartRequest).fields['is_deleted'] ==
                     'true',
               ),
             ),
@@ -357,7 +359,7 @@ void main() {
 
         verify(
           () => mockHttpClient.delete(
-            Uri.parse('http://localhost:8011/entities/123'),
+            Uri.parse('http://store.local:8011/entities/123'),
             headers: any(named: 'headers'),
           ),
         ).called(1);
@@ -407,7 +409,7 @@ void main() {
         expect(result.guestMode, isTrue);
         verify(
           () => mockHttpClient.put(
-            Uri.parse('http://localhost:8011/admin/pref/guest-mode'),
+            Uri.parse('http://store.local:8011/admin/pref/guest-mode'),
             body: {'guest_mode': 'true'},
             headers: any(named: 'headers'),
           ),
@@ -429,7 +431,7 @@ void main() {
       test('test_auth_headers_applied', () async {
         final auth = JWTAuthProvider(token: 'test-token');
         final c = StoreClient(
-          baseUrl: 'http://localhost:8011',
+          baseUrl: 'http://store.local:8011',
           client: mockHttpClient,
           authProvider: auth,
         );
@@ -470,7 +472,7 @@ void main() {
         verify(
           () => mockHttpClient.get(
             Uri.parse(
-              'http://localhost:8011/intelligence/entities/123/clip_embedding',
+              'http://store.local:8011/intelligence/entities/123/clip_embedding',
             ),
             headers: any(named: 'headers'),
           ),

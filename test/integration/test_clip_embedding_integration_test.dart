@@ -47,7 +47,7 @@ void main() {
       final job = await client.clipEmbedding.embedImage(
         image,
         onProgress: (j) => progressUpdates.add(j.progress),
-        onComplete: (j) => completionCompleter.complete(j),
+        onComplete: completionCompleter.complete,
       );
 
       final finalJob = await completionCompleter.future.timeout(
@@ -69,8 +69,8 @@ void main() {
     test('test_clip_embedding_both_callbacks', () async {
       final image = await IntegrationHelper.getTestImage();
 
-      bool progressCalled = false;
-      bool completeCalled = false;
+      var progressCalled = false;
+      var completeCalled = false;
       final completionCompleter = Completer<void>();
 
       await client.clipEmbedding.embedImage(
