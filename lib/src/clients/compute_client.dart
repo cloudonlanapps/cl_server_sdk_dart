@@ -104,48 +104,76 @@ class ComputeClient implements ClientProtocol {
     required Map<String, File> files,
     Map<String, dynamic>? data,
   }) async {
-    final uri = Uri.parse('$baseUrl$endpoint');
-    final request = http.MultipartRequest('POST', uri);
-    request.headers.addAll(await _getHeaders());
+    return _withRetry(() async {
+      final uri = Uri.parse('$baseUrl$endpoint');
+      final request = http.MultipartRequest('POST', uri);
+      request.headers.addAll(await _getHeaders());
 
-    if (data != null) {
-      data.forEach((k, v) {
-        request.fields[k] = v.toString();
-      });
-    }
+      if (data != null) {
+        data.forEach((k, v) {
+          request.fields[k] = v.toString();
+        });
+      }
 
-    for (final entry in files.entries) {
-      request.files.add(
-        await HttpUtils.createMultipartFile(entry.key, entry.value),
-      );
-    }
+      for (final entry in files.entries) {
+        request.files.add(
+          await HttpUtils.createMultipartFile(entry.key, entry.value),
+        );
+      }
 
-    final streamResponse = await _session.send(request).timeout(timeout);
-    final response = await http.Response.fromStream(streamResponse);
+      final streamResponse = await _session.send(request).timeout(timeout);
+      final response = await http.Response.fromStream(streamResponse);
 
-    final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
-    return jsonMap['job_id'] as String;
+      final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
+      return jsonMap['job_id'] as String;
+    });
   }
 
   @override
   Future<JobResponse> getJob(String jobId) async {
-    final endpoint = ComputeClientConfig.endpointGetJob(jobId);
-    final response = await _session
-        .get(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders())
-        .timeout(timeout);
+    return _withRetry(() async {
+      final endpoint = ComputeClientConfig.endpointGetJob(jobId);
+      final response = await _session
+          .get(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders())
+          .timeout(timeout);
 
-    final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
-    return JobResponse.fromMap(jsonMap);
+      final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
+      return JobResponse.fromMap(jsonMap);
+    });
   }
 
   Future<void> deleteJob(String jobId) async {
-    final endpoint = ComputeClientConfig.endpointDeleteJob(jobId);
-    final response = await _session
-        .delete(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders())
-        .timeout(timeout);
+    await _withRetry(() async {
+      final endpoint = ComputeClientConfig.endpointDeleteJob(jobId);
+      final response = await _session
+          .delete(Uri.parse('$baseUrl$endpoint'), headers: await _getHeaders())
+          .timeout(timeout);
 
-    if (response.statusCode >= 200 && response.statusCode < 300) return;
-    await _handleResponse(response);
+      if (response.statusCode >= 200 && response.statusCode < 300) return;
+      await _handleResponse(response);
+    });
+  }
+
+  Future<T> _withRetry<T>(Future<T> Function() action, {int maxRetries = 3}) async {
+    int attempts = 0;
+    while (true) {
+      attempts++;
+      try {
+        return await action();
+      } on Exception catch (e) {
+        final isRetryable = e is http.ClientException || 
+                           e is SocketException || 
+                           e is TimeoutException;
+        
+        if (!isRetryable || attempts >= maxRetries) {
+          rethrow;
+        }
+        
+        // Log retry attempt if possible or just wait
+        final delay = Duration(milliseconds: 500 * attempts);
+        await Future<void>.delayed(delay);
+      }
+    }
   }
 
   @override
