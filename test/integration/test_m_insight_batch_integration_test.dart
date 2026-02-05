@@ -40,7 +40,7 @@ void main() {
 
         // 2. Upload batch of unique images
         const numImages = 10; // Reduced from 30 for CI/test efficiency
-        //print('Uploading $numImages unique images...');
+        //log('Uploading $numImages unique images...');
 
         final sourceImage = await IntegrationHelper.getTestImage();
         final entityIds = <int>[];
@@ -68,7 +68,7 @@ void main() {
           entityIds.add(res.data!.id);
         }
 
-        /*print(
+        /*log(
           'Successfully uploaded ${entityIds.length} images. Waiting for queuing...',
         );*/
 
@@ -94,7 +94,7 @@ void main() {
           }
 
           if (pendingIds.isNotEmpty) {
-            /*print(
+            /*log(
               '  ${pendingIds.length} images still not picked up by MInsight...',
             );*/
             await Future<void>.delayed(const Duration(seconds: 2));
@@ -108,10 +108,10 @@ void main() {
           );
         }
 
-        //print('All images successfully queued by MInsight!');
+        //log('All images successfully queued by MInsight!');
 
         // 4. Cleanup
-        //print('Cleaning up batch entities...');
+        //log('Cleaning up batch entities...');
         for (final id in entityIds) {
           await store.deleteEntity(id);
         }

@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 import 'integration_test_utils.dart';
@@ -13,7 +14,7 @@ void main() {
         await session.close();
       // ignore: avoid_catches_without_on_clauses
       } catch (e) {
-        print('Warning: Could not disable guest mode: $e');
+        log('Warning: Could not disable guest mode: $e');
       }
     });
 
@@ -111,7 +112,7 @@ void main() {
 
     test('test_non_admin_user_forbidden_from_admin_endpoints', () async {
       if (!IntegrationTestConfig.isAuthEnabled) {
-        print('Skipping non-admin test: admin credentials not provided');
+        log('Skipping non-admin test: admin credentials not provided');
         return;
       }
 
@@ -185,14 +186,14 @@ void main() {
       // This test is skipped in PySDK as it's difficult to test without
       // short-lived tokens or server clock mocking.
       // Included here for 100% test parity count.
-      print(
+      log(
         'Skipping test_expired_token_rejected: Requires short-lived tokens',
       );
     }, skip: 'Requires short-lived tokens');
 
     test('test_compute_operations_with_valid_auth_succeed', () async {
       if (!IntegrationTestConfig.isAuthEnabled) {
-        print('Skipping positive auth test: auth not enabled');
+        log('Skipping positive auth test: auth not enabled');
         return;
       }
 

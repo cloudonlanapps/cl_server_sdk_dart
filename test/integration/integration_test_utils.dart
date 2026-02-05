@@ -1,5 +1,6 @@
+import 'dart:developer';
 import 'dart:io';
-import 'dart:math';
+import 'dart:math' hide log;
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 
 class IntegrationTestConfig {
@@ -183,7 +184,7 @@ class IntegrationHelper {
     try {
       // Try minimal bulk delete first (exposed via client)
       await store.storeClient.deleteAllEntities();
-      print('Called deleteAllEntities()');
+      log('Called deleteAllEntities()');
       // ignore: avoid_catches_without_on_clauses
     } catch (_) {
       // Fallback to individual
@@ -199,14 +200,14 @@ class IntegrationHelper {
             // deletedCount++;
             // ignore: avoid_catches_without_on_clauses
           } catch (e) {
-            print('Cleanup error deleting ${item.id}: $e');
+            log('Cleanup error deleting ${item.id}: $e');
           }
         }
         result = await store.listEntities(pageSize: 100);
       }
-      //if (deletedCount > 0) print('Cleaned up $deletedCount entities.');
+      //if (deletedCount > 0) log('Cleaned up $deletedCount entities.');
     } on Object catch (_) {
-      //print('Cleanup warning: $e');
+      //log('Cleanup warning: $e');
     } finally {
       await session.close();
     }
@@ -236,16 +237,16 @@ class IntegrationHelper {
       if (result.exitCode == 0 && dest.existsSync()) {
         return dest;
       } else {
-        print(
+        log(
           'Python make_unique failed or dest missing. Exit code: ${result.exitCode}',
         );
         if (result.stderr.toString().isNotEmpty) {
-          print('Error: ${result.stderr}');
+          log('Error: ${result.stderr}');
         }
       }
       // ignore: avoid_catches_without_on_clauses
     } catch (e) {
-      print('Error calling python make_unique: $e');
+      log('Error calling python make_unique: $e');
     }
 
     // Fallback to simple file append strategy if script fails
@@ -261,13 +262,13 @@ class IntegrationHelper {
 }
 
 void printConfig() {
-  print('Integration Test Config:');
+  log('Integration Test Config:');
 
-  print('Auth URL: ${IntegrationTestConfig.authUrl}');
+  log('Auth URL: ${IntegrationTestConfig.authUrl}');
 
-  print('Compute URL: ${IntegrationTestConfig.computeUrl}');
+  log('Compute URL: ${IntegrationTestConfig.computeUrl}');
 
-  print('Store URL: ${IntegrationTestConfig.storeUrl}');
+  log('Store URL: ${IntegrationTestConfig.storeUrl}');
 
-  print('User: ${IntegrationTestConfig.username}');
+  log('User: ${IntegrationTestConfig.username}');
 }

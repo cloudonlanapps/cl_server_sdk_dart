@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 import 'integration_test_utils.dart';
@@ -73,7 +74,7 @@ void main() {
           final faces = facesResult.data!;
           if (faces.isNotEmpty && faces[0].knownPersonId != null) {
             final personId = faces[0].knownPersonId!;
-            print('Testing person name update for $personId...');
+            log('Testing person name update for $personId...');
             final newName =
                 'Test Person Update ${DateTime.now().millisecondsSinceEpoch}';
             final updateRes = await store.updateKnownPersonName(

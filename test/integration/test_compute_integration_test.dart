@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:test/test.dart';
 import 'integration_test_utils.dart';
@@ -27,7 +28,7 @@ void main() {
         expect(job.status, anyOf('completed', 'failed', 'error'));
       } catch (e) {
         if (e is SocketException) {
-          print('Skipping compute test: server unreachable');
+          log('Skipping compute test: server unreachable');
           return;
         }
         rethrow;

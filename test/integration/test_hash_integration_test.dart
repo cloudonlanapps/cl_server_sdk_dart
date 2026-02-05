@@ -31,12 +31,12 @@ void main() {
       expect(job.taskOutput, isNotNull);
 
       final output = job.taskOutput!;
-      //print('Hash Output: $output');
+      //log('Hash Output: $output');
       if (output.containsKey('p_hash')) {
         expect(output['p_hash'], isA<String>());
         expect(output['p_hash'].toString().length, greaterThan(0));
       } else {
-        //print('Warning: server did not return p_hash');
+        //log('Warning: server did not return p_hash');
       }
 
       await client.deleteJob(job.jobId);

@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
@@ -11,20 +12,20 @@ void main() async {
   };
   final mqttUrl = Platform.environment['CL_MQTT_URL'] ?? 'mqtt://localhost:1883';
 
-  print('--- Health Check ---');
+  log('--- Health Check ---');
   for (final entry in urls.entries) {
     try {
       final response = await http
           .get(Uri.parse(entry.value))
           .timeout(const Duration(seconds: 5));
-      print('${entry.key}: SUCCESS (${response.statusCode})');
+      log('${entry.key}: SUCCESS (${response.statusCode})');
       // ignore: avoid_catches_without_on_clauses
     } catch (e) {
-      print('${entry.key}: FAILED ($e)');
+      log('${entry.key}: FAILED ($e)');
     }
   }
 
-  print('\n--- Store Manager Test ---');
+  log('\n--- Store Manager Test ---');
   final session = SessionManager(
     serverConfig: ServerConfig(
       authUrl: urls['Auth']!,
@@ -35,23 +36,23 @@ void main() async {
   );
 
   try {
-    print('Logging in...');
+    log('Logging in...');
     await session.login('admin', 'admin');
-    print('Login success.');
+    log('Login success.');
 
     final store = session.createStoreManager();
-    print('Created store manager.');
+    log('Created store manager.');
 
-    print('Listing entities...');
+    log('Listing entities...');
     final listRes = await store.listEntities(pageSize: 5);
     if (listRes.isSuccess) {
-      print('List success. Found ${listRes.data?.items.length} entities.');
+      log('List success. Found ${listRes.data?.items.length} entities.');
     } else {
-      print('List failed: ${listRes.error}');
+      log('List failed: ${listRes.error}');
     }
     // ignore: avoid_catches_without_on_clauses
   } catch (e) {
-    print('Caught exception: $e');
+    log('Caught exception: $e');
   } finally {
     await session.close();
   }

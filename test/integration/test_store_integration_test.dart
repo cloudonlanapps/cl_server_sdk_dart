@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 import 'integration_test_utils.dart';
@@ -17,7 +18,7 @@ void main() {
     test('test_list_entities', () async {
       if (!IntegrationTestConfig.isAuthEnabled) {
         if (!IntegrationTestConfig.storeGuestMode) {
-          print('Skipping store test: auth disabled and no guest mode');
+          log('Skipping store test: auth disabled and no guest mode');
           return;
         }
       }
@@ -38,7 +39,7 @@ void main() {
     test('test_create_entity_collection', () async {
       if (!IntegrationTestConfig.isAuthEnabled) {
         if (!IntegrationTestConfig.storeGuestMode) {
-          print('Skipping store test: auth disabled and no guest mode');
+          log('Skipping store test: auth disabled and no guest mode');
           return;
         }
       }
@@ -68,7 +69,7 @@ void main() {
     test('test_read_entity', () async {
       if (!IntegrationTestConfig.isAuthEnabled) {
         if (!IntegrationTestConfig.storeGuestMode) {
-          print('Skipping store test: auth disabled and no guest mode');
+          log('Skipping store test: auth disabled and no guest mode');
           return;
         }
       }
@@ -99,7 +100,7 @@ void main() {
     test('test_update_entity', () async {
       if (!IntegrationTestConfig.isAuthEnabled) {
         if (!IntegrationTestConfig.storeGuestMode) {
-          print('Skipping store test: auth disabled and no guest mode');
+          log('Skipping store test: auth disabled and no guest mode');
           return;
         }
       }
@@ -155,7 +156,7 @@ void main() {
       // We'll just verify we can subscribe without error.
       // Creating a dummy subscription
       final subId = await store.monitorEntity(entityId, (payload) {
-        print('Received update: ${payload.status}');
+        log('Received update: ${payload.status}');
       });
       expect(subId, isNotNull);
 

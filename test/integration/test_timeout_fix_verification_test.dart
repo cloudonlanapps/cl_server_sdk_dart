@@ -40,7 +40,7 @@ void main() {
 
           await IntegrationHelper.createUniqueCopy(sourceFile, uniqueFile);
 
-          //print('Uploading $imageName (unique copy)...');
+          //log('Uploading $imageName (unique copy)...');
           uploadTasks.add(
             store.createEntity(
               label: 'Test Timeout Fix $imageName',
@@ -65,10 +65,10 @@ void main() {
           expect(result.data, isNotNull);
 
           createdEntities.add(result.data!);
-          //print('Created entity ${result.data!.id} for $imageName');
+          //log('Created entity ${result.data!.id} for $imageName');
         }
 
-        /*print(
+        /*log(
           'Successfully uploaded ${createdEntities.length} images concurrently.',
         );*/
       } finally {

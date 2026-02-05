@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:test/test.dart';
 import 'package:uuid/uuid.dart';
@@ -10,7 +11,7 @@ void main() {
   group('Concurrency Integration Tests', () {
     test('test_concurrent_collection_creation', () async {
       if (!IntegrationTestConfig.isAuthEnabled) {
-        print('Skipping concurrency test: credentials not provided');
+        log('Skipping concurrency test: credentials not provided');
         return;
       }
 
@@ -92,7 +93,7 @@ void main() {
 
     test('test_mixed_concurrent_operations', () async {
       if (!IntegrationTestConfig.isAuthEnabled) {
-        print('Skipping mixed concurrency test: credentials not provided');
+        log('Skipping mixed concurrency test: credentials not provided');
         return;
       }
 

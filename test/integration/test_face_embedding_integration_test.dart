@@ -32,7 +32,7 @@ void main() {
       expect(job.status, equals('completed'));
       expect(job.taskOutput, isNotNull);
 
-      //print('Face Embedding Output: ${job.taskOutput}');
+      //log('Face Embedding Output: ${job.taskOutput}');
       // Note: Server response format seems to have changed or is returning metadata only
       // {normalized: true, embedding_dim: 512, quality_score: ...}
       // Temporarily skipping structure validation
@@ -43,7 +43,7 @@ void main() {
         expect(face, contains('embedding'));
         expect(face['embedding'] as List, isNotEmpty);
       } else {
-        /*print(
+        /*log(
           'Warning: face embedding output missing "faces" key: ${job.taskOutput}',
         );*/
       }
