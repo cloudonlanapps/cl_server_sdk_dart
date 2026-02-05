@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   group('ComputeClientConfig', () {
     test('test_default_timeout', () {
-      expect(ComputeClientConfig.defaultTimeout.inSeconds, equals(30));
+      expect(ComputeClientConfig.defaultTimeout.inSeconds, equals(60));
     });
 
     test('test_mqtt_config', () {
