@@ -147,6 +147,36 @@ class StoreManager {
     }
   }
 
+  // Multimedia operations
+
+  Future<StoreOperationResult<List<int>>> downloadMedia(int entityId) async {
+    try {
+      final result = await storeClient.downloadMedia(entityId);
+      return StoreOperationResult(
+        success: 'Media downloaded successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  Future<StoreOperationResult<List<int>>> downloadPreview(int entityId) async {
+    try {
+      final result = await storeClient.downloadPreview(entityId);
+      return StoreOperationResult(
+        success: 'Preview downloaded successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  String getStreamUrl(int entityId) {
+    return storeClient.getStreamUrl(entityId);
+  }
+
   // Read operations
 
   Future<StoreOperationResult<EntityListResponse>> listEntities({
@@ -154,6 +184,15 @@ class StoreManager {
     int pageSize = 20,
     String? searchQuery,
     bool excludeDeleted = false,
+    String? md5,
+    String? mimeType,
+    String? type,
+    int? width,
+    int? height,
+    int? fileSizeMin,
+    int? fileSizeMax,
+    int? dateFrom,
+    int? dateTo,
   }) async {
     try {
       final result = await storeClient.listEntities(
@@ -161,6 +200,15 @@ class StoreManager {
         pageSize: pageSize,
         searchQuery: searchQuery,
         excludeDeleted: excludeDeleted,
+        md5: md5,
+        mimeType: mimeType,
+        type: type,
+        width: width,
+        height: height,
+        fileSizeMin: fileSizeMin,
+        fileSizeMax: fileSizeMax,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
       );
       return StoreOperationResult(
         success: 'Entities retrieved successfully',

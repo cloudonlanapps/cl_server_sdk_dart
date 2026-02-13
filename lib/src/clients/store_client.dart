@@ -82,6 +82,15 @@ class StoreClient {
     String? searchQuery,
     int? version,
     bool excludeDeleted = false,
+    String? md5,
+    String? mimeType,
+    String? type,
+    int? width,
+    int? height,
+    int? fileSizeMin,
+    int? fileSizeMax,
+    int? dateFrom,
+    int? dateTo,
   }) async {
     final queryParams = {
       'page': page.toString(),
@@ -89,6 +98,15 @@ class StoreClient {
       'search_query': ?searchQuery,
       if (version != null) 'version': version.toString(),
       if (excludeDeleted) 'exclude_deleted': 'true',
+      if (md5 != null) 'md5': md5,
+      if (mimeType != null) 'mime_type': mimeType,
+      if (type != null) 'type': type,
+      if (width != null) 'width': width.toString(),
+      if (height != null) 'height': height.toString(),
+      if (fileSizeMin != null) 'file_size_min': fileSizeMin.toString(),
+      if (fileSizeMax != null) 'file_size_max': fileSizeMax.toString(),
+      if (dateFrom != null) 'date_from': dateFrom.toString(),
+      if (dateTo != null) 'date_to': dateTo.toString(),
     };
 
     final uri = Uri.parse(
@@ -107,6 +125,42 @@ class StoreClient {
 
     final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
     return EntityListResponse.fromMap(jsonMap);
+  }
+
+  // Multimedia operations
+
+  Future<List<int>> downloadMedia(int entityId) async {
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/entities/$entityId/media'),
+          headers: await _getHeaders(),
+        )
+        .timeout(timeout);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return response.bodyBytes;
+    }
+    await _handleResponse(response); // Will throw
+    throw Exception('Unreachable');
+  }
+
+  Future<List<int>> downloadPreview(int entityId) async {
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/entities/$entityId/preview'),
+          headers: await _getHeaders(),
+        )
+        .timeout(timeout);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return response.bodyBytes;
+    }
+    await _handleResponse(response); // Will throw
+    throw Exception('Unreachable');
+  }
+
+  String getStreamUrl(int entityId) {
+    return '$baseUrl/entities/$entityId/stream/adaptive.m3u8';
   }
 
   Future<Entity> readEntity(int entityId, {int? version}) async {
