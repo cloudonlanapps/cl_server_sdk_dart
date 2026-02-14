@@ -94,6 +94,91 @@ void main() {
       ).called(1);
     });
 
+    test('test_list_entities_with_parent_id', () async {
+      final response = EntityListResponse(
+        items: [],
+        pagination: EntityPagination(
+          page: 1,
+          pageSize: 20,
+          totalItems: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        ),
+      );
+
+      when(
+        () => mockStoreClient.listEntities(parentId: 5),
+      ).thenAnswer((_) async => response);
+
+      final result = await manager.listEntities(parentId: 5);
+
+      expect(result.isSuccess, isTrue);
+      verify(
+        () => mockStoreClient.listEntities(parentId: 5),
+      ).called(1);
+    });
+
+    test('test_list_entities_with_is_collection', () async {
+      final response = EntityListResponse(
+        items: [],
+        pagination: EntityPagination(
+          page: 1,
+          pageSize: 20,
+          totalItems: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        ),
+      );
+
+      when(
+        () => mockStoreClient.listEntities(isCollection: true),
+      ).thenAnswer((_) async => response);
+
+      final result = await manager.listEntities(isCollection: true);
+
+      expect(result.isSuccess, isTrue);
+      verify(
+        () => mockStoreClient.listEntities(isCollection: true),
+      ).called(1);
+    });
+
+    test('test_lookup_entity_success', () async {
+      final entity = Entity(
+        id: 42,
+        label: 'Found',
+        isCollection: false,
+        isDeleted: false,
+        addedDate: 0,
+        updatedDate: 0,
+        md5: 'abc123',
+      );
+
+      when(
+        () => mockStoreClient.lookupEntity(md5: 'abc123'),
+      ).thenAnswer((_) async => entity);
+
+      final result = await manager.lookupEntity(md5: 'abc123');
+
+      expect(result.isSuccess, isTrue);
+      expect(result.data?.id, equals(42));
+      verify(
+        () => mockStoreClient.lookupEntity(md5: 'abc123'),
+      ).called(1);
+    });
+
+    test('test_lookup_entity_not_found', () async {
+      when(
+        () => mockStoreClient.lookupEntity(md5: 'nonexistent'),
+      ).thenAnswer((_) async => null);
+
+      final result = await manager.lookupEntity(md5: 'nonexistent');
+
+      expect(result.isSuccess, isTrue);
+      expect(result.data, isNull);
+    });
+
     test('test_read_entity_success', () async {
       final entity = Entity(
         id: 123,
@@ -369,12 +454,16 @@ void main() {
 
     test('test_monitor_entity', () async {
       final monitor = MockMQTTJobMonitor();
-      manager = StoreManager(mockStoreClient, const ServerConfig(
-        authUrl: 'http://auth.local:8010',
-        computeUrl: 'http://compute.local:8012',
-        storeUrl: 'http://store.local:8011',
-        mqttUrl: 'mqtt://mqtt.local:1883',
-      ), monitor);
+      manager = StoreManager(
+        mockStoreClient,
+        const ServerConfig(
+          authUrl: 'http://auth.local:8010',
+          computeUrl: 'http://compute.local:8012',
+          storeUrl: 'http://store.local:8011',
+          mqttUrl: 'mqtt://mqtt.local:1883',
+        ),
+        monitor,
+      );
 
       when(
         () => monitor.subscribeEntityStatus(any(), any(), any()),
@@ -391,12 +480,16 @@ void main() {
 
     test('test_wait_for_entity_status_success', () async {
       final monitor = MockMQTTJobMonitor();
-      manager = StoreManager(mockStoreClient, const ServerConfig(
-        authUrl: 'http://auth.local:8010',
-        computeUrl: 'http://compute.local:8012',
-        storeUrl: 'http://store.local:8011',
-        mqttUrl: 'mqtt://mqtt.local:1883',
-      ), monitor);
+      manager = StoreManager(
+        mockStoreClient,
+        const ServerConfig(
+          authUrl: 'http://auth.local:8010',
+          computeUrl: 'http://compute.local:8012',
+          storeUrl: 'http://store.local:8011',
+          mqttUrl: 'mqtt://mqtt.local:1883',
+        ),
+        monitor,
+      );
       // completer removed
 
       when(() => monitor.isConnected).thenReturn(true);

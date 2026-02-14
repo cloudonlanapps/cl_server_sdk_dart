@@ -193,6 +193,8 @@ class StoreManager {
     int? fileSizeMax,
     int? dateFrom,
     int? dateTo,
+    int? parentId,
+    bool? isCollection,
   }) async {
     try {
       final result = await storeClient.listEntities(
@@ -209,9 +211,30 @@ class StoreManager {
         fileSizeMax: fileSizeMax,
         dateFrom: dateFrom,
         dateTo: dateTo,
+        parentId: parentId,
+        isCollection: isCollection,
       );
       return StoreOperationResult(
         success: 'Entities retrieved successfully',
+        data: result,
+      );
+    } on Object catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  /// Lookup a single entity by MD5 (media) or label (collection).
+  Future<StoreOperationResult<Entity?>> lookupEntity({
+    String? md5,
+    String? label,
+  }) async {
+    try {
+      final result = await storeClient.lookupEntity(
+        md5: md5,
+        label: label,
+      );
+      return StoreOperationResult(
+        success: 'Entity lookup successful',
         data: result,
       );
     } on Object catch (e) {

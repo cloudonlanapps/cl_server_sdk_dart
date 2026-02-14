@@ -86,6 +86,121 @@ void main() {
         ).called(1);
       });
 
+      test('test_list_entities_with_parent_id', () async {
+        final responseBody = jsonEncode(<String, dynamic>{
+          'items': <Map<String, dynamic>>[],
+          'pagination': <String, dynamic>{
+            'page': 1,
+            'page_size': 20,
+            'total_items': 0,
+            'total_pages': 0,
+            'has_next': false,
+            'has_prev': false,
+          },
+        });
+
+        when(
+          () => mockHttpClient.get(
+            any(),
+            headers: any(named: 'headers'),
+          ),
+        ).thenAnswer((_) async => http.Response(responseBody, 200));
+
+        await client.listEntities(parentId: 5);
+
+        verify(
+          () => mockHttpClient.get(
+            any(
+              that: predicate<Uri>(
+                (uri) => uri.queryParameters['parent_id'] == '5',
+              ),
+            ),
+            headers: any(named: 'headers'),
+          ),
+        ).called(1);
+      });
+
+      test('test_list_entities_with_is_collection', () async {
+        final responseBody = jsonEncode(<String, dynamic>{
+          'items': <Map<String, dynamic>>[],
+          'pagination': <String, dynamic>{
+            'page': 1,
+            'page_size': 20,
+            'total_items': 0,
+            'total_pages': 0,
+            'has_next': false,
+            'has_prev': false,
+          },
+        });
+
+        when(
+          () => mockHttpClient.get(
+            any(),
+            headers: any(named: 'headers'),
+          ),
+        ).thenAnswer((_) async => http.Response(responseBody, 200));
+
+        await client.listEntities(isCollection: true);
+
+        verify(
+          () => mockHttpClient.get(
+            any(
+              that: predicate<Uri>(
+                (uri) => uri.queryParameters['is_collection'] == 'true',
+              ),
+            ),
+            headers: any(named: 'headers'),
+          ),
+        ).called(1);
+      });
+
+      test('test_lookup_entity_by_md5', () async {
+        final responseBody = jsonEncode({
+          'id': 42,
+          'label': 'Found Entity',
+          'md5': 'abc123',
+        });
+
+        when(
+          () => mockHttpClient.get(
+            any(),
+            headers: any(named: 'headers'),
+          ),
+        ).thenAnswer((_) async => http.Response(responseBody, 200));
+
+        final result = await client.lookupEntity(md5: 'abc123');
+
+        expect(result, isNotNull);
+        expect(result!.id, equals(42));
+        expect(result.md5, equals('abc123'));
+
+        verify(
+          () => mockHttpClient.get(
+            any(
+              that: predicate<Uri>(
+                (uri) =>
+                    uri.path == '/entities/lookup' &&
+                    uri.queryParameters['md5'] == 'abc123',
+              ),
+            ),
+            headers: any(named: 'headers'),
+          ),
+        ).called(1);
+      });
+
+      test('test_lookup_entity_not_found', () async {
+        when(
+          () => mockHttpClient.get(
+            any(),
+            headers: any(named: 'headers'),
+          ),
+        ).thenAnswer((_) async => http.Response('Not Found', 404));
+
+        final result = await client.lookupEntity(md5: 'nonexistent');
+
+        expect(result, isNull);
+      });
+
       test('test_read_entity_with_version', () async {
         final responseBody = jsonEncode({'id': 123, 'label': 'Old Label'});
 
@@ -196,8 +311,7 @@ void main() {
             () => mockHttpClient.send(
               any(
                 that: predicate(
-                  (req) =>
-                      req is http.MultipartRequest && req.files.isNotEmpty,
+                  (req) => req is http.MultipartRequest && req.files.isNotEmpty,
                 ),
               ),
             ),
@@ -303,8 +417,7 @@ void main() {
           () => mockHttpClient.send(
             any(
               that: predicate(
-                (req) =>
-                    (req! as http.MultipartRequest).fields.isEmpty,
+                (req) => (req! as http.MultipartRequest).fields.isEmpty,
               ),
             ),
           ),
@@ -316,8 +429,7 @@ void main() {
           () => mockHttpClient.send(
             any(
               that: predicate(
-                (req) =>
-                    (req! as http.MultipartRequest).fields['label'] == '',
+                (req) => (req! as http.MultipartRequest).fields['label'] == '',
               ),
             ),
           ),

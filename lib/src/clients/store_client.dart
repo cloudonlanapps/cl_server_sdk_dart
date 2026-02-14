@@ -91,6 +91,8 @@ class StoreClient {
     int? fileSizeMax,
     int? dateFrom,
     int? dateTo,
+    int? parentId,
+    bool? isCollection,
   }) async {
     final queryParams = {
       'page': page.toString(),
@@ -107,6 +109,8 @@ class StoreClient {
       if (fileSizeMax != null) 'file_size_max': fileSizeMax.toString(),
       if (dateFrom != null) 'date_from': dateFrom.toString(),
       if (dateTo != null) 'date_to': dateTo.toString(),
+      if (parentId != null) 'parent_id': parentId.toString(),
+      if (isCollection != null) 'is_collection': isCollection.toString(),
     };
 
     final uri = Uri.parse(
@@ -125,6 +129,37 @@ class StoreClient {
 
     final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
     return EntityListResponse.fromMap(jsonMap);
+  }
+
+  /// Lookup a single entity by MD5 (media) or label (collection).
+  ///
+  /// Returns the entity if found, null if not found.
+  Future<Entity?> lookupEntity({
+    String? md5,
+    String? label,
+  }) async {
+    final queryParams = <String, String>{
+      if (md5 != null) 'md5': md5,
+      if (label != null) 'label': label,
+    };
+
+    final uri = Uri.parse(
+      '$baseUrl/entities/lookup',
+    ).replace(queryParameters: queryParams);
+
+    final response = await _client
+        .get(
+          uri,
+          headers: await _getHeaders(),
+        )
+        .timeout(timeout);
+
+    if (response.statusCode == 404) {
+      return null;
+    }
+
+    final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
+    return Entity.fromMap(jsonMap);
   }
 
   // Multimedia operations
