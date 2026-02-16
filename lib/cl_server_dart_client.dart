@@ -40,4 +40,7 @@ export 'src/plugins/image_conversion.dart';
 export 'src/plugins/media_thumbnail.dart';
 export 'src/server_config.dart';
 export 'src/session_manager.dart';
+export 'src/store/entity_mapper.dart';
+export 'src/store/entity_store.dart';
+export 'src/store/query_filter_adapter.dart';
 export 'src/types.dart';
