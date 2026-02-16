@@ -15,11 +15,16 @@ export 'src/exceptions.dart';
 export 'src/managers/store_manager.dart';
 export 'src/models/auth_models.dart';
 export 'src/models/cl_server.dart';
+export 'src/models/cl_socket.dart';
 export 'src/models/intelligence_models.dart';
 // Models
 export 'src/models/models.dart';
+export 'src/models/network_scanner.dart';
 export 'src/models/remote_service_location_config.dart';
+export 'src/models/rest_api.dart';
+export 'src/models/server.dart';
 export 'src/models/server_health_status.dart';
+export 'src/models/server_preferences.dart';
 export 'src/models/store_models.dart';
 export 'src/mqtt_monitor.dart';
 // Plugins
