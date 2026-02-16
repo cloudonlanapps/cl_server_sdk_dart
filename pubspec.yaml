@@ -3,10 +3,14 @@ description: Dart client library for CL Server microservices (Auth, Store, Compu
 version: 0.1.0
 repository: https://github.com/cloudonlanapps/cl_server_dart_client.git
 
+publish_to: none 
+
 environment:
   sdk: ^3.10.1
 
 dependencies:
+  cl_basic_types:
+    path: ../../apps/ui_flutter/cl_basic_types
   collection: ^1.19.1
   encrypt: ^5.0.0
   http: ^1.1.0

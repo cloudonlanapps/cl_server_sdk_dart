@@ -154,21 +154,25 @@ class ComputeClient implements ClientProtocol {
     });
   }
 
-  Future<T> _withRetry<T>(Future<T> Function() action, {int maxRetries = 3}) async {
-    int attempts = 0;
+  Future<T> _withRetry<T>(
+    Future<T> Function() action, {
+    int maxRetries = 3,
+  }) async {
+    var attempts = 0;
     while (true) {
       attempts++;
       try {
         return await action();
       } on Exception catch (e) {
-        final isRetryable = e is http.ClientException || 
-                           e is SocketException || 
-                           e is TimeoutException;
-        
+        final isRetryable =
+            e is http.ClientException ||
+            e is SocketException ||
+            e is TimeoutException;
+
         if (!isRetryable || attempts >= maxRetries) {
           rethrow;
         }
-        
+
         // Log retry attempt if possible or just wait
         final delay = Duration(milliseconds: 500 * attempts);
         await Future<void>.delayed(delay);

@@ -100,9 +100,9 @@ class StoreClient {
       'search_query': ?searchQuery,
       if (version != null) 'version': version.toString(),
       if (excludeDeleted) 'exclude_deleted': 'true',
-      if (md5 != null) 'md5': md5,
-      if (mimeType != null) 'mime_type': mimeType,
-      if (type != null) 'type': type,
+      'md5': ?md5,
+      'mime_type': ?mimeType,
+      'type': ?type,
       if (width != null) 'width': width.toString(),
       if (height != null) 'height': height.toString(),
       if (fileSizeMin != null) 'file_size_min': fileSizeMin.toString(),
@@ -139,8 +139,8 @@ class StoreClient {
     String? label,
   }) async {
     final queryParams = <String, String>{
-      if (md5 != null) 'md5': md5,
-      if (label != null) 'label': label,
+      'md5': ?md5,
+      'label': ?label,
     };
 
     final uri = Uri.parse(
