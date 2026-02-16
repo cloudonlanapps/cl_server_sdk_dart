@@ -1,4 +1,4 @@
-import 'package:cl_basic_types/cl_basic_types.dart';
+import 'package:store/store.dart';
 import '../models/store_models.dart' as sdk;
 
 /// Maps between CLEntity and DartSDK Entity models.
