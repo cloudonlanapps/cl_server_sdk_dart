@@ -9,8 +9,6 @@ environment:
   sdk: ^3.10.1
 
 dependencies:
-  cl_basic_types:
-    path: ../../apps/ui_flutter/cl_basic_types
   collection: ^1.19.1
   encrypt: ^5.0.0
   http: ^1.1.0

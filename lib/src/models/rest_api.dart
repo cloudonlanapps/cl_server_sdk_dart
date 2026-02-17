@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:cl_basic_types/cl_basic_types.dart';
 import 'package:cl_server_dart_client/cl_server_dart_client.dart';
 import 'package:http/http.dart' as http;
 
@@ -60,7 +59,7 @@ extension RESTAPi on CLServer {
     return multipartFiles;
   }
 
-  Future<StoreReply<dynamic>> post(
+  Future<ServerReply<dynamic>> post(
     String endPoint, {
     http.Client? client,
     String? auth,
@@ -108,16 +107,16 @@ extension RESTAPi on CLServer {
             .then(http.Response.fromStream);
       }
       if ([200, 201].contains(response.statusCode)) {
-        return StoreResult(response.body);
+        return ServerResult(response.body);
       }
 
-      return StoreError<dynamic>.fromString(response.body);
+      return ServerError<dynamic>.fromString(response.body);
     } on Object catch (e, st) {
-      return StoreError.fromString(e.toString(), st: st);
+      return ServerError.fromString(e.toString(), st: st);
     }
   }
 
-  Future<StoreReply<dynamic>> get(
+  Future<ServerReply<dynamic>> get(
     String endPoint, {
     http.Client? client,
     String? auth,
@@ -145,19 +144,19 @@ extension RESTAPi on CLServer {
         if (outputFileName != null) {
           final file = File(outputFileName);
           await file.writeAsBytes(response.bodyBytes);
-          return StoreResult(outputFileName);
+          return ServerResult(outputFileName);
         } else {
-          return StoreResult(response.body);
+          return ServerResult(response.body);
         }
       }
 
-      return StoreError<dynamic>.fromString(response.body);
+      return ServerError<dynamic>.fromString(response.body);
     } on Object catch (e, st) {
-      return StoreError.fromString(e.toString(), st: st);
+      return ServerError.fromString(e.toString(), st: st);
     }
   }
 
-  Future<StoreReply<dynamic>> put(
+  Future<ServerReply<dynamic>> put(
     String endPoint, {
     http.Client? client,
     String? auth,
@@ -205,16 +204,16 @@ extension RESTAPi on CLServer {
             .then(http.Response.fromStream);
       }
       if ([200, 201].contains(response.statusCode)) {
-        return StoreResult(response.body);
+        return ServerResult(response.body);
       }
 
-      return StoreError<dynamic>.fromString(response.body);
+      return ServerError<dynamic>.fromString(response.body);
     } on Object catch (e, st) {
-      return StoreError.fromString(e.toString(), st: st);
+      return ServerError.fromString(e.toString(), st: st);
     }
   }
 
-  Future<StoreReply<dynamic>> delete(
+  Future<ServerReply<dynamic>> delete(
     String endPoint, {
     http.Client? client,
     String? auth,
@@ -236,12 +235,12 @@ extension RESTAPi on CLServer {
 
       response = await httpClient.delete(uri, headers: headers);
       if ([200, 201].contains(response.statusCode)) {
-        return StoreResult(response.body);
+        return ServerResult(response.body);
       }
 
-      return StoreError<dynamic>.fromString(response.body);
+      return ServerError<dynamic>.fromString(response.body);
     } on Object catch (e, st) {
-      return StoreError.fromString(e.toString(), st: st);
+      return ServerError.fromString(e.toString(), st: st);
     }
   }
 

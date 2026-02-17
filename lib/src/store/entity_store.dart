@@ -1,6 +1,5 @@
 import 'dart:developer';
 
-import 'package:cl_basic_types/cl_basic_types.dart';
 import 'package:meta/meta.dart';
 import 'package:store/store.dart';
 
