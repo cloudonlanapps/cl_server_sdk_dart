@@ -94,6 +94,9 @@ class OnlineEntityStore extends EntityStore {
       }
 
       // Fetch entities - all filters are server-side now!
+      log(
+        'OnlineEntityStore.getAll: parentId=${adapted.parentId}, isCollection=${adapted.isCollection}, page=${adapted.page}',
+      );
       final result = await storeManager.listEntities(
         page: adapted.page ?? 1,
         pageSize: adapted.pageSize ?? 20,
@@ -111,8 +114,14 @@ class OnlineEntityStore extends EntityStore {
         isCollection: adapted.isCollection, // ✅ Phase 1 complete
       );
 
-      if (!result.isSuccess || result.data == null) return [];
+      if (!result.isSuccess || result.data == null) {
+        log('OnlineEntityStore.getAll failed: ${result.error}');
+        return [];
+      }
 
+      log(
+        'OnlineEntityStore.getAll successful: ${result.data!.items.length} items returned',
+      );
       var entities = EntityMapper.fromSdkEntities(result.data!.items);
 
       // Apply client-side filters ONLY for client-side fields (pin)

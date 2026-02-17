@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -97,12 +98,12 @@ class StoreClient {
     final queryParams = {
       'page': page.toString(),
       'page_size': pageSize.toString(),
-      'search_query': ?searchQuery,
+      if (searchQuery != null) 'search_query': searchQuery,
       if (version != null) 'version': version.toString(),
       if (excludeDeleted) 'exclude_deleted': 'true',
-      'md5': ?md5,
-      'mime_type': ?mimeType,
-      'type': ?type,
+      if (md5 != null) 'md5': md5,
+      if (mimeType != null) 'mime_type': mimeType,
+      if (type != null) 'type': type,
       if (width != null) 'width': width.toString(),
       if (height != null) 'height': height.toString(),
       if (fileSizeMin != null) 'file_size_min': fileSizeMin.toString(),
@@ -119,6 +120,8 @@ class StoreClient {
 
     // NOTE: http package does not automatically url encode query params correctly?
     // Uri.replace(queryParameters) DOES encode them.
+    log('StoreClient.listEntities: uri=$uri');
+    log('StoreClient.listEntities: params=$queryParams');
 
     final response = await _client
         .get(
@@ -128,6 +131,10 @@ class StoreClient {
         .timeout(timeout);
 
     final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
+    final items = jsonMap['items'] as List?;
+    log(
+      'StoreClient.listEntities: Received ${items?.length} items (total_items: ${jsonMap['pagination']?['total_items']})',
+    );
     return EntityListResponse.fromMap(jsonMap);
   }
 
@@ -139,8 +146,8 @@ class StoreClient {
     String? label,
   }) async {
     final queryParams = <String, String>{
-      'md5': ?md5,
-      'label': ?label,
+      if (md5 != null) 'md5': md5,
+      if (label != null) 'label': label,
     };
 
     final uri = Uri.parse(

@@ -26,7 +26,6 @@ class EntityMapper {
           ? DateTime.fromMillisecondsSinceEpoch(entity.updatedDate!)
           : DateTime.now(),
       isDeleted: entity.isDeleted ?? false,
-
       // Media fields
       md5: entity.md5,
       fileSize: entity.fileSize,
@@ -44,6 +43,7 @@ class EntityMapper {
       isHidden: false, // Default - not stored on server
       pin: null, // Not stored on server
       faces: null, // Removed - now in intelligenceData
+      childrenCount: entity.childrenCount,
     );
   }
 
@@ -75,8 +75,10 @@ class EntityMapper {
       height: entity.height,
       width: entity.width,
       duration: entity.duration,
+      isIndirectlyDeleted: entity.isDeleted,
+      childrenCount: entity.childrenCount,
       // Server-only fields not included:
-      // - addedBy, updatedBy, filePath, isIndirectlyDeleted, intelligenceData
+      // - addedBy, updatedBy, filePath, intelligenceData
     );
   }
 }

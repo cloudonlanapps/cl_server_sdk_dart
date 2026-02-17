@@ -213,6 +213,7 @@ class Entity {
     this.md5,
     this.filePath,
     this.isIndirectlyDeleted,
+    this.childrenCount,
     this.intelligenceData,
   });
 
@@ -239,6 +240,7 @@ class Entity {
       md5: map['md5'] as String?,
       filePath: map['file_path'] as String?,
       isIndirectlyDeleted: map['is_indirectly_deleted'] as bool?,
+      childrenCount: map['children_count'] as int?,
       intelligenceData: map['intelligence_data'] != null
           ? EntityIntelligenceData.fromMap(
               map['intelligence_data'] as Map<String, dynamic>,
@@ -318,6 +320,9 @@ class Entity {
   /// True if any ancestor in the parent chain is soft-deleted
   final bool? isIndirectlyDeleted;
 
+  /// Number of children if this is a collection
+  final int? childrenCount;
+
   /// Denormalized intelligence data
   final EntityIntelligenceData? intelligenceData;
 
@@ -362,6 +367,7 @@ class Entity {
       'md5': md5,
       'file_path': filePath,
       'is_indirectly_deleted': isIndirectlyDeleted,
+      'children_count': childrenCount,
       'intelligence_data': intelligenceData?.toMap(),
     };
   }
