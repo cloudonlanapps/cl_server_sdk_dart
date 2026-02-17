@@ -1,6 +1,6 @@
+import 'package:cl_extensions/cl_extensions.dart' show CLLogger, ValueGetter;
 import 'package:http/http.dart' as http;
 import 'package:meta/meta.dart';
-import 'package:store/store.dart';
 
 import '../managers/store_manager.dart';
 import '../models/auth_models.dart';
