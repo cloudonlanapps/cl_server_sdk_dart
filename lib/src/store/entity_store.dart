@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cl_basic_types/cl_basic_types.dart';
 import 'package:cl_extensions/cl_extensions.dart' show CLLogger, NotNullValue;
 import 'package:meta/meta.dart';
 import 'package:store/store.dart';
@@ -66,9 +67,21 @@ class OnlineEntityStore extends EntityStore with CLLogger {
   }
 
   @override
-  Future<List<CLEntity>> getAll([StoreQuery<CLEntity>? query]) async {
+  Future<PagedResult<CLEntity>> getAll([StoreQuery<CLEntity>? query]) async {
     // Handle isHidden filter (client-side only, server doesn't support)
-    if (query?.map['isHidden'] == 1) return [];
+    if (query?.map['isHidden'] == 1) {
+      return const PagedResult(
+        items: [],
+        pagination: PaginationMetadata(
+          page: 1,
+          pageSize: 20,
+          totalItems: 0,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        ),
+      );
+    }
 
     final storeManager = _requireStoreManager();
 
@@ -79,22 +92,42 @@ class OnlineEntityStore extends EntityStore with CLLogger {
       // Special case: direct ID lookup
       if (adapted.idFilter != null) {
         final entity = await getByID(adapted.idFilter!);
-        return entity != null ? [entity] : [];
+        return PagedResult(
+          items: entity != null ? [entity] : [],
+          pagination: const PaginationMetadata(
+            page: 1,
+            pageSize: 20,
+            totalItems: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          ),
+        );
       }
 
       // Special case: exact label match with no other filters
       if (adapted.labelFilter != null && adapted.otherFilters.isEmpty) {
         final entity = await get(label: adapted.labelFilter);
-        return entity != null ? [entity] : [];
+        return PagedResult(
+          items: entity != null ? [entity] : [],
+          pagination: const PaginationMetadata(
+            page: 1,
+            pageSize: 20,
+            totalItems: 1,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          ),
+        );
       }
 
       // Fetch entities - all filters are server-side now!
       log(
-        'OnlineEntityStore.getAll: parentId=${adapted.parentId}, isCollection=${adapted.isCollection}, page=${adapted.page}',
+        'OnlineEntityStore.getAll: parentId=${adapted.parentId}, isCollection=${adapted.isCollection}, page=${query?.page}',
       );
       final result = await storeManager.listEntities(
-        page: adapted.page ?? 1,
-        pageSize: adapted.pageSize ?? 20,
+        page: query?.page ?? 1,
+        pageSize: query?.pageSize ?? 20,
         md5: adapted.md5,
         mimeType: adapted.mimeType,
         type: adapted.type,
@@ -111,7 +144,17 @@ class OnlineEntityStore extends EntityStore with CLLogger {
 
       if (!result.isSuccess || result.data == null) {
         log('OnlineEntityStore.getAll failed: ${result.error}');
-        return [];
+        return PagedResult(
+          items: const [],
+          pagination: PaginationMetadata(
+            page: query?.page ?? 1,
+            pageSize: query?.pageSize ?? 20,
+            totalItems: 0,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false,
+          ),
+        );
       }
 
       log(
@@ -128,10 +171,30 @@ class OnlineEntityStore extends EntityStore with CLLogger {
         }).toList();
       }
 
-      return entities;
+      return PagedResult(
+        items: entities,
+        pagination: PaginationMetadata(
+          page: result.data!.pagination.page,
+          pageSize: result.data!.pagination.pageSize,
+          totalItems: result.data!.pagination.totalItems,
+          totalPages: result.data!.pagination.totalPages,
+          hasNext: result.data!.pagination.hasNext,
+          hasPrev: result.data!.pagination.hasPrev,
+        ),
+      );
     } on Exception catch (e) {
       log('OnlineEntityStore.getAll error: $e');
-      return [];
+      return PagedResult(
+        items: const [],
+        pagination: PaginationMetadata(
+          page: query?.page ?? 1,
+          pageSize: query?.pageSize ?? 20,
+          totalItems: 0,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        ),
+      );
     }
   }
 
