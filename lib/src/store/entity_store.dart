@@ -221,7 +221,7 @@ class OnlineEntityStore extends EntityStore {
   Uri? previewUri(CLEntity item) {
     if (item.id == null) return null;
     return Uri.parse(
-      '${(config as RemoteServiceLocationConfig).storeUrl}/entities/${item.id}/preview',
+      '${(config as RemoteServiceLocationConfig).storeUrl}/entities/${item.id}/preview?force=1',
     );
   }
 

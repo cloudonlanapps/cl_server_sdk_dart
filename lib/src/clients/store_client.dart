@@ -191,7 +191,7 @@ class StoreClient {
   Future<List<int>> downloadPreview(int entityId) async {
     final response = await _client
         .get(
-          Uri.parse('$baseUrl/entities/$entityId/preview'),
+          Uri.parse('$baseUrl/entities/$entityId/preview?force=1'),
           headers: await _getHeaders(),
         )
         .timeout(timeout);
