@@ -7,6 +7,7 @@ import 'package:store/store.dart';
 import '../managers/store_manager.dart';
 import '../models/cl_server.dart';
 import '../models/remote_service_location_config.dart';
+import '../models/store_models.dart';
 import 'entity_mapper.dart';
 import 'query_filter_adapter.dart';
 
@@ -139,22 +140,43 @@ class OnlineEntityStore extends EntityStore with CLLogger {
     final storeManager = _requireStoreManager();
 
     try {
-      final result = curr.id != null
-          ? await storeManager.updateEntity(
-              curr.id!,
-              label: curr.label ?? '',
-              description: curr.description,
-              isCollection: curr.isCollection,
-              parentId: curr.parentId,
-              mediaPath: path,
-            )
-          : await storeManager.createEntity(
-              isCollection: curr.isCollection,
-              label: curr.label,
-              description: curr.description,
-              parentId: curr.parentId,
-              mediaPath: path,
-            );
+      final StoreOperationResult<Entity> result;
+
+      if (curr.id == null) {
+        // Create new entity
+        result = await storeManager.createEntity(
+          isCollection: curr.isCollection,
+          label: curr.label,
+          description: curr.description,
+          parentId: curr.parentId,
+          mediaPath: path,
+        );
+      } else {
+        // Update existing entity
+        if (path != null) {
+          // If media file is provided, we MUST use updateEntity (PUT)
+          // because patchEntity doesn't support file upload
+          result = await storeManager.updateEntity(
+            curr.id!,
+            label: curr.label ?? '',
+            description: curr.description,
+            isCollection: curr.isCollection,
+            parentId: curr.parentId,
+            mediaPath: path,
+          );
+        } else {
+          // If no media file, use patchEntity (PATCH) for metadata updates
+          // This supports partial updates and is safer for moves/renames
+          result = await storeManager.patchEntity(
+            curr.id!,
+            label: curr.label,
+            description: curr.description,
+            isCollection: curr.isCollection,
+            parentId: curr.parentId,
+            isDeleted: curr.isDeleted,
+          );
+        }
+      }
 
       if (!result.isSuccess) {
         throw Exception(result.error ?? 'Upsert failed');
