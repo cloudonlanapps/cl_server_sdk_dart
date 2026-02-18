@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:cl_extensions/cl_extensions.dart' show NotNullValue;
 import 'package:meta/meta.dart';
@@ -12,10 +13,7 @@ import 'query_filter_adapter.dart';
 
 @immutable
 class OnlineEntityStore extends EntityStore {
-  const OnlineEntityStore({
-    required super.config,
-    required this.server,
-  });
+  const OnlineEntityStore({required super.config, required this.server});
 
   final CLServer server;
 
@@ -43,10 +41,7 @@ class OnlineEntityStore extends EntityStore {
 
     try {
       // Use new lookupEntity endpoint (added in Phase 1)
-      final result = await storeManager.lookupEntity(
-        md5: md5,
-        label: label,
-      );
+      final result = await storeManager.lookupEntity(md5: md5, label: label);
 
       if (!result.isSuccess || result.data == null) return null;
 
@@ -187,6 +182,33 @@ class OnlineEntityStore extends EntityStore {
   }
 
   @override
+  Future<bool> download(CLEntity item, File targetFile) async {
+    if (item.id == null) {
+      log('Download failed: Entity ID is null');
+      return false;
+    }
+
+    final storeManager = _requireStoreManager();
+
+    try {
+      log('Downloading media for entity ${item.id} from remote...');
+      final result = await storeManager.downloadMedia(item.id!);
+      if (result.isSuccess && result.data != null) {
+        await targetFile.writeAsBytes(result.data!);
+        log(
+          'Download successful: ${result.data!.length} bytes written to ${targetFile.path}',
+        );
+        return true;
+      }
+      log('Download failed: ${result.error}');
+      return false;
+    } on Exception catch (e) {
+      log('Download exception: $e');
+      return false;
+    }
+  }
+
+  @override
   Uri? mediaUri(CLEntity item) {
     if (item.id == null) return null;
 
@@ -207,10 +229,7 @@ class OnlineEntityStore extends EntityStore {
     required RemoteServiceLocationConfig config,
     required CLServer server,
   }) async {
-    return OnlineEntityStore(
-      config: config,
-      server: server,
-    );
+    return OnlineEntityStore(config: config, server: server);
   }
 }
 
@@ -219,8 +238,5 @@ Future<EntityStore> createOnlineEntityStore({
   required CLServer server,
   required String storePath,
 }) async {
-  return OnlineEntityStore.createStore(
-    server: server,
-    config: config,
-  );
+  return OnlineEntityStore.createStore(server: server, config: config);
 }

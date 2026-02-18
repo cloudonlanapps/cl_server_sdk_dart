@@ -84,7 +84,11 @@ class QueryFilterAdapter {
     final isDeletedInt = map['isDeleted'] as int?;
     final excludeDeleted = isDeletedInt != null ? isDeletedInt == 0 : null;
 
-    final parentId = map['parentId'] as int?;
+    // For OnlineStore, parentId=null (root) must be sent as 0
+    // If key is missing, it's "all items" (null)
+    final parentId = map.containsKey('parentId')
+        ? (map['parentId'] as int?) ?? 0
+        : null;
 
     final isCollectionInt = map['isCollection'] as int?;
     final isCollection = isCollectionInt != null ? isCollectionInt != 0 : null;

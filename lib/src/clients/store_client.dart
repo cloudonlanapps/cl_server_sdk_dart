@@ -1,3 +1,5 @@
+// ignore_for_file: use_null_aware_elements because we don't want keys too
+
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
