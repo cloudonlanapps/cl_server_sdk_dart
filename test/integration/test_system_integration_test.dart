@@ -56,7 +56,7 @@ void main() {
       final res1 = await store.createEntity(
         label: 'Entity One',
         isCollection: false,
-        imagePath: temp1.path,
+        mediaPath: temp1.path,
       );
       expect(res1.isSuccess, isTrue, reason: res1.error);
       final id1 = res1.data!.id;
@@ -72,7 +72,7 @@ void main() {
       final res2 = await store.createEntity(
         label: 'Entity Two',
         isCollection: false,
-        imagePath: temp2.path,
+        mediaPath: temp2.path,
       );
       expect(res2.isSuccess, isTrue, reason: res2.error);
       final id2 = res2.data!.id;

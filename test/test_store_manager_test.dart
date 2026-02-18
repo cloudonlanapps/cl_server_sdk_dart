@@ -248,7 +248,7 @@ void main() {
           isCollection: false,
           label: 'Photo',
           description: 'Test photo',
-          imagePath: '/tmp/test.jpg',
+          mediaPath: 'path/to/image.jpg',
         ),
       ).thenAnswer((_) async => (entity, 201));
 
@@ -256,7 +256,7 @@ void main() {
         label: 'Photo',
         description: 'Test photo',
         isCollection: false,
-        imagePath: '/tmp/test.jpg',
+        mediaPath: '/tmp/test.jpg',
       );
 
       expect(result.isSuccess, isTrue);

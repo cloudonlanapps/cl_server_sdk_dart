@@ -135,7 +135,7 @@ class StoreClient {
     final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
     final items = jsonMap['items'] as List?;
     log(
-      'StoreClient.listEntities: Received ${items?.length} items (total_items: ${jsonMap['pagination']?['total_items']})',
+      'StoreClient.listEntities: Received ${items?.length} items (total_items: ${(jsonMap['pagination'] as Map?)?['total_items']})',
     );
     return EntityListResponse.fromMap(jsonMap);
   }
@@ -242,13 +242,13 @@ class StoreClient {
 
   // Write operations
 
-  /// Create a new entity (image or collection).
+  /// Create a new entity (media file or collection).
   Future<(Entity, int)> createEntity({
     required bool isCollection,
     String? label,
     String? description,
     int? parentId,
-    String? imagePath,
+    String? mediaPath,
   }) async {
     final request = http.MultipartRequest(
       'POST',
@@ -261,8 +261,10 @@ class StoreClient {
     if (description != null) request.fields['description'] = description;
     if (parentId != null) request.fields['parent_id'] = parentId.toString();
 
-    if (imagePath != null) {
-      request.files.add(await http.MultipartFile.fromPath('image', imagePath));
+    if (mediaPath != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath('media_file', mediaPath),
+      );
     }
 
     final streamResponse = await _client.send(request).timeout(timeout);
@@ -277,7 +279,7 @@ class StoreClient {
     required String label,
     String? description,
     int? parentId,
-    String? imagePath,
+    String? mediaPath,
   }) async {
     final request = http.MultipartRequest(
       'PUT',
@@ -290,9 +292,9 @@ class StoreClient {
     if (description != null) request.fields['description'] = description;
     if (parentId != null) request.fields['parent_id'] = parentId.toString();
 
-    if (imagePath != null) {
+    if (mediaPath != null) {
       request.files.add(
-        await HttpUtils.createMultipartFile('image', File(imagePath)),
+        await HttpUtils.createMultipartFile('media_file', File(mediaPath)),
       );
     }
 

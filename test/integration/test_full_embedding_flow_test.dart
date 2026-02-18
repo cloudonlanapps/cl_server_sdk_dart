@@ -50,7 +50,7 @@ void main() {
           final createResult = await store.createEntity(
             isCollection: false,
             label: 'Test Integration $filename',
-            imagePath: uniqueImage.path,
+            mediaPath: uniqueImage.path,
           );
 
           expect(

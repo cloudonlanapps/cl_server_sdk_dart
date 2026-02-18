@@ -45,7 +45,7 @@ void main() {
             store.createEntity(
               label: 'Test Timeout Fix $imageName',
               isCollection: false,
-              imagePath: uniqueFile.path,
+              mediaPath: uniqueFile.path,
             ),
           );
         }

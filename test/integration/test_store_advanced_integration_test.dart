@@ -44,7 +44,7 @@ void main() {
         label: 'Child Media',
         isCollection: false,
         parentId: parentId,
-        imagePath: uniqueImage.path,
+        mediaPath: uniqueImage.path,
       );
       expect(childResult.isSuccess, isTrue, reason: childResult.error);
       final childId = childResult.data!.id;

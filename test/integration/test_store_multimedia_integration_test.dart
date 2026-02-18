@@ -50,7 +50,7 @@ void main() {
         label: 'Dart Test Image',
         description: 'A test image file',
         parentId: collectionId,
-        imagePath: testImage!.path,
+        mediaPath: testImage!.path,
       );
       expect(entityRes.isSuccess, isTrue);
       entityId = entityRes.data!.id;

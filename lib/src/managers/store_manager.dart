@@ -381,15 +381,15 @@ class StoreManager {
     }
   }
 
-  /// Create a new entity (image or collection).
+  /// Create a new entity (media file or collection).
   ///
-  /// For images, it triggers asynchronous intelligence processing.
+  /// For media files, it triggers asynchronous intelligence processing.
   Future<StoreOperationResult<Entity>> createEntity({
     required bool isCollection,
     String? label,
     String? description,
     int? parentId,
-    String? imagePath,
+    String? mediaPath,
   }) async {
     try {
       final (entity, statusCode) = await storeClient.createEntity(
@@ -397,7 +397,7 @@ class StoreManager {
         label: label,
         description: description,
         parentId: parentId,
-        imagePath: imagePath,
+        mediaPath: mediaPath,
       );
 
       // 201 Created (New), 200 OK (Duplicate)
@@ -421,7 +421,7 @@ class StoreManager {
     String? description,
     bool isCollection = false,
     int? parentId,
-    String? imagePath,
+    String? mediaPath,
   }) async {
     try {
       final result = await storeClient.updateEntity(
@@ -430,7 +430,7 @@ class StoreManager {
         label: label,
         description: description,
         parentId: parentId,
-        imagePath: imagePath,
+        mediaPath: mediaPath,
       );
       return StoreOperationResult(
         success: 'Entity updated successfully',

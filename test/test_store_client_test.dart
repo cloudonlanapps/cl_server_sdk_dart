@@ -302,7 +302,7 @@ void main() {
           final (result, statusCode) = await client.createEntity(
             isCollection: false,
             label: 'Photo',
-            imagePath: tempFile.path,
+            mediaPath: tempFile.path,
           );
 
           expect(result.id, equals(2));

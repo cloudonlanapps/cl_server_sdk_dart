@@ -81,7 +81,7 @@ void main() {
       final createResult = await store.createEntity(
         label: 'Entity to Read',
         isCollection: false,
-        imagePath: imagePath.path,
+        mediaPath: imagePath.path,
       );
       expect(createResult.isSuccess, isTrue);
       final entityId = createResult.data!.id;
@@ -113,7 +113,7 @@ void main() {
         label: 'Original Label',
         description: 'Original description',
         isCollection: false,
-        imagePath: imagePath.path,
+        mediaPath: imagePath.path,
       );
       expect(createResult.isSuccess, isTrue);
       final entityId = createResult.data!.id;
@@ -189,7 +189,7 @@ void main() {
       final createResult = await store.createEntity(
         label: 'Entity to Soft Delete',
         isCollection: false,
-        imagePath: imagePath.path,
+        mediaPath: imagePath.path,
       );
       expect(createResult.isSuccess, isTrue);
       final entityId = createResult.data!.id;
@@ -241,7 +241,7 @@ void main() {
         label: 'Test Image',
         description: 'Test upload',
         isCollection: false,
-        imagePath: imagePath.path,
+        mediaPath: imagePath.path,
       );
 
       expect(result.isSuccess, isTrue);
@@ -265,7 +265,7 @@ void main() {
         label: 'Original Label',
         description: 'Original description',
         isCollection: false,
-        imagePath: imagePath.path,
+        mediaPath: imagePath.path,
       );
       expect(createResult.isSuccess, isTrue);
       final entityId = createResult.data!.id;
@@ -293,7 +293,7 @@ void main() {
       final createResult = await store.createEntity(
         label: 'Entity to Soft Delete',
         isCollection: false,
-        imagePath: imagePath.path,
+        mediaPath: imagePath.path,
       );
       expect(createResult.isSuccess, isTrue);
       final entityId = createResult.data!.id;
@@ -328,7 +328,7 @@ void main() {
         label: 'Original Label',
         description: 'Original Description',
         isCollection: false,
-        imagePath: imagePath.path,
+        mediaPath: imagePath.path,
       );
       expect(createResult.isSuccess, isTrue);
       final entityId = createResult.data!.id;
@@ -368,7 +368,7 @@ void main() {
         label: 'Version Test Entity',
         description: 'Original',
         isCollection: false,
-        imagePath: imagePath.path,
+        mediaPath: imagePath.path,
       );
       expect(createResult.isSuccess, isTrue);
       final entityId = createResult.data!.id;
@@ -434,7 +434,7 @@ void main() {
       final createResult = await store.createEntity(
         label: 'Entity to Delete',
         isCollection: false,
-        imagePath: image.path,
+        mediaPath: image.path,
       );
       expect(createResult.isSuccess, isTrue);
       final entityId = createResult.data!.id;

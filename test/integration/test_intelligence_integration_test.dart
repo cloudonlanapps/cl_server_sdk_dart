@@ -29,7 +29,7 @@ void main() {
         final createResult = await store.createEntity(
           label: 'Intelligence Test Entity',
           isCollection: false,
-          imagePath: image.path,
+          mediaPath: image.path,
         );
         expect(createResult.isSuccess, isTrue);
         final entityId = createResult.data!.id;
@@ -114,7 +114,7 @@ void main() {
         final createResult = await store.createEntity(
           label: 'Consolidated Delete Test',
           isCollection: false,
-          imagePath: image.path,
+          mediaPath: image.path,
         );
         expect(createResult.isSuccess, isTrue);
         final entityId = createResult.data!.id;

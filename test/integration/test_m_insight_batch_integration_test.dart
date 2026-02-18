@@ -57,7 +57,7 @@ void main() {
           final res = await store.createEntity(
             label: 'Batch_Test_$i',
             isCollection: false,
-            imagePath: uniquePath.path,
+            mediaPath: uniquePath.path,
           );
 
           expect(

@@ -147,14 +147,14 @@ class OnlineEntityStore extends EntityStore {
               description: curr.description,
               isCollection: curr.isCollection,
               parentId: curr.parentId,
-              imagePath: path,
+              mediaPath: path,
             )
           : await storeManager.createEntity(
               isCollection: curr.isCollection,
               label: curr.label,
               description: curr.description,
               parentId: curr.parentId,
-              imagePath: path,
+              mediaPath: path,
             );
 
       if (!result.isSuccess) {
