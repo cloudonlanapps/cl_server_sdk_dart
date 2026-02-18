@@ -1,9 +1,10 @@
 // ignore_for_file: use_null_aware_elements because we don't want keys too
 
 import 'dart:convert';
-import 'dart:developer';
+
 import 'dart:io';
 
+import 'package:cl_extensions/cl_extensions.dart';
 import 'package:http/http.dart' as http;
 
 import '../auth.dart';
@@ -14,7 +15,7 @@ import '../models/store_models.dart';
 import '../types.dart';
 
 /// Low-level HTTP client for store service operations.
-class StoreClient {
+class StoreClient with CLLogger {
   StoreClient({
     required this.baseUrl,
     this.authProvider,
@@ -591,4 +592,7 @@ class StoreClient {
     final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
     return KnownPersonResponse.fromMap(jsonMap);
   }
+
+  @override
+  String get logPrefix => 'StoreClient';
 }

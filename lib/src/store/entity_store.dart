@@ -1,7 +1,6 @@
-import 'dart:developer';
 import 'dart:io';
 
-import 'package:cl_extensions/cl_extensions.dart' show NotNullValue;
+import 'package:cl_extensions/cl_extensions.dart' show CLLogger, NotNullValue;
 import 'package:meta/meta.dart';
 import 'package:store/store.dart';
 
@@ -12,7 +11,7 @@ import 'entity_mapper.dart';
 import 'query_filter_adapter.dart';
 
 @immutable
-class OnlineEntityStore extends EntityStore {
+class OnlineEntityStore extends EntityStore with CLLogger {
   const OnlineEntityStore({required super.config, required this.server});
 
   final CLServer server;
@@ -231,6 +230,9 @@ class OnlineEntityStore extends EntityStore {
   }) async {
     return OnlineEntityStore(config: config, server: server);
   }
+
+  @override
+  String get logPrefix => 'OnlineEntityStore';
 }
 
 Future<EntityStore> createOnlineEntityStore({
