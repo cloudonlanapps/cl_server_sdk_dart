@@ -101,31 +101,50 @@ class ComputeClient implements ClientProtocol {
   @override
   Future<String> httpSubmitJob(
     String endpoint, {
-    required Map<String, File> files,
+    Map<String, File>? files,
     Map<String, dynamic>? data,
   }) async {
     return _withRetry(() async {
       final uri = Uri.parse('$baseUrl$endpoint');
-      final request = http.MultipartRequest('POST', uri);
-      request.headers.addAll(await _getHeaders());
 
-      if (data != null) {
-        data.forEach((k, v) {
-          request.fields[k] = v.toString();
-        });
+      // Use MultipartRequest if files are provided, otherwise use regular POST
+      if (files != null && files.isNotEmpty) {
+        final request = http.MultipartRequest('POST', uri);
+        request.headers.addAll(await _getHeaders());
+
+        if (data != null) {
+          data.forEach((k, v) {
+            request.fields[k] = v.toString();
+          });
+        }
+
+        for (final entry in files.entries) {
+          request.files.add(
+            await HttpUtils.createMultipartFile(entry.key, entry.value),
+          );
+        }
+
+        final streamResponse = await _session.send(request).timeout(timeout);
+        final response = await http.Response.fromStream(streamResponse);
+
+        final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
+        return jsonMap['job_id'] as String;
+      } else {
+        // Simple POST for parameter-only job submission
+        final response = await _session
+            .post(
+              uri,
+              headers: {
+                ...(await _getHeaders()),
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: data?.map((k, v) => MapEntry(k, v.toString())),
+            )
+            .timeout(timeout);
+
+        final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
+        return jsonMap['job_id'] as String;
       }
-
-      for (final entry in files.entries) {
-        request.files.add(
-          await HttpUtils.createMultipartFile(entry.key, entry.value),
-        );
-      }
-
-      final streamResponse = await _session.send(request).timeout(timeout);
-      final response = await http.Response.fromStream(streamResponse);
-
-      final jsonMap = await _handleResponse(response) as Map<String, dynamic>;
-      return jsonMap['job_id'] as String;
     });
   }
 

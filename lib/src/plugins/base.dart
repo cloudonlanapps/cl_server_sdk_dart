@@ -9,7 +9,7 @@ import '../models/models.dart';
 abstract class ClientProtocol {
   Future<String> httpSubmitJob(
     String endpoint, {
-    required Map<String, File> files,
+    Map<String, File>? files,
     Map<String, dynamic>? data,
   });
 
@@ -45,11 +45,31 @@ class BasePluginClient {
     void Function(JobResponse)? onProgress,
     void Function(JobResponse)? onComplete,
   }) async {
-    throw UnimplementedError(
-      '$taskType requires file uploads. '
-      'Use submitWithFiles() instead. '
-      'This method is reserved for future file-less plugins.',
+    // 1. Submit job (http)
+    final jobId = await client.httpSubmitJob(
+      endpoint,
+      data: HttpUtils.buildFormData(params: params, priority: priority),
     );
+
+    // 2. Fetch full job details
+    final job = await client.getJob(jobId);
+
+    // 3. Subscribe to MQTT callbacks if provided
+    if (onProgress != null || onComplete != null) {
+      client.mqttSubscribeJobUpdates(
+        jobId,
+        onProgress: onProgress,
+        onComplete: onComplete,
+        taskType: taskType,
+      );
+    }
+
+    // 4. Wait for completion if requested
+    if (wait) {
+      return client.waitForJob(jobId, timeout: timeout);
+    }
+
+    return job;
   }
 
   Future<JobResponse> submitWithFiles({

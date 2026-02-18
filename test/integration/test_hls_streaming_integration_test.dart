@@ -23,7 +23,7 @@ void main() {
       final video = await IntegrationHelper.getTestVideo();
 
       final job = await client.hlsStreaming.generateManifest(
-        video,
+        video: video,
         wait: true,
         timeout: const Duration(seconds: 300), // Video processing takes longer
       );
@@ -57,7 +57,7 @@ void main() {
 
       final completionCompleter = Completer<JobResponse>();
       final job = await client.hlsStreaming.generateManifest(
-        video,
+        video: video,
         onComplete: completionCompleter.complete,
       );
 
